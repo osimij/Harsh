@@ -1,0 +1,622 @@
+/* ============================================
+   HERO SECTION - Portfolio Landing
+   World-class responsive implementation
+
+   Design System:
+   - Desktop: 1440px (Figma reference)
+   - Tablet: 768px - 1024px
+   - Mobile: < 768px
+
+   Typography: Helvetica Neue
+   Colors: #111 (primary), #fff (bg)
+   ============================================ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES
+   ============================================ */
+:root {
+    /* Colors */
+    --color-primary: #ffffff;
+    --color-bg: #000000;
+    --color-text: #ffffff;
+    --color-text-muted: rgba(255, 255, 255, 0.7);
+    --color-border: rgba(255, 255, 255, 0.2);
+    --color-border-light: rgba(255, 255, 255, 0.1);
+
+    /* Typography */
+    --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-size-intro: 15px;
+    --font-size-nav: 18px;
+    --line-height-intro: 1.3;
+    --letter-spacing-intro: -0.3px;
+    --letter-spacing-nav: -0.36px;
+
+    /* Spacing */
+    --spacing-page: 40px;
+    --spacing-section: 30px;
+    --spacing-nav-gap: 7px;
+
+    /* Sizes */
+    --profile-size: 66px;
+    --profile-radius: 3px;
+    --logo-cell-width: 175px;
+    --logo-cell-height: 110px;
+    --main-logo-width: 600px;
+    --main-logo-height: 550px;
+
+    /* Animation */
+    --transition-fast: 0.2s ease;
+    --transition-medium: 0.4s ease;
+    --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ============================================
+   HERO CONTAINER
+   ============================================ */
+.hero {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--color-bg);
+    padding: 0 var(--spacing-page);
+    overflow: hidden;
+}
+
+/* ============================================
+   MAIN LAYOUT
+   Two-column on desktop, stacked on mobile
+   ============================================ */
+.main {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    justify-content: center;
+    align-content: start;
+    width: 100%;
+    height: 100%;
+    padding: 20px 0 10px 0; /* top padding: 20px mobile, 40px on tablet+ via media query */
+}
+
+/* ============================================
+   LEFT CONTENT SECTION
+   On mobile: split into nav at top, intro at bottom
+   ============================================ */
+.content {
+    display: contents;
+}
+
+/* Intro Section - Image + Text */
+.intro-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    order: 3;
+    padding: 10px 20px;
+    flex-shrink: 0;
+}
+
+/* Profile Image */
+.profile-image {
+    width: var(--profile-size);
+    height: var(--profile-size);
+    border-radius: var(--profile-radius);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: var(--profile-radius);
+}
+
+/* Intro Text */
+.intro-text {
+    max-width: 354px;
+    font-size: var(--font-size-intro);
+    font-weight: 400;
+    line-height: var(--line-height-intro);
+    letter-spacing: var(--letter-spacing-intro);
+    text-transform: uppercase;
+    color: var(--color-text);
+}
+
+.intro-line {
+    margin: 0;
+}
+
+.text-regular {
+    font-weight: 400;
+}
+
+.text-medium {
+    font-weight: 500;
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+.nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    order: 1;
+    width: 100%;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.nav-left {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-item {
+    display: block;
+    padding: 5px 10px;
+    font-size: var(--font-size-intro);
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: var(--letter-spacing-intro);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border-light);
+    cursor: pointer;
+}
+
+.nav-active {
+    padding: 5px 10px;
+    background: var(--color-primary);
+    color: var(--color-bg);
+    border: 1px solid var(--color-primary);
+    white-space: nowrap;
+}
+
+/* ============================================
+   LOGOS SECTION
+   ============================================ */
+.logos-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 100%;
+    order: 2;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Main Logo Display */
+.main-logo {
+    width: 100%;
+    max-width: 100%;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ============================================
+   LOGO GRID
+   3x2 grid, responsive scaling
+   ============================================ */
+.logo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, auto);
+    width: calc(100% - 50px);
+    max-width: 553px;
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+/* Logo Cell */
+.logo-cell {
+    aspect-ratio: 175 / 110;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--color-bg);
+    padding: 12px;
+    cursor: pointer;
+    border: none;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    font: inherit;
+    color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: box-shadow 1s ease;
+}
+
+.logo-cell:nth-child(3n) {
+    border-right: none;
+}
+.logo-cell:nth-child(n+4) {
+    border-bottom: none;
+}
+
+/* Active cell - use box-shadow for full border effect */
+.logo-cell-active {
+    box-shadow: inset 0 0 0 1px var(--color-primary);
+    z-index: 1;
+}
+
+/* Logo wrapper - consistent size container */
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 53px;
+    padding: 0 8px;
+    opacity: 0.2;
+    transition: opacity 0.5s ease;
+}
+
+/* Logo SVGs - use color for opacity control */
+.logo-img {
+    display: block;
+    max-width: 86%;
+    max-height: 86%;
+    width: auto;
+    height: auto;
+    color: rgba(255, 255, 255, 1);
+    transition: color 0.5s ease;
+}
+.logo-img path {
+    fill: #ffffff;
+}
+
+/* Active cell content - full opacity */
+.logo-cell-active .logo-wrapper {
+    opacity: 1;
+}
+
+/* Hover effect on non-active cells - subtle brighten */
+.logo-cell:not(.logo-cell-active):hover .logo-wrapper {
+    opacity: 0.5;
+}
+
+/* ============================================
+   TABLET BREAKPOINT (768px - 1024px)
+   ============================================ */
+@media (min-width: 768px) {
+    :root {
+        --spacing-page: 40px;
+    }
+
+    .main {
+        grid-template-columns: minmax(300px, 400px) 1fr;
+        grid-template-rows: 1fr;
+        align-items: stretch;
+        align-content: stretch;
+        gap: 40px;
+        padding: 40px 0 20px 0;
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+    .intro-section {
+        align-items: flex-start;
+        text-align: left;
+        order: unset;
+        padding: 0 0 20px 0;
+        gap: var(--spacing-section);
+    }
+
+    .nav {
+        order: unset;
+        width: fit-content;
+        justify-content: flex-start;
+        padding-top: 10px;
+        gap: 12px;
+    }
+
+    .nav-left {
+        display: contents;
+    }
+
+    .logos-section {
+        justify-content: space-between;
+        width: var(--main-logo-width);
+        max-width: 100%;
+        justify-self: end;
+        flex: unset;
+        padding-top: 50px;
+    }
+
+    .main-logo {
+        max-width: var(--main-logo-width);
+        height: var(--main-logo-height);
+        aspect-ratio: unset;
+    }
+
+    .logo-grid {
+        max-width: min(473px, 33.6vw);
+    }
+
+    .logo-wrapper {
+        height: clamp(43px, 4.25vw, 74px);
+    }
+}
+
+/* ============================================
+   DESKTOP BREAKPOINT (1024px+)
+   ============================================ */
+@media (min-width: 1024px) {
+    .main {
+        grid-template-columns: 374px 1fr;
+    }
+
+    .logo-grid {
+        max-width: min(553px, 33.6vw);
+    }
+}
+
+/* ============================================
+   LARGE DESKTOP (1440px+)
+   ============================================ */
+@media (min-width: 1440px) {
+}
+
+/* ============================================
+   SMALL MOBILE (< 480px)
+   ============================================ */
+@media (max-width: 479px) {
+    :root {
+        --spacing-page: 20px;
+        --font-size-intro: 12px;
+        --font-size-nav: 14px;
+        --profile-size: 56px;
+    }
+
+    .intro-text {
+        max-width: 100%;
+    }
+
+    .logo-grid {
+        width: calc(100% - 34px);
+    }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes logoReveal {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Initial load animations — staggered intro reveal */
+.hero.loaded .profile-image {
+    animation: fadeIn 0.6s ease forwards;
+    opacity: 0;
+}
+
+.hero.loaded .intro-line {
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+}
+
+.hero.loaded .intro-line:nth-child(1) { animation-delay: 0.1s; }
+.hero.loaded .intro-line:nth-child(2) { animation-delay: 0.2s; }
+.hero.loaded .intro-line:nth-child(3) { animation-delay: 0.3s; }
+.hero.loaded .intro-line:nth-child(4) { animation-delay: 0.4s; }
+
+.hero.loaded .nav {
+    animation: fadeIn 0.6s ease 0.5s forwards;
+    opacity: 0;
+}
+
+.hero.loaded .main-logo {
+    animation: logoReveal 0.8s ease 0.1s forwards;
+    opacity: 0;
+}
+
+.hero.loaded .logo-grid {
+    animation: fadeIn 0.6s ease 0.3s forwards;
+    opacity: 0;
+}
+
+/* ============================================
+   SPLASH SCREEN
+   ============================================ */
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.5s ease;
+}
+
+.splash-screen.splash-bg-black {
+    background: #000;
+}
+
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+}
+
+.splash-image {
+    width: 294px;
+    height: 294px;
+    object-fit: cover;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.splash-text {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    color: #111;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: -0.36px;
+    line-height: normal;
+    width: 460px;
+    max-width: 90vw;
+}
+
+.splash-line {
+    margin: 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+/* Appear state */
+.splash-screen.splash-appear .splash-image {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.splash-screen.splash-appear .splash-line {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.splash-screen.splash-appear .splash-line:nth-child(1) { transition-delay: 0.1s; }
+.splash-screen.splash-appear .splash-line:nth-child(2) { transition-delay: 0.2s; }
+.splash-screen.splash-appear .splash-line:nth-child(3) { transition-delay: 0.3s; }
+.splash-screen.splash-appear .splash-line:nth-child(4) { transition-delay: 0.4s; }
+
+/* Fade-out state */
+.splash-screen.splash-fade .splash-image,
+.splash-screen.splash-fade .splash-line {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition-delay: 0s;
+}
+
+/* Responsive */
+@media (max-width: 479px) {
+    .splash-image {
+        width: 200px;
+        height: 200px;
+    }
+    .splash-text {
+        font-size: 14px;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus states for keyboard navigation */
+.nav-item:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.logo-cell:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-border: rgba(17, 17, 17, 0.5);
+        --color-border-light: rgba(17, 17, 17, 0.3);
+    }
+
+    .logo-img {
+        filter: none;
+    }
+}

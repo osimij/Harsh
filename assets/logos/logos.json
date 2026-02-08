@@ -1,0 +1,71 @@
+{
+  "logos": [
+    {
+      "id": "artikuchi",
+      "file": "Artikuchi.svg",
+      "name": "Artikuchi",
+      "displayName": "Artikuchi",
+      "initialActive": true,
+      "tags": ["Logo", "Branding", "Identity"],
+      "description": "Brand identity for Artikuchi — a monogram that fuses the letterforms A and K into a single cohesive mark, balancing symmetry with character.",
+      "year": "2024",
+      "thumbnailBg": "#C70204",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "peacora",
+      "file": "Peacora.svg",
+      "name": "Peacora",
+      "displayName": "Peacora",
+      "tags": ["Logo", "Branding"],
+      "description": "A graceful identity for Peacora, capturing elegance and natural form through refined design.",
+      "year": "2024",
+      "thumbnailBg": "#062B2B",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "balanced-pathways",
+      "file": "Balanced Pathways Corporation.svg",
+      "name": "Balanced Pathways Corporation",
+      "displayName": "Balanced Pathways Corporation",
+      "tags": ["Logo", "Corporate", "Branding"],
+      "description": "Corporate identity for Balanced Pathways Corporation — a mark that communicates stability, direction, and professional integrity.",
+      "year": "2024",
+      "thumbnailBg": "#000098",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "solar-sphere",
+      "file": "Solar Sphere.svg",
+      "name": "Solar Sphere",
+      "displayName": "Solar Sphere",
+      "tags": ["Logo", "Branding", "3D"],
+      "description": "A dimensional mark for Solar Sphere, using layered circular forms to evoke orbital energy and light. The logomark communicates innovation and movement.",
+      "year": "2023",
+      "thumbnailBg": "#136646",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "tanmay-gedam",
+      "file": "Tanmay Gedam.svg",
+      "name": "Tanmay Gedam",
+      "displayName": "Tanmay Gedam",
+      "tags": ["Logo", "Personal", "Identity"],
+      "description": "Personal brand identity for Tanmay Gedam — a distinctive mark that balances individuality with professional presence.",
+      "year": "2024",
+      "thumbnailBg": "#3C2211",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "macro-genics",
+      "file": "Macro Genics.svg",
+      "name": "Macro Genics",
+      "displayName": "Macro Genics",
+      "tags": ["Logo", "Branding", "Science"],
+      "description": "Brand identity for Macro Genics — a modern mark that bridges scientific precision with bold visual impact.",
+      "year": "2024",
+      "thumbnailBg": "#0E4946",
+      "logoColor": "#FFFFFF"
+    }
+  ]
+}

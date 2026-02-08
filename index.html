@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Harsh - Logo Designer & Brand Systems Creator. Joy by origin, rough by translation.">
+    <meta name="theme-color" content="#111111">
+
+    <!-- Preload critical assets -->
+    <link rel="preload" href="assets/hero/profile.jpg" as="image">
+
+    <title>Harsh - Logo & Brand Designer</title>
+    <link rel="stylesheet" href="hero.css">
+</head>
+<body>
+    <!-- Splash Screen Overlay -->
+    <div class="splash-screen" aria-hidden="true">
+        <div class="splash-content">
+            <img
+                class="splash-image"
+                src="assets/hero/profile.jpg"
+                alt=""
+                width="294"
+                height="294"
+            >
+            <div class="splash-text">
+                <p class="splash-line">Greetings, my name is Harsh.</p>
+                <p class="splash-line">In Sanskrit, it means Joy.</p>
+                <p class="splash-line">Joy by origin, Rough by translation.</p>
+                <p class="splash-line">I design logos and brand systems</p>
+            </div>
+        </div>
+    </div>
+
+    <section class="hero" aria-label="Introduction">
+        <div class="main">
+            <!-- Left Column: Introduction & Navigation -->
+            <div class="content">
+                <header class="intro-section">
+                    <figure class="profile-image">
+                        <img
+                            src="assets/hero/profile.jpg"
+                            alt="Portrait of Harsh"
+                            width="66"
+                            height="66"
+                            loading="eager"
+                        >
+                    </figure>
+                    <div class="intro-text">
+                        <p class="intro-line">
+                            <span class="text-regular">My mom named me </span><span class="text-medium">Harsh</span><span class="text-regular">.</span>
+                        </p>
+                        <p class="intro-line">
+                            <span class="text-regular">In Sanskrit, it means Joy.</span>
+                        </p>
+                        <p class="intro-line">
+                            <span class="text-regular">Joy by origin, Rough</span><br>
+                            <span class="text-regular">by translation.</span>
+                        </p>
+                        <p class="intro-line">
+                            <span class="text-regular">I design logos and brand systems</span>
+                        </p>
+                    </div>
+                </header>
+
+                <nav class="nav" aria-label="Primary navigation">
+                    <div class="nav-left">
+                        <a href="#contact" class="nav-item">Contact</a>
+                        <a href="work.html" class="nav-item">Work</a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Right Column: Logo Showcase -->
+            <div class="logos-section">
+                <div class="main-logo" aria-label="Featured logo artwork">
+                    <canvas id="particle-canvas"></canvas>
+                </div>
+
+                <div class="logo-grid" role="list" aria-label="Logo portfolio">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="module">
+        /**
+         * Hero Section - Interactive Logo Gallery with GPU Fluid Particle Animation
+         * Features:
+         * - GPU-accelerated particle simulation with curl noise & vortices
+         * - Auto-cycling synchronized with grid
+         * - Click/tap to select
+         * - Keyboard navigation
+         * - Pause on interaction
+         */
+        import { GPUParticleSim } from './js/gpu-particle-sim.js';
+        import { RasterPointSampler } from './js/raster-point-sampler.js';
+        import { Renderer } from './js/renderer.js';
+
+        (async function() {
+            'use strict';
+
+            /**
+             * Detect display quality and return appropriate particle color.
+             * Uses multiple signals to determine if display is high-quality (OLED, HDR, Retina).
+             */
+            function detectParticleColor() {
+                const darkGray = '#696968';   // For high-quality displays (OLED, HDR, Retina)
+                const lightGray = '#a0a09f';  // For standard displays (better visibility)
+
+                // Check for HDR support (strong indicator of quality display)
+                const hasHDR = window.matchMedia('(dynamic-range: high)').matches;
+
+                // Check for wide color gamut (P3, Rec2020 - common in quality displays)
+                const hasWideGamut = window.matchMedia('(color-gamut: p3)').matches ||
+                                     window.matchMedia('(color-gamut: rec2020)').matches;
+
+                // High DPR often correlates with quality displays (Retina, OLED phones)
+                const hasHighDPR = window.devicePixelRatio >= 2;
+
+                // User prefers more contrast (accessibility setting)
+                const prefersMoreContrast = window.matchMedia('(prefers-contrast: more)').matches;
+
+                // If user explicitly wants more contrast, use lighter color
+                if (prefersMoreContrast) {
+                    return lightGray;
+                }
+
+                // High-quality display: HDR or (wide gamut + high DPR)
+                const isHighQualityDisplay = hasHDR || (hasWideGamut && hasHighDPR);
+
+                return isHighQualityDisplay ? darkGray : lightGray;
+            }
+
+            // Configuration
+            const CONFIG = {
+                cycleInterval: 5000,      // Total cycle time (morph + hold) (ms)
+                morphDuration: 2500,      // Cycle Duration 2.5 sec
+                holdDuration: 2500,       // Hold time 2.5 sec
+                pauseDuration: 10000,     // Pause duration after interaction (ms)
+                initialDelay: 500,        // Delay before first auto-cycle (ms)
+                initialActive: 2,         // Initial active logo index (0-based)
+                particleCount: 300000,    // Number of particles (300K)
+                particleSize: 1.1,        // Base particle size
+                particleColor: detectParticleColor(), // Adaptive particle color based on display
+                glowIntensity: 0,         // Glow off
+                depthVariance: 0.25,      // Depth Spread 25%
+                sizeRandom: 1.0,          // Random Size Coverage 100%
+                opacityRandom: 1.0,       // Random Opacity Coverage 100%
+                sizeMin: 0.4,             // Random Size Min 0.4x
+                sizeMax: 1.25,            // Random Size Max 1.25x
+                opacityMin: 0.3,          // Random Opacity Min 30%
+                opacityMax: 1.0           // Random Opacity Max 100%
+            };
+
+            // State
+            let currentIndex = CONFIG.initialActive;
+            let nextIndex = null;
+            let cycleTimer = null;
+            let pauseTimer = null;
+            let isPaused = false;
+            let isTransitioning = false;
+            let transitionStartTime = 0;
+
+            // GPU Particle system components
+            let gpuSim = null;
+            let rasterSampler = null;
+            let renderer = null;
+            let gl = null;
+            let targetTextures = [];  // Float textures for each logo
+            let animationId = null;
+            let lastTime = 0;
+
+            // Logo data loaded from manifest
+            let logoManifest = [];
+            let svgStrings = [];  // Raw SVG strings (fill="#111111") for GPU textures
+
+            // DOM Elements
+            const hero = document.querySelector('.hero');
+            const canvas = document.getElementById('particle-canvas');
+            const logoGrid = document.querySelector('.logo-grid');
+            let cells = [];
+            let totalLogos = 0;
+
+            // Check for reduced motion preference
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            /**
+             * Load logos from the manifest and fetch all SVG files
+             */
+            async function loadLogos() {
+                const manifestRes = await fetch('assets/logos/logos.json');
+                if (!manifestRes.ok) throw new Error(`Failed to load logo manifest (${manifestRes.status})`);
+                const manifest = await manifestRes.json();
+                logoManifest = manifest.logos;
+
+                // Determine initial active index from manifest
+                const activeIdx = logoManifest.findIndex(l => l.initialActive);
+                if (activeIdx !== -1) {
+                    CONFIG.initialActive = activeIdx;
+                    currentIndex = activeIdx;
+                }
+
+                // Fetch all SVG files in parallel
+                const fetches = logoManifest.map(logo =>
+                    fetch(`assets/logos/${logo.file}`).then(r => {
+                        if (!r.ok) throw new Error(`Failed to load ${logo.file}`);
+                        return r.text();
+                    })
+                );
+                svgStrings = await Promise.all(fetches);
+
+                totalLogos = logoManifest.length;
+            }
+
+            /**
+             * Deduplicate SVG internal IDs to avoid DOM collisions
+             */
+            function deduplicateSvgIds(svgString, prefix) {
+                return svgString.replace(/\bid="([^"]+)"/g, `id="${prefix}_$1"`)
+                                .replace(/url\(#([^)]+)\)/g, `url(#${prefix}_$1)`)
+                                .replace(/#clip(\d)/g, `#${prefix}_clip$1`);
+            }
+
+            /**
+             * Build the logo grid from loaded SVG data
+             */
+            function buildLogoGrid() {
+                logoGrid.innerHTML = '';
+                logoManifest.forEach((logo, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'logo-cell' + (i === currentIndex ? ' logo-cell-active' : '');
+                    btn.setAttribute('role', 'listitem');
+                    btn.setAttribute('data-logo', logo.id);
+                    btn.setAttribute('aria-label', `View ${logo.name} logo`);
+                    btn.setAttribute('aria-pressed', i === currentIndex ? 'true' : 'false');
+                    btn.setAttribute('tabindex', '0');
+
+                    // Create thumbnail SVG with currentColor fill and deduplicated IDs
+                    let thumbSvg = deduplicateSvgIds(svgStrings[i], `logo_${logo.id}`);
+                    thumbSvg = thumbSvg.replace(/fill="#111111"/g, 'fill="currentColor"');
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'logo-wrapper';
+                    wrapper.innerHTML = thumbSvg;
+
+                    // Add the logo-img class + aria-hidden to the inserted SVG
+                    const svgEl = wrapper.querySelector('svg');
+                    if (svgEl) {
+                        svgEl.classList.add('logo-img');
+                        svgEl.setAttribute('aria-hidden', 'true');
+                    }
+
+                    btn.appendChild(wrapper);
+                    logoGrid.appendChild(btn);
+                });
+
+                // Update cells reference
+                cells = Array.from(document.querySelectorAll('.logo-cell'));
+
+                // Attach event listeners
+                cells.forEach(cell => {
+                    cell.addEventListener('click', handleCellClick);
+                    cell.addEventListener('keydown', handleKeyDown);
+                });
+            }
+
+            /**
+             * Initialize GPU particle system with all logos
+             */
+            async function initParticleSystem() {
+                // Setup canvas
+                const container = canvas.parentElement;
+                let rect = container.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) {
+                    await new Promise(resolve => requestAnimationFrame(resolve));
+                    rect = container.getBoundingClientRect();
+                }
+
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+
+                // Initialize renderer first (it creates the WebGL2 context)
+                renderer = new Renderer(canvas);
+
+                if (!renderer.gl) {
+                    console.error('WebGL2 not supported');
+                    return;
+                }
+
+                // Use the renderer's WebGL context for GPU simulation
+                gl = renderer.gl;
+
+                // Configure renderer settings
+                renderer.settings.glowIntensity = CONFIG.glowIntensity;
+                renderer.settings.depthVariance = CONFIG.depthVariance;
+                renderer.settings.zoom = 1.0;
+                renderer.settings.userSize = CONFIG.particleSize;
+                renderer.settings.useColorOverride = true;
+                // Convert hex to RGB array (0-1 range)
+                const hexToRgb = (hex) => {
+                    const h = hex.replace('#', '');
+                    return [
+                        parseInt(h.substring(0, 2), 16) / 255,
+                        parseInt(h.substring(2, 4), 16) / 255,
+                        parseInt(h.substring(4, 6), 16) / 255
+                    ];
+                };
+                renderer.settings.colorOverrideRgb = hexToRgb(CONFIG.particleColor);
+                renderer.settings.sizeRandom = CONFIG.sizeRandom;
+                renderer.settings.opacityRandom = CONFIG.opacityRandom;
+                renderer.settings.sizeMin = CONFIG.sizeMin;
+                renderer.settings.sizeMax = CONFIG.sizeMax;
+                renderer.settings.opacityMin = CONFIG.opacityMin;
+                renderer.settings.opacityMax = CONFIG.opacityMax;
+
+                // Initialize GPU particle simulation using the same GL context
+                try {
+                    gpuSim = new GPUParticleSim(gl, { count: CONFIG.particleCount, seed: 42 });
+                } catch (e) {
+                    console.error('GPU particle sim not supported:', e);
+                    return;
+                }
+
+                // Initialize raster sampler for high-density point clouds
+                rasterSampler = new RasterPointSampler();
+
+                // Sample all logos to GPU textures
+                for (const svgString of svgStrings) {
+                    try {
+                        const { texture } = await rasterSampler.sampleToTexture(
+                            gl,
+                            svgString,
+                            CONFIG.particleCount,
+                            { rasterSize: 1024, edgeRatio: 0.5 }
+                        );
+                        targetTextures.push(texture);
+                    } catch (e) {
+                        console.error('Failed to sample SVG to texture:', e);
+                        targetTextures.push(null);
+                    }
+                }
+
+                // Set initial targets (from and to both point to initial logo)
+                const initialTex = targetTextures[CONFIG.initialActive];
+                if (initialTex) {
+                    gpuSim.setTargets({ fromTex: initialTex, toTex: initialTex });
+                }
+
+                // Handle resize
+                window.addEventListener('resize', handleResize);
+
+                // Start animation loop
+                startAnimationLoop();
+            }
+
+            /**
+             * Handle canvas resize
+             */
+            function handleResize() {
+                if (!canvas || !renderer) return;
+                const container = canvas.parentElement;
+                const rect = container.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+            }
+
+            /**
+             * Animation loop
+             */
+            function startAnimationLoop() {
+                lastTime = performance.now();
+
+                function animate(currentTime) {
+                    const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.05);
+                    lastTime = currentTime;
+
+                    // Calculate transition parameters
+                    let morphT = 1, scatterT = 0, chaosT = 0, attractT = 1, settleT = 1;
+
+                    if (isTransitioning) {
+                        const elapsed = currentTime - transitionStartTime;
+                        const progress = Math.min(elapsed / CONFIG.morphDuration, 1);
+                        const easedProgress = easeInOutCubic(progress);
+
+                        morphT = easedProgress;
+                        // Scatter peaks in the middle of transition
+                        scatterT = Math.sin(progress * Math.PI) * 0.4;
+                        // Chaos adds fluid turbulence
+                        chaosT = Math.sin(progress * Math.PI) * 0.6;
+                        // Attract ramps up as we approach target
+                        attractT = easedProgress;
+                        // Settle increases to lock particles into final positions
+                        settleT = progress * progress;
+
+                        if (progress >= 1) {
+                            // Transition complete - swap targets
+                            const toTex = targetTextures[nextIndex];
+                            if (toTex) {
+                                gpuSim.setTargets({ fromTex: toTex, toTex: toTex });
+                            }
+                            currentIndex = nextIndex;
+                            isTransitioning = false;
+                        }
+                    }
+
+                    // Step GPU simulation with fluid parameters
+                    gpuSim.step(deltaTime, {
+                        morphT,
+                        scatterT,
+                        chaosT,
+                        attractT,
+                        settleT,
+                        // Fluid simulation parameters
+                        noiseScale: 3.5,
+                        noiseStrength: 0.9,
+                        noiseSpeed: 0.2,
+                        vortexStrength: 1.5,
+                        vortexRadius: 0.7,
+                        vortex1: [0.0, 0.0],
+                        vortex2: [-0.25, 0.2],
+                        vortex3: [0.3, -0.15],
+                        repulseStrength: 1.2,
+                        attractStrength: 2.8,
+                        drag: 1.2,
+                        maxSpeed: 2.5
+                    });
+
+                    // Render particles from GPU texture
+                    // renderGPU expects a source object with textures from the GPU sim
+                    renderer.renderGPU({
+                        count: gpuSim.count,
+                        texWidth: gpuSim.texWidth,
+                        texHeight: gpuSim.texHeight,
+                        posTex: gpuSim.getPositionTexture(),
+                        velTex: gpuSim.getVelocityTexture(),
+                        randTex: gpuSim.getRandomTexture(),
+                        targetFromTex: targetTextures[currentIndex],
+                        targetToTex: targetTextures[nextIndex !== null ? nextIndex : currentIndex]
+                    });
+
+                    animationId = requestAnimationFrame(animate);
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            /**
+             * Easing function
+             */
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            /**
+             * Morph to a specific logo
+             */
+            function morphToLogo(index) {
+                if (!gpuSim || !targetTextures[index]) return;
+
+                // Set up morph: from current logo to new logo
+                const fromTex = targetTextures[currentIndex];
+                const toTex = targetTextures[index];
+
+                if (fromTex && toTex) {
+                    gpuSim.setTargets({ fromTex, toTex });
+                }
+
+                nextIndex = index;
+                isTransitioning = true;
+                transitionStartTime = performance.now();
+            }
+
+            /**
+             * Set active logo by index
+             */
+            function setActiveLogo(index, skipMorph = false) {
+                cells.forEach((cell, i) => {
+                    const isActive = i === index;
+                    cell.classList.toggle('logo-cell-active', isActive);
+                    cell.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+
+                if (!skipMorph && index !== currentIndex) {
+                    morphToLogo(index);
+                } else if (skipMorph) {
+                    currentIndex = index;
+                }
+            }
+
+            /**
+             * Cycle to next logo
+             */
+            function cycleToNext() {
+                if (isPaused || isTransitioning) return;
+                const next = (currentIndex + 1) % totalLogos;
+                setActiveLogo(next);
+            }
+
+            /**
+             * Start auto-cycling
+             */
+            function startCycling() {
+                if (prefersReducedMotion) return;
+                stopCycling();
+                cycleTimer = setInterval(cycleToNext, CONFIG.cycleInterval);
+            }
+
+            /**
+             * Stop auto-cycling
+             */
+            function stopCycling() {
+                if (cycleTimer) {
+                    clearInterval(cycleTimer);
+                    cycleTimer = null;
+                }
+            }
+
+            /**
+             * Pause cycling temporarily
+             */
+            function pauseCycling() {
+                isPaused = true;
+                stopCycling();
+
+                if (pauseTimer) clearTimeout(pauseTimer);
+                pauseTimer = setTimeout(() => {
+                    isPaused = false;
+                    startCycling();
+                }, CONFIG.pauseDuration);
+            }
+
+            /**
+             * Handle logo cell click/tap
+             */
+            function handleCellClick(event) {
+                const cell = event.currentTarget;
+                const index = Array.from(cells).indexOf(cell);
+
+                if (index !== -1 && index !== currentIndex && !isTransitioning) {
+                    setActiveLogo(index);
+                    pauseCycling();
+                }
+            }
+
+            /**
+             * Handle keyboard navigation
+             */
+            function handleKeyDown(event) {
+                const cell = event.currentTarget;
+                const index = Array.from(cells).indexOf(cell);
+                let newIndex = index;
+
+                switch (event.key) {
+                    case 'Enter':
+                    case ' ':
+                        event.preventDefault();
+                        if (index !== currentIndex && !isTransitioning) {
+                            setActiveLogo(index);
+                            pauseCycling();
+                        }
+                        break;
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        newIndex = (index + 1) % totalLogos;
+                        cells[newIndex].focus();
+                        break;
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        newIndex = (index - 1 + totalLogos) % totalLogos;
+                        cells[newIndex].focus();
+                        break;
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        newIndex = (index + 5) % totalLogos;
+                        cells[newIndex].focus();
+                        break;
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        newIndex = (index - 5 + totalLogos) % totalLogos;
+                        cells[newIndex].focus();
+                        break;
+                }
+            }
+
+            // Splash screen orchestration
+            const splash = document.querySelector('.splash-screen');
+            const splashAlreadyShown = sessionStorage.getItem('splashShown') === '1';
+
+            function runSplashSequence() {
+                return new Promise(resolve => {
+                    // Phase 1: Fade in image + text (~300ms after load)
+                    setTimeout(() => {
+                        splash.classList.add('splash-appear');
+                    }, 300);
+
+                    // Phase 2: Fade out content (~3000ms after load)
+                    setTimeout(() => {
+                        splash.classList.add('splash-fade');
+                    }, 3000);
+
+                    // Phase 3: Background transition to black (~3600ms)
+                    setTimeout(() => {
+                        splash.classList.add('splash-bg-black');
+                    }, 3600);
+
+                    // Phase 4: Remove splash, reveal hero (~4100ms)
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                        resolve();
+                    }, 4100);
+                });
+            }
+
+            // Load logos from manifest, build grid, then init particles
+            await loadLogos();
+            buildLogoGrid();
+            setActiveLogo(currentIndex, true);
+
+            if (splashAlreadyShown) {
+                // Return visit: skip splash, init particles, reveal hero
+                splash.style.display = 'none';
+                await initParticleSystem();
+                requestAnimationFrame(() => {
+                    hero.classList.add('loaded');
+                });
+            } else {
+                // First visit: full splash + particles concurrently
+                await Promise.all([
+                    runSplashSequence(),
+                    initParticleSystem()
+                ]);
+                sessionStorage.setItem('splashShown', '1');
+                requestAnimationFrame(() => {
+                    hero.classList.add('loaded');
+                });
+            }
+
+            if (!prefersReducedMotion) {
+                setTimeout(startCycling, CONFIG.initialDelay + CONFIG.morphDuration);
+            }
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    stopCycling();
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                        animationId = null;
+                    }
+                } else {
+                    if (!animationId) {
+                        startAnimationLoop();
+                    }
+                    if (!isPaused) {
+                        startCycling();
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

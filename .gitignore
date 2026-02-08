@@ -1,0 +1,13 @@
+# Old project copy
+LogoPortfolio-main 2/
+
+# Dev notes
+cleanup.md
+
+# Server runtime files
+.server.log
+.server.pid
+
+# OS files
+.DS_Store
+Thumbs.db

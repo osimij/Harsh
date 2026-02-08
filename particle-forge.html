@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Forge | SVG to Particle Transformer</title>
+    <meta name="description"
+        content="Transform your SVG logos into stunning particle visualizations with realistic depth and glow effects">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">◉</span>
+                <span class="logo-text">PARTICLE FORGE</span>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary btn-compact header-upload-btn" id="header-upload-btn" type="button">
+                    Upload
+                </button>
+                <button class="header-panel-toggle" id="header-panel-toggle" type="button" aria-label="Toggle controls panel" aria-controls="control-panel" aria-expanded="true" title="Toggle Sidebar (Shortcut: \)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14" />
+                        <line x1="4" y1="10" x2="4" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12" y2="3" />
+                        <line x1="20" y1="21" x2="20" y2="16" />
+                        <line x1="20" y1="12" x2="20" y2="3" />
+                        <line x1="1" y1="14" x2="7" y2="14" />
+                        <line x1="9" y1="8" x2="15" y2="8" />
+                        <line x1="17" y1="16" x2="23" y2="16" />
+                    </svg>
+                </button>
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-label">PARTICLES</span>
+                        <span class="stat-value" id="particle-count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">FPS</span>
+                        <span class="stat-value" id="fps-counter">60</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Canvas Area -->
+        <main class="canvas-container">
+            <canvas id="particle-canvas"></canvas>
+
+            <!-- Upload Zone (shown when no SVG loaded) -->
+            <div id="upload-zone" class="upload-zone">
+                <div class="upload-content">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 15V3m0 0l-4 4m4-4l4 4" />
+                            <path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17" />
+                        </svg>
+                    </div>
+                    <h2 class="upload-title">Drop your SVG or image(s) here</h2>
+                    <p class="upload-subtitle">or click to browse (multi-select supported)</p>
+                    <div class="upload-actions">
+                        <button class="btn btn-secondary" id="demo-btn" type="button">Try demo sequence</button>
+                    </div>
+                    <input type="file" id="svg-input" accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp" multiple class="sr-only" aria-label="Upload SVG or image file(s)">
+                </div>
+            </div>
+        </main>
+
+        <!-- Control Panel -->
+        <aside class="control-panel" id="control-panel">
+            <div class="panel-header">
+                <h3>PARAMETERS</h3>
+                <button class="panel-toggle" id="panel-toggle" type="button" aria-label="Toggle controls panel" aria-controls="control-panel" aria-expanded="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="panel-content">
+                <div class="panel-actions-row">
+                    <button class="btn btn-ghost btn-compact" id="expand-all" type="button">Expand All</button>
+                    <button class="btn btn-ghost btn-compact" id="collapse-all" type="button">Collapse All</button>
+                </div>
+
+                <!-- PARTICLES -->
+                <details class="control-section" data-section="particles" open>
+                    <summary class="section-summary">
+                        <span class="section-title">PARTICLES</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Logo Density</span>
+                                <span class="control-value" id="logo-density-value">15000</span>
+                            </label>
+                            <input type="range" id="logo-density" min="1000" max="1300000" value="15000" step="1000">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Image Density</span>
+                                <span class="control-value" id="image-density-value">15000</span>
+                            </label>
+                            <input type="range" id="image-density" min="1000" max="1300000" value="15000" step="1000">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Base Size</span>
+                                <span class="control-value" id="size-value">2.0</span>
+                            </label>
+                            <input type="range" id="particle-size" min="0.5" max="5" value="2" step="0.1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Depth Spread</span>
+                                <span class="control-value" id="depth-value">50%</span>
+                            </label>
+                            <input type="range" id="depth" min="0" max="100" value="50" step="5">
+                        </div>
+
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label" title="Click canvas to set the focus zone">
+                                <span>Focus Zone</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="focus-enabled">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Focus Radius</span>
+                                <span class="control-value" id="focus-radius-value">45%</span>
+                            </label>
+                            <input type="range" id="focus-radius" min="10" max="120" value="45" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Focus Softness</span>
+                                <span class="control-value" id="focus-softness-value">35%</span>
+                            </label>
+                            <input type="range" id="focus-softness" min="0" max="100" value="35" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Outside Scatter</span>
+                                <span class="control-value" id="focus-scatter-value">150%</span>
+                            </label>
+                            <input type="range" id="focus-scatter" min="0" max="250" value="150" step="5">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Glow Intensity</span>
+                                <span class="control-value" id="glow-value">40%</span>
+                            </label>
+                            <input type="range" id="glow" min="0" max="100" value="40" step="5">
+                        </div>
+
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label" title="Soft falloff + outliers around image edges">
+                                <span>Edge Aura</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="edge-aura">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Aura Amount</span>
+                                <span class="control-value" id="edge-aura-amount-value">12%</span>
+                            </label>
+                            <input type="range" id="edge-aura-amount" min="0" max="40" value="12" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Aura Spread</span>
+                                <span class="control-value" id="edge-aura-spread-value">12%</span>
+                            </label>
+                            <input type="range" id="edge-aura-spread" min="0" max="40" value="12" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Aura Outliers</span>
+                                <span class="control-value" id="edge-aura-outlier-value">5%</span>
+                            </label>
+                            <input type="range" id="edge-aura-outlier" min="0" max="20" value="5" step="1">
+                        </div>
+                    </div>
+                </details>
+
+                <!-- VIEW & CAMERA -->
+                <details class="control-section" data-section="view">
+                    <summary class="section-summary">
+                        <span class="section-title">VIEW & CAMERA</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Zoom</span>
+                                <span class="control-value" id="zoom-value">100%</span>
+                            </label>
+                            <input type="range" id="zoom" min="25" max="400" value="100" step="5">
+                        </div>
+
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label">
+                                <span>Auto Rotate</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="auto-rotate">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- MOTION & INTERACTION -->
+                <details class="control-section" data-section="motion" open>
+                    <summary class="section-summary">
+                        <span class="section-title">MOTION & INTERACTION</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+	                        <div class="control-group toggle-group">
+	                            <label class="toggle-label" title="GPU curl-noise flow simulation (more organic motion).">
+	                                <span>Fluid Motion (GPU)</span>
+	                                <div class="toggle">
+	                                    <input type="checkbox" id="fluid-gpu">
+	                                    <span class="toggle-slider"></span>
+	                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label" title="Pulsing, gooey motion (GPU only).">
+                                <span>Venom Flow</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="venom-mode">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Venom Strength</span>
+                                <span class="control-value" id="venom-strength-value">70%</span>
+                            </label>
+                            <input type="range" id="venom-strength" min="0" max="100" value="70" step="5">
+                        </div>
+
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label" title="Shortcut: M">
+                                <span>Magnet Tool (M)</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="magnet-enabled">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Magnet Mode</span>
+                                <span class="control-value" id="magnet-mode-value">Attract</span>
+                            </label>
+                            <div class="mode-toggle" id="magnet-mode-toggle">
+                                <button class="btn btn-secondary btn-compact mode-btn active" data-mode="attract" id="magnet-mode-attract" type="button">Attract</button>
+                                <button class="btn btn-secondary btn-compact mode-btn" data-mode="repel" id="magnet-mode-repel" type="button">Repel</button>
+                            </div>
+                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Magnet Radius</span>
+	                                <span class="control-value" id="magnet-radius-value">140px</span>
+	                            </label>
+	                            <input type="range" id="magnet-radius" min="20" max="500" value="140" step="5">
+	                        </div>
+	
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Magnet Strength</span>
+	                                <span class="control-value" id="magnet-strength-value">1.00</span>
+	                            </label>
+	                            <input type="range" id="magnet-strength" min="0" max="5000" value="100" step="10">
+	                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Chaos</span>
+                                <span class="control-value" id="chaos-value">75%</span>
+                            </label>
+                            <input type="range" id="chaos" min="0" max="100" value="75" step="5">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Style</span>
+                                <span class="control-value" id="transition-style-value">Chaotic</span>
+                            </label>
+                            <div class="mode-toggle" id="transition-style-toggle">
+                                <button class="btn btn-secondary btn-compact mode-btn" data-style="clean" id="transition-style-clean" type="button">Clean</button>
+                                <button class="btn btn-secondary btn-compact mode-btn active" data-style="chaotic" id="transition-style-chaotic" type="button">Chaotic</button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- CYCLE & TIMING -->
+                <details class="control-section" data-section="cycle" open>
+                    <summary class="section-summary">
+                        <span class="section-title">CYCLE & TIMING</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label">
+                                <span>Dissolve Cycle</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="dissolve-cycle" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Cycle Duration</span>
+                                <span class="control-value" id="cycle-value">12s</span>
+                            </label>
+                            <input type="range" id="cycle-seconds" min="1" max="30" value="12" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Hold Time</span>
+                                <span class="control-value" id="hold-value">0s</span>
+                            </label>
+                            <input type="range" id="hold-seconds" min="0" max="20" value="0" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Animation Speed</span>
+                                <span class="control-value" id="speed-value">20%</span>
+                            </label>
+                            <input type="range" id="animation-speed" min="0" max="100" value="20" step="5">
+                        </div>
+                    </div>
+                </details>
+
+                <!-- COLOR & BACKGROUND -->
+                <details class="control-section" data-section="colors">
+                    <summary class="section-summary">
+                        <span class="section-title">COLOR & BACKGROUND</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label">
+                                <span>Real Colors</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="real-colors" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Particle Color</span>
+                            </label>
+                            <div class="color-options">
+                                <button class="color-btn active" data-color="original" title="Original SVG Colors">
+                                    <span class="color-preview original"></span>
+                                </button>
+                                <button class="color-btn" data-color="#ffffff" title="White">
+                                    <span class="color-preview" style="background: #ffffff"></span>
+                                </button>
+                                <button class="color-btn" data-color="#00ff88" title="Cyber Green">
+                                    <span class="color-preview" style="background: #00ff88"></span>
+                                </button>
+                                <button class="color-btn" data-color="#00d4ff" title="Electric Blue">
+                                    <span class="color-preview" style="background: #00d4ff"></span>
+                                </button>
+                                <button class="color-btn" data-color="#ff6b6b" title="Coral">
+                                    <span class="color-preview" style="background: #ff6b6b"></span>
+                                </button>
+                                <button class="color-btn" data-color="#a855f7" title="Purple">
+                                    <span class="color-preview" style="background: #a855f7"></span>
+                                </button>
+                            </div>
+                            <div class="color-custom">
+                                <label class="color-custom-label" for="particle-color-custom">Custom</label>
+                                <input id="particle-color-custom" class="color-picker" type="color" value="#ffffff">
+                                <button class="btn btn-secondary btn-compact" id="particle-color-apply" type="button">Apply</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label">
+                                <span>Gradient Overlay</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="gradient-enabled" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group" id="gradient-overlay-controls">
+                            <label class="control-label">
+                                <span>Gradient Colors</span>
+                            </label>
+                            <div class="color-custom">
+                                <label class="color-custom-label" for="gradient-color-a">A</label>
+                                <input id="gradient-color-a" class="color-picker" type="color" value="#00d4ff">
+                                <label class="color-custom-label" for="gradient-color-b">B</label>
+                                <input id="gradient-color-b" class="color-picker" type="color" value="#a855f7">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Gradient Strength</span>
+                                <span class="control-value" id="gradient-strength-value">70%</span>
+                            </label>
+                            <input type="range" id="gradient-strength" min="0" max="100" value="70" step="5">
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Gradient Direction</span>
+                            </label>
+                            <select class="control-select" id="gradient-direction" aria-label="Gradient Direction">
+                                <option value="ltr">Left → Right</option>
+                                <option value="ttb">Top → Bottom</option>
+                                <option value="diag" selected>Diagonal</option>
+                                <option value="radial">Radial</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Background</span>
+                            </label>
+                            <div class="color-options" id="bg-color-options">
+                                <button class="color-btn bg-color-btn active" data-bg="default" title="Default">
+                                    <span class="color-preview" style="background: #0a0a0f"></span>
+                                </button>
+                                <button class="color-btn bg-color-btn" data-bg="#000000" title="Black">
+                                    <span class="color-preview" style="background: #000000"></span>
+                                </button>
+                                <button class="color-btn bg-color-btn" data-bg="#0b1020" title="Deep Navy">
+                                    <span class="color-preview" style="background: #0b1020"></span>
+                                </button>
+                                <button class="color-btn bg-color-btn" data-bg="#081a12" title="Deep Green">
+                                    <span class="color-preview" style="background: #081a12"></span>
+                                </button>
+                                <button class="color-btn bg-color-btn" data-bg="#1a1026" title="Deep Purple">
+                                    <span class="color-preview" style="background: #1a1026"></span>
+                                </button>
+                            </div>
+                            <div class="color-custom">
+                                <label class="color-custom-label" for="bg-color-custom">Custom</label>
+                                <input id="bg-color-custom" class="color-picker" type="color" value="#0a0a0f">
+                                <button class="btn btn-secondary btn-compact" id="bg-color-apply" type="button">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- SHAPES & VARIANCE -->
+                <details class="control-section" data-section="shapes">
+                    <summary class="section-summary">
+                        <span class="section-title">SHAPES & VARIANCE</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label">
+                                <span>Squares</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="squares-enabled">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Squares Mix</span>
+                                <span class="control-value" id="squares-value">25%</span>
+                            </label>
+                            <input type="range" id="squares-ratio" min="0" max="100" value="25" step="5" disabled>
+                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Random Size (Coverage)</span>
+	                                <span class="control-value" id="size-random-value">100%</span>
+	                            </label>
+	                            <input type="range" id="size-random" min="0" max="100" value="100" step="5">
+	                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Random Opacity (Coverage)</span>
+	                                <span class="control-value" id="opacity-random-value">100%</span>
+	                            </label>
+	                            <input type="range" id="opacity-random" min="0" max="100" value="100" step="5">
+	                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Random Size Min (×)</span>
+	                                <span class="control-value" id="size-min-value">0.80×</span>
+	                            </label>
+	                            <input type="range" id="size-min" min="0.1" max="3" value="0.8" step="0.05">
+	                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Random Size Max (×)</span>
+	                                <span class="control-value" id="size-max-value">1.20×</span>
+	                            </label>
+	                            <input type="range" id="size-max" min="0.1" max="3" value="1.2" step="0.05">
+	                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Random Opacity Min</span>
+	                                <span class="control-value" id="opacity-min-value">68%</span>
+	                            </label>
+	                            <input type="range" id="opacity-min" min="0" max="100" value="68" step="1">
+	                        </div>
+
+	                        <div class="control-group">
+	                            <label class="control-label">
+	                                <span>Random Opacity Max</span>
+	                                <span class="control-value" id="opacity-max-value">82%</span>
+	                            </label>
+	                            <input type="range" id="opacity-max" min="0" max="100" value="82" step="1">
+	                        </div>
+	                    </div>
+                </details>
+
+                <!-- PARTICLE ICONS -->
+                <details class="control-section" data-section="particle-icons">
+                    <summary class="section-summary">
+                        <span class="section-title">PARTICLE ICONS</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group toggle-group">
+                            <label class="toggle-label">
+                                <span>Custom Icons</span>
+                                <div class="toggle">
+                                    <input type="checkbox" id="particle-icons-enabled">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Upload Icons</span>
+                                <span class="control-value" id="particle-icon-count">0</span>
+                            </label>
+                            <div class="control-actions">
+                                <button class="btn btn-secondary" id="particle-icon-upload-btn" type="button">Upload SVG</button>
+                                <input type="file" id="particle-icon-input" accept=".svg,image/svg+xml" multiple class="sr-only" aria-label="Upload particle icon SVGs">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Logo</span>
+                            </label>
+                            <select class="control-select" id="particle-icon-logo" aria-label="Select logo to edit"></select>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Icon For Logo</span>
+                            </label>
+                            <select class="control-select" id="particle-icon-select" aria-label="Select particle icon for logo"></select>
+                        </div>
+
+                        <div class="control-actions">
+                            <button class="btn btn-secondary" id="particle-icon-apply-all" type="button">Apply To All Logos</button>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Icon Rotation</span>
+                            </label>
+                            <select class="control-select" id="particle-icon-rotation" aria-label="Particle icon rotation">
+                                <option value="spin" selected>Spin With Particles</option>
+                                <option value="still">Stay Still</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Icon Colors</span>
+                            </label>
+                            <select class="control-select" id="particle-icon-color-mode" aria-label="Particle icon color mode">
+                                <option value="tint" selected>Tinted By Particle Color</option>
+                                <option value="original">Use SVG Colors</option>
+                            </select>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- RECORDING -->
+                <details class="control-section" data-section="recording">
+                    <summary class="section-summary">
+                        <span class="section-title">RECORDING</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <span>Status</span>
+                                <span class="control-value" id="record-status">IDLE</span>
+                            </label>
+
+                            <div class="record-row">
+                                <div class="record-timer" id="record-timer">00:00</div>
+                                <select class="control-select" id="record-fps" aria-label="Recording FPS">
+                                    <option value="24">24 fps</option>
+                                    <option value="30">30 fps</option>
+                                    <option value="60" selected>60 fps</option>
+                                </select>
+                            </div>
+
+                            <div class="control-actions">
+                                <button class="btn btn-primary" id="record-btn" type="button">Record</button>
+                                <button class="btn btn-secondary" id="record-stop-btn" type="button" disabled>Stop</button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- ACTIONS -->
+                <details class="control-section" data-section="actions" open>
+                    <summary class="section-summary">
+                        <span class="section-title">ACTIONS</span>
+                        <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </summary>
+                    <div class="section-content">
+                        <div class="control-actions">
+                            <button class="btn btn-secondary" id="reset-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 4v6h6" />
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                                </svg>
+                                Reset
+                            </button>
+                            <button class="btn btn-primary" id="export-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7,10 12,15 17,10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </aside>
+
+        <!-- Export Modal -->
+        <div class="modal" id="export-modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <h3>Export</h3>
+                <div class="export-options">
+                    <button class="export-option" data-format="png">
+                        <span class="format-icon">PNG</span>
+                        <span class="format-desc">High quality (matches background)</span>
+                    </button>
+                    <button class="export-option" data-format="webp">
+                        <span class="format-icon">WEBP</span>
+                        <span class="format-desc">Smaller file size</span>
+                    </button>
+                    <button class="export-option" data-format="jpg">
+                        <span class="format-icon">JPG</span>
+                        <span class="format-desc">Best compatibility</span>
+                    </button>
+                    <button class="export-option" data-export="video" data-format="webm" disabled title="Use Performance → Record for interactive video capture">
+                        <span class="format-icon">WEBM</span>
+                        <span class="format-desc">Video export is disabled in this build (use Performance → Record)</span>
+                    </button>
+                </div>
+                <div class="export-toggle">
+                    <label class="toggle-label" title="PNG/WebP can export with transparency. JPEG cannot.">
+                        <span>Transparent background</span>
+                        <div class="toggle">
+                            <input type="checkbox" id="export-transparent-bg">
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </label>
+                </div>
+                <div class="export-size">
+                    <label>Resolution</label>
+                    <select id="export-resolution">
+                        <option value="1">1x (Canvas Size)</option>
+                        <option value="2" selected>2x (High DPI)</option>
+                        <option value="4">4x (Ultra HD)</option>
+                    </select>
+                </div>
+                <div class="export-size">
+                    <label>Video FPS</label>
+                    <select id="export-fps">
+                        <option value="24">24</option>
+                        <option value="30" selected>30</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+                <button class="btn btn-ghost modal-close">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
