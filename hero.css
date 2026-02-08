@@ -498,6 +498,16 @@ a {
     opacity: 0;
 }
 
+.hero.instant.loaded .profile-image,
+.hero.instant.loaded .intro-line,
+.hero.instant.loaded .nav,
+.hero.instant.loaded .main-logo,
+.hero.instant.loaded .logo-grid {
+    animation: none;
+    opacity: 1;
+    transform: none;
+}
+
 /* ============================================
    SPLASH SCREEN
    ============================================ */
@@ -596,6 +606,46 @@ a {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* Screen-reader only utility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ============================================
+   PAGE TRANSITIONS
+   Blur out/in when cycling between logo pages
+   ============================================ */
+.logo-grid.page-exit .logo-wrapper {
+    opacity: 0 !important;
+    filter: blur(4px);
+    transition: opacity 0.5s ease, filter 0.5s ease;
+}
+
+.logo-grid.page-enter .logo-wrapper {
+    opacity: 0;
+    filter: blur(4px);
+    transition: none;
+}
+
+.logo-grid.page-enter-active .logo-wrapper {
+    opacity: 0.2;
+    filter: blur(0px);
+    transition: opacity 0.5s ease, filter 0.5s ease;
+}
+
+.logo-grid.page-enter-active .logo-cell-active .logo-wrapper {
+    opacity: 1;
+    filter: blur(0px);
 }
 
 /* Focus states for keyboard navigation */

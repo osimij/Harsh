@@ -66,6 +66,39 @@
       "year": "2024",
       "thumbnailBg": "#0E4946",
       "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "euphonic-motion",
+      "file": "Euphonic Motion.svg",
+      "name": "Euphonic Motion",
+      "displayName": "Euphonic Motion",
+      "tags": ["Logo", "Branding"],
+      "description": "Brand identity for Euphonic Motion — a dynamic mark that captures the harmony between sound and movement.",
+      "year": "2024",
+      "thumbnailBg": "#1A1A2E",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "forgeflow",
+      "file": "ForgeFlow.svg",
+      "name": "ForgeFlow",
+      "displayName": "ForgeFlow",
+      "tags": ["Logo", "Branding", "Tech"],
+      "description": "Brand identity for ForgeFlow — a bold mark that conveys strength and seamless workflow through refined geometry.",
+      "year": "2024",
+      "thumbnailBg": "#2D1B4E",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "raw-abstract-goods",
+      "file": "RAW ABTRACT GOODS.svg",
+      "name": "RAW ABSTRACT GOODS",
+      "displayName": "RAW ABSTRACT GOODS",
+      "tags": ["Logo", "Branding", "Streetwear"],
+      "description": "Brand identity for RAW ABSTRACT GOODS — a raw, unfiltered mark that embraces abstraction and authenticity.",
+      "year": "2024",
+      "thumbnailBg": "#0A0A0A",
+      "logoColor": "#FFFFFF"
     }
   ]
 }
