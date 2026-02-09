@@ -1,7 +1,7 @@
 export const DEFAULT_SETTINGS = Object.freeze({
     // Legacy single-density value (kept for backward compatibility with saved state).
-    density: 15000,
-    logoDensity: 15000,
+    density: 350000,
+    logoDensity: 350000,
     imageDensity: 15000,
     size: 2.0,
     depthVariance: 0.5,
@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     edgeAuraOutlier: 0.05,
     // Enable GPU-driven curl-noise flow simulation (fluid, organic motion).
     // Note: when enabled, the app runs a GPU simulation path (some CPU-only features may be limited).
-    fluidGPU: false,
+    fluidGPU: true,
     venomMode: false,
     venomStrength: 0.7,
     colorMode: 'original',

@@ -499,55 +499,73 @@
             }
 
             /**
-             * Blur-out current page, rebuild grid, blur-in new page.
+             * Simultaneous crossfade using a body-level clone.
+             * The clone is placed in document.body with position:fixed so it is
+             * completely isolated from .logo-grid's CSS cascade and layout.
              */
             function transitionToPage(newPage) {
                 isPageTransitioning = true;
                 stopCycling();
                 logoGrid.setAttribute('aria-busy', 'true');
 
-                // Phase 1: Blur out all cells
-                logoGrid.classList.add('page-exit');
+                const transitionMs = prefersReducedMotion ? 10 : 1000;
 
-                const transitionMs = prefersReducedMotion ? 10 : 500;
+                // Step 1: Snapshot the grid's viewport position
+                const rect = logoGrid.getBoundingClientRect();
 
+                // Step 2: Deep-clone the grid and restyle as a fixed overlay
+                const clone = logoGrid.cloneNode(true);
+                clone.className = 'crossfade-clone';
+                clone.removeAttribute('role');
+                clone.removeAttribute('aria-label');
+                clone.setAttribute('aria-hidden', 'true');
+                clone.style.top = rect.top + 'px';
+                clone.style.left = rect.left + 'px';
+                clone.style.width = rect.width + 'px';
+                clone.style.height = rect.height + 'px';
+                // Transparent border preserves internal cell spacing without visible outline
+                clone.style.borderColor = 'transparent';
+                clone.style.borderWidth = '1px';
+                clone.style.borderStyle = 'solid';
+
+                // Step 3: Append clone to body (completely outside .logo-grid)
+                document.body.appendChild(clone);
+
+                // Step 4: Rebuild the real grid with new page content
+                const firstGi = globalOf(newPage, 0);
+                globalIndex = firstGi;
+                buildLogoGrid(newPage);
+
+                // Step 5: Set new grid cells to hidden (blur-in start state)
+                logoGrid.classList.add('page-enter');
+
+                // Force reflow so browser registers initial hidden state
+                void logoGrid.offsetHeight;
+
+                // Step 6: Simultaneously fade out clone + blur in new grid
+                logoGrid.classList.remove('page-enter');
+                logoGrid.classList.add('page-enter-active');
+                clone.classList.add('fade-out');
+
+                // Step 7: Cleanup after transition completes
                 setTimeout(() => {
-                    // Phase 2: Rebuild grid with new page content (cells start hidden)
-                    logoGrid.classList.remove('page-exit');
+                    logoGrid.classList.remove('page-enter-active');
+                    if (clone.parentNode) clone.parentNode.removeChild(clone);
+                    logoGrid.setAttribute('aria-busy', 'false');
+                    isPageTransitioning = false;
 
-                    const firstGi = globalOf(newPage, 0);
-                    // Pre-set globalIndex so buildLogoGrid marks cell 0 as active
-                    globalIndex = firstGi;
-                    buildLogoGrid(newPage);
+                    // Morph particles to the first logo on the new page
+                    setActiveLogo(firstGi);
 
-                    logoGrid.classList.add('page-enter');
+                    // Announce page change for screen readers
+                    const pageNum = newPage + 1;
+                    const firstName = logoManifest[firstGi % totalLogos].name;
+                    pageAnnounce.textContent = `Page ${pageNum} of ${totalPages()}, showing ${firstName}`;
 
-                    // Force reflow so the browser registers the initial state
-                    void logoGrid.offsetHeight;
-
-                    // Phase 3: Blur in
-                    logoGrid.classList.remove('page-enter');
-                    logoGrid.classList.add('page-enter-active');
-
-                    setTimeout(() => {
-                        // Phase 4: Cleanup and resume
-                        logoGrid.classList.remove('page-enter-active');
-                        logoGrid.setAttribute('aria-busy', 'false');
-                        isPageTransitioning = false;
-
-                        // Morph particles to the first logo on the new page
-                        setActiveLogo(firstGi);
-
-                        // Announce page change for screen readers
-                        const pageNum = newPage + 1;
-                        const firstName = logoManifest[firstGi % totalLogos].name;
-                        pageAnnounce.textContent = `Page ${pageNum} of ${totalPages()}, showing ${firstName}`;
-
-                        // Resume auto-cycling
-                        if (!isPaused) {
-                            startCycling();
-                        }
-                    }, transitionMs);
+                    // Resume auto-cycling
+                    if (!isPaused) {
+                        startCycling();
+                    }
                 }, transitionMs);
             }
 

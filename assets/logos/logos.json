@@ -20,8 +20,8 @@
       "tags": ["Logo", "Branding"],
       "description": "A graceful identity for Peacora, capturing elegance and natural form through refined design.",
       "year": "2024",
-      "thumbnailBg": "#062B2B",
-      "logoColor": "#FFFFFF"
+      "thumbnailBg": "#E1DDD5",
+      "logoColor": "#062B2B"
     },
     {
       "id": "balanced-pathways",
@@ -43,7 +43,7 @@
       "description": "A dimensional mark for Solar Sphere, using layered circular forms to evoke orbital energy and light. The logomark communicates innovation and movement.",
       "year": "2023",
       "thumbnailBg": "#136646",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FDFFF1"
     },
     {
       "id": "tanmay-gedam",
@@ -75,7 +75,7 @@
       "tags": ["Logo", "Branding"],
       "description": "Brand identity for Euphonic Motion — a dynamic mark that captures the harmony between sound and movement.",
       "year": "2024",
-      "thumbnailBg": "#1A1A2E",
+      "thumbnailBg": "#DE0000",
       "logoColor": "#FFFFFF"
     },
     {
@@ -86,8 +86,8 @@
       "tags": ["Logo", "Branding", "Tech"],
       "description": "Brand identity for ForgeFlow — a bold mark that conveys strength and seamless workflow through refined geometry.",
       "year": "2024",
-      "thumbnailBg": "#2D1B4E",
-      "logoColor": "#FFFFFF"
+      "thumbnailBg": "#F03C0B",
+      "logoColor": "#F5F3E1"
     },
     {
       "id": "raw-abstract-goods",
@@ -97,8 +97,7 @@
       "tags": ["Logo", "Branding", "Streetwear"],
       "description": "Brand identity for RAW ABSTRACT GOODS — a raw, unfiltered mark that embraces abstraction and authenticity.",
       "year": "2024",
-      "thumbnailBg": "#0A0A0A",
-      "logoColor": "#FFFFFF"
+      "thumbnailBg": "#F9F1EB"
     }
   ]
 }
