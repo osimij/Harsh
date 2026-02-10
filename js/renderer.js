@@ -39,7 +39,9 @@ export class Renderer {
             spriteEnabled: false,
             spriteColorMode: 'tint',
             spriteRotate: true,
-            sprite: null
+            sprite: null,
+            colorMode: 'original',
+            chromaticShift: 0.15
         };
 
         // On-canvas overlay (e.g., MagnetTool circle). Stored in clip space so it’s resolution independent.
@@ -237,11 +239,45 @@ export class Renderer {
             uniform float u_spriteEnabled;
             uniform float u_spriteColorMode;
             uniform float u_spriteRotate;
+            uniform vec2 u_resolution;
+            uniform float u_chromatic;
+            uniform float u_chromaticShift;
             
+            vec3 prismaticColor(float mR, float mG, float mB, float maxA) {
+                vec3 prism = vec3(mR, mG, mB) / max(maxA, 1e-5);
+                float luma = dot(prism, vec3(0.299, 0.587, 0.114));
+                prism = mix(vec3(luma), prism, 1.85);
+                prism = pow(clamp(prism, 0.0, 1.0), vec3(0.92));
+                return clamp(prism, 0.0, 1.0);
+            }
+
             out vec4 fragColor;
             
             void main() {
                 vec2 coord = gl_PointCoord - vec2(0.5);
+                bool chroma = (u_chromatic > 0.5);
+                vec2 chromaOffsetR = vec2(0.0);
+                vec2 chromaOffsetG = vec2(0.0);
+                vec2 chromaOffsetB = vec2(0.0);
+                if (chroma) {
+                    vec2 ndc = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
+                    float ndcLen = length(ndc);
+                    vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
+                    float chromaRadius = clamp(ndcLen, 0.0, 1.0);
+                    float chromaScale = 0.2 + 0.8 * (chromaRadius * chromaRadius);
+                    float amt = u_chromaticShift * 0.95 * chromaScale;
+                    vec2 dir120 = vec2(
+                        -0.5 * dir.x - 0.8660254 * dir.y,
+                         0.8660254 * dir.x - 0.5 * dir.y
+                    );
+                    vec2 dir240 = vec2(
+                        -0.5 * dir.x + 0.8660254 * dir.y,
+                        -0.8660254 * dir.x - 0.5 * dir.y
+                    );
+                    chromaOffsetR = dir * amt;
+                    chromaOffsetG = dir120 * (amt * 0.92);
+                    chromaOffsetB = dir240 * amt;
+                }
 
                 if (u_spriteEnabled > 0.5) {
                     float a = (u_spriteRotate > 0.5) ? v_angle : 0.0;
@@ -253,8 +289,24 @@ export class Renderer {
                     float alphaMask = sprite.a;
                     float glow = alphaMask * u_glowIntensity * 0.35;
                     float alpha = (alphaMask + glow) * v_opacity;
-                    if (alpha < 0.01) discard;
+                    if (chroma) {
+                        vec2 uvR = rot * (coord + chromaOffsetR) + vec2(0.5);
+                        vec2 uvG = rot * (coord + chromaOffsetG) + vec2(0.5);
+                        vec2 uvB = rot * (coord + chromaOffsetB) + vec2(0.5);
+                        float aR = texture(u_sprite, uvR).a;
+                        float aG = texture(u_sprite, uvG).a;
+                        float aB = texture(u_sprite, uvB).a;
+                        float mR = (aR + aR * u_glowIntensity * 0.35) * v_opacity;
+                        float mG = (aG + aG * u_glowIntensity * 0.35) * v_opacity;
+                        float mB = (aB + aB * u_glowIntensity * 0.35) * v_opacity;
+                        float maxA = max(mG, max(mR, mB));
+                        if (maxA < 0.01) discard;
+                        vec3 col = prismaticColor(mR, mG, mB, maxA);
+                        fragColor = vec4(col, maxA);
+                        return;
+                    }
 
+                    if (alpha < 0.01) discard;
                     vec3 base = (u_spriteColorMode > 0.5) ? (sprite.rgb * v_color) : v_color;
                     fragColor = vec4(base, alpha);
                     return;
@@ -288,9 +340,36 @@ export class Renderer {
                 float glow = smoothstep(0.75, 0.5 - aa * 1.35, d) * u_glowIntensity * 0.55;
                 
                 float alpha = (core + glow) * v_opacity;
-                
+                if (chroma) {
+                    vec2 uvR = rot * (coord + chromaOffsetR);
+                    vec2 uvG = rot * (coord + chromaOffsetG);
+                    vec2 uvB = rot * (coord + chromaOffsetB);
+                    float dCircleR = length(coord + chromaOffsetR);
+                    float dCircleG = length(coord + chromaOffsetG);
+                    float dCircleB = length(coord + chromaOffsetB);
+                    float dRectR = max(abs(uvR.x), abs(uvR.y) * aspect);
+                    float dRectG = max(abs(uvG.x), abs(uvG.y) * aspect);
+                    float dRectB = max(abs(uvB.x), abs(uvB.y) * aspect);
+                    float dR = mix(dCircleR, dRectR, useRect);
+                    float dG = mix(dCircleG, dRectG, useRect);
+                    float dB = mix(dCircleB, dRectB, useRect);
+                    float coreR = smoothstep(0.5, 0.5 - aa * 1.35, dR);
+                    float glowR = smoothstep(0.75, 0.5 - aa * 1.35, dR) * u_glowIntensity * 0.55;
+                    float coreG = smoothstep(0.5, 0.5 - aa * 1.35, dG);
+                    float glowG = smoothstep(0.75, 0.5 - aa * 1.35, dG) * u_glowIntensity * 0.55;
+                    float coreB = smoothstep(0.5, 0.5 - aa * 1.35, dB);
+                    float glowB = smoothstep(0.75, 0.5 - aa * 1.35, dB) * u_glowIntensity * 0.55;
+                    float mR = (coreR + glowR) * v_opacity;
+                    float mG = (coreG + glowG) * v_opacity;
+                    float mB = (coreB + glowB) * v_opacity;
+                    float maxA = max(mG, max(mR, mB));
+                    if (maxA < 0.01) discard;
+                    vec3 col = prismaticColor(mR, mG, mB, maxA);
+                    fragColor = vec4(col, maxA);
+                    return;
+                }
+
                 if (alpha < 0.01) discard;
-                
                 fragColor = vec4(v_color, alpha);
             }
         `;
@@ -337,7 +416,9 @@ export class Renderer {
             spriteTex: gl.getUniformLocation(this.program, 'u_sprite'),
             spriteEnabled: gl.getUniformLocation(this.program, 'u_spriteEnabled'),
             spriteColorMode: gl.getUniformLocation(this.program, 'u_spriteColorMode'),
-            spriteRotate: gl.getUniformLocation(this.program, 'u_spriteRotate')
+            spriteRotate: gl.getUniformLocation(this.program, 'u_spriteRotate'),
+            chromatic: gl.getUniformLocation(this.program, 'u_chromatic'),
+            chromaticShift: gl.getUniformLocation(this.program, 'u_chromaticShift')
         };
 
         // Create post-processing shader for bloom
@@ -555,6 +636,9 @@ export class Renderer {
             uniform float u_colorTexBlend;  // 0..1
             uniform float u_countRatio;     // 0..1
             uniform float u_countSoftness;  // 0..1
+            uniform vec2 u_resolution;
+            uniform float u_chromatic;      // 0/1
+            uniform float u_chromaticShift; // 0..1
             // Logo-wide gradient overlay (tint)
             uniform float u_gradientEnabled;   // 0/1
             uniform float u_gradientStrength;  // 0..1
@@ -566,6 +650,14 @@ export class Renderer {
 	                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 	            }
 
+            vec3 prismaticColor(float mR, float mG, float mB, float maxA) {
+                vec3 prism = vec3(mR, mG, mB) / max(maxA, 1e-5);
+                float luma = dot(prism, vec3(0.299, 0.587, 0.114));
+                prism = mix(vec3(luma), prism, 1.85);
+                prism = pow(clamp(prism, 0.0, 1.0), vec3(0.92));
+                return clamp(prism, 0.0, 1.0);
+            }
+
 	            out vec4 fragColor;
 
             void main() {
@@ -573,12 +665,39 @@ export class Renderer {
                 vec4 sprite = vec4(0.0);
                 float core = 0.0;
                 float halo = 0.0;
+                float useRect = 0.0;
+                float aa = 0.0;
+                mat2 rot = mat2(1.0);
+
+                bool chroma = (u_chromatic > 0.5);
+                vec2 chromaOffsetR = vec2(0.0);
+                vec2 chromaOffsetG = vec2(0.0);
+                vec2 chromaOffsetB = vec2(0.0);
+                if (chroma) {
+                    vec2 ndc = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
+                    float ndcLen = length(ndc);
+                    vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
+                    float chromaRadius = clamp(ndcLen, 0.0, 1.0);
+                    float chromaScale = 0.2 + 0.8 * (chromaRadius * chromaRadius);
+                    float amt = u_chromaticShift * 0.95 * chromaScale;
+                    vec2 dir120 = vec2(
+                        -0.5 * dir.x - 0.8660254 * dir.y,
+                         0.8660254 * dir.x - 0.5 * dir.y
+                    );
+                    vec2 dir240 = vec2(
+                        -0.5 * dir.x + 0.8660254 * dir.y,
+                        -0.8660254 * dir.x - 0.5 * dir.y
+                    );
+                    chromaOffsetR = dir * amt;
+                    chromaOffsetG = dir120 * (amt * 0.92);
+                    chromaOffsetB = dir240 * amt;
+                }
 
                 if (u_spriteEnabled > 0.5) {
                     float a = (u_spriteRotate > 0.5) ? (v_rand.x * 6.28318530718) : 0.0;
                     float ca = cos(a);
                     float sa = sin(a);
-                    mat2 rot = mat2(ca, -sa, sa, ca);
+                    rot = mat2(ca, -sa, sa, ca);
                     vec2 uv = rot * coord + vec2(0.5);
                     sprite = texture(u_spriteTex, uv);
                     float alphaMask = sprite.a;
@@ -588,7 +707,6 @@ export class Renderer {
                     float dCircle = length(coord);
 
                     // Optional square sprites (matches CPU "Squares" control)
-                    float useRect = 0.0;
                     if (u_squaresEnabled > 0.5 && u_squareRatio > 0.0) {
                         // 1 when v_rand.x < ratio, else 0
                         useRect = 1.0 - step(clamp(u_squareRatio, 0.0, 1.0), v_rand.x);
@@ -596,14 +714,14 @@ export class Renderer {
                     float a = v_rand.w * 6.28318530718; // 2π
                     float ca = cos(a);
                     float sa = sin(a);
-                    mat2 rot = mat2(ca, -sa, sa, ca);
+                    rot = mat2(ca, -sa, sa, ca);
                     vec2 uv = rot * coord;
                     float dRect = max(abs(uv.x), abs(uv.y)); // aspect=1
                     float d = mix(dCircle, dRect, useRect);
 
                     // Core + halo (bloom will take over for large glow)
                     // Derivative-based AA keeps the edge crisp at larger point sizes.
-                    float aa = max(fwidth(d), 1e-4);
+                    aa = max(fwidth(d), 1e-4);
                     core = smoothstep(0.5, 0.5 - aa * 1.35, d);
                     halo = smoothstep(0.8, 0.5 - aa * 1.35, d) * u_glowIntensity * 0.8;
                 }
@@ -621,7 +739,8 @@ export class Renderer {
 	                float randA = mix(omin, omax, tA);
 	                float baseA = clamp(mix(0.75, randA, apply), 0.08, 1.0);
 	                float depthFade = 1.0 - abs(v_depth) * 0.25;
-	                float alpha = (core + halo) * baseA * depthFade;
+                    float baseMask = core + halo;
+	                float alpha = baseMask * baseA * depthFade;
                     float edgeRough = clamp(v_edge, 0.0, 1.0);
                     if (edgeRough > 1e-4) {
                         float edgeCutAmount = 0.34 * edgeRough;
@@ -653,56 +772,99 @@ export class Renderer {
                     float tCount = smoothstep(countRatio, edge, v_rand.x);
                     alpha *= tCount;
                 }
-	                if (alpha < 0.01) discard;
-
-                // Color: either "real colors" palette, or user override, else neutral white.
-                vec3 fallbackBase;
-                if (u_realColors > 0.5) {
-                    // Metallic dust palette (cool/warm whites)
-                    vec3 cool = vec3(0.84, 0.91, 1.0);
-                    vec3 warm = vec3(1.0, 0.95, 0.86);
-                    float temp = step(0.55, v_rand.x);
-                    fallbackBase = mix(cool, warm, temp);
-                    fallbackBase = mix(fallbackBase, vec3(1.0), 0.55);
-                    fallbackBase *= 0.85 + 0.25 * v_rand.z;
-                } else if (u_useColorOverride > 0.5) {
-                    fallbackBase = clamp(u_colorOverride, 0.0, 1.0);
-                } else {
-                    fallbackBase = vec3(0.83, 0.83, 0.85);
-                }
-
-                vec3 tintBase = fallbackBase;
-                if (u_useColorTex > 0.5) {
-                    float colorBlend = clamp(u_colorTexBlend, 0.0, 1.0);
-                    tintBase = mix(fallbackBase, v_color, colorBlend);
-                }
-
                 vec3 base;
-                if (u_spriteEnabled > 0.5 && u_spriteColorMode > 0.5) {
-                    base = sprite.rgb;
-                } else {
-                    base = tintBase;
-                }
-
-                // Logo-wide gradient tint (in logo space, not screen space)
-                if (u_gradientEnabled > 0.5 && u_gradientStrength > 1e-4) {
-                    float t;
-                    if (u_gradientDirection < 0.5) {
-                        // Left -> Right
-                        t = clamp(v_logoXY.x * 0.5 + 0.5, 0.0, 1.0);
-                    } else if (u_gradientDirection < 1.5) {
-                        // Top -> Bottom
-                        t = clamp(0.5 - v_logoXY.y * 0.5, 0.0, 1.0);
-                    } else if (u_gradientDirection < 2.5) {
-                        // Diagonal (top-left -> bottom-right)
-                        t = clamp((v_logoXY.x - v_logoXY.y + 2.0) * 0.25, 0.0, 1.0);
+                if (chroma) {
+                    float alphaFactor = (baseMask > 1e-5) ? (alpha / baseMask) : 0.0;
+                    float maskR = 0.0;
+                    float maskG = 0.0;
+                    float maskB = 0.0;
+                    if (u_spriteEnabled > 0.5) {
+                        vec2 uvR = rot * (coord + chromaOffsetR) + vec2(0.5);
+                        vec2 uvG = rot * (coord + chromaOffsetG) + vec2(0.5);
+                        vec2 uvB = rot * (coord + chromaOffsetB) + vec2(0.5);
+                        float aR = texture(u_spriteTex, uvR).a;
+                        float aG = texture(u_spriteTex, uvG).a;
+                        float aB = texture(u_spriteTex, uvB).a;
+                        maskR = (aR + aR * u_glowIntensity * 0.35) * alphaFactor;
+                        maskG = (aG + aG * u_glowIntensity * 0.35) * alphaFactor;
+                        maskB = (aB + aB * u_glowIntensity * 0.35) * alphaFactor;
                     } else {
-                        // Radial (center -> edge)
-                        t = clamp(length(v_logoXY) / 1.41421356237, 0.0, 1.0);
+                        float dCircleR = length(coord + chromaOffsetR);
+                        float dCircleG = length(coord + chromaOffsetG);
+                        float dCircleB = length(coord + chromaOffsetB);
+                        vec2 uvR = rot * (coord + chromaOffsetR);
+                        vec2 uvG = rot * (coord + chromaOffsetG);
+                        vec2 uvB = rot * (coord + chromaOffsetB);
+                        float dRectR = max(abs(uvR.x), abs(uvR.y));
+                        float dRectG = max(abs(uvG.x), abs(uvG.y));
+                        float dRectB = max(abs(uvB.x), abs(uvB.y));
+                        float dR = mix(dCircleR, dRectR, useRect);
+                        float dG = mix(dCircleG, dRectG, useRect);
+                        float dB = mix(dCircleB, dRectB, useRect);
+                        float coreR = smoothstep(0.5, 0.5 - aa * 1.35, dR);
+                        float haloR = smoothstep(0.8, 0.5 - aa * 1.35, dR) * u_glowIntensity * 0.8;
+                        float coreG = smoothstep(0.5, 0.5 - aa * 1.35, dG);
+                        float haloG = smoothstep(0.8, 0.5 - aa * 1.35, dG) * u_glowIntensity * 0.8;
+                        float coreB = smoothstep(0.5, 0.5 - aa * 1.35, dB);
+                        float haloB = smoothstep(0.8, 0.5 - aa * 1.35, dB) * u_glowIntensity * 0.8;
+                        maskR = (coreR + haloR) * alphaFactor;
+                        maskG = (coreG + haloG) * alphaFactor;
+                        maskB = (coreB + haloB) * alphaFactor;
                     }
-                    vec3 gcol = mix(u_gradientColorA, u_gradientColorB, t);
-                    float s = clamp(u_gradientStrength, 0.0, 1.0);
-                    base = mix(base, base * gcol, s);
+                    float maxA = max(maskG, max(maskR, maskB));
+                    if (maxA < 0.01) discard;
+                    alpha = maxA;
+                    base = prismaticColor(maskR, maskG, maskB, maxA);
+                } else {
+                    if (alpha < 0.01) discard;
+                    // Color: either "real colors" palette, or user override, else neutral white.
+                    vec3 fallbackBase;
+                    if (u_realColors > 0.5) {
+                        // Metallic dust palette (cool/warm whites)
+                        vec3 cool = vec3(0.84, 0.91, 1.0);
+                        vec3 warm = vec3(1.0, 0.95, 0.86);
+                        float temp = step(0.55, v_rand.x);
+                        fallbackBase = mix(cool, warm, temp);
+                        fallbackBase = mix(fallbackBase, vec3(1.0), 0.55);
+                        fallbackBase *= 0.85 + 0.25 * v_rand.z;
+                    } else if (u_useColorOverride > 0.5) {
+                        fallbackBase = clamp(u_colorOverride, 0.0, 1.0);
+                    } else {
+                        fallbackBase = vec3(0.83, 0.83, 0.85);
+                    }
+
+                    vec3 tintBase = fallbackBase;
+                    if (u_useColorTex > 0.5) {
+                        float colorBlend = clamp(u_colorTexBlend, 0.0, 1.0);
+                        tintBase = mix(fallbackBase, v_color, colorBlend);
+                    }
+
+                    if (u_spriteEnabled > 0.5 && u_spriteColorMode > 0.5) {
+                        base = sprite.rgb;
+                    } else {
+                        base = tintBase;
+                    }
+
+                    // Logo-wide gradient tint (in logo space, not screen space)
+                    if (u_gradientEnabled > 0.5 && u_gradientStrength > 1e-4) {
+                        float t;
+                        if (u_gradientDirection < 0.5) {
+                            // Left -> Right
+                            t = clamp(v_logoXY.x * 0.5 + 0.5, 0.0, 1.0);
+                        } else if (u_gradientDirection < 1.5) {
+                            // Top -> Bottom
+                            t = clamp(0.5 - v_logoXY.y * 0.5, 0.0, 1.0);
+                        } else if (u_gradientDirection < 2.5) {
+                            // Diagonal (top-left -> bottom-right)
+                            t = clamp((v_logoXY.x - v_logoXY.y + 2.0) * 0.25, 0.0, 1.0);
+                        } else {
+                            // Radial (center -> edge)
+                            t = clamp(length(v_logoXY) / 1.41421356237, 0.0, 1.0);
+                        }
+                        vec3 gcol = mix(u_gradientColorA, u_gradientColorB, t);
+                        float s = clamp(u_gradientStrength, 0.0, 1.0);
+                        base = mix(base, base * gcol, s);
+                    }
                 }
 
                 // Pseudo normal: random + a bit of velocity direction so sparkles react to motion
@@ -784,6 +946,8 @@ export class Renderer {
             colorOverride: gl.getUniformLocation(this.gpuProgram, 'u_colorOverride'),
             useColorTex: gl.getUniformLocation(this.gpuProgram, 'u_useColorTex'),
             colorTexBlend: gl.getUniformLocation(this.gpuProgram, 'u_colorTexBlend'),
+            chromatic: gl.getUniformLocation(this.gpuProgram, 'u_chromatic'),
+            chromaticShift: gl.getUniformLocation(this.gpuProgram, 'u_chromaticShift'),
             colorTexFrom: gl.getUniformLocation(this.gpuProgram, 'u_colorTexFrom'),
             colorTexTo: gl.getUniformLocation(this.gpuProgram, 'u_colorTexTo'),
             countRatio: gl.getUniformLocation(this.gpuProgram, 'u_countRatio'),
@@ -1661,6 +1825,10 @@ export class Renderer {
         gl.uniform1f(this.uniformLocations.spriteEnabled, useSprite ? 1.0 : 0.0);
         gl.uniform1f(this.uniformLocations.spriteColorMode, (this.settings.spriteColorMode === 'original') ? 1.0 : 0.0);
         gl.uniform1f(this.uniformLocations.spriteRotate, this.settings.spriteRotate ? 1.0 : 0.0);
+        const chromaticEnabled = String(this.settings.colorMode || '') === 'chromatic';
+        const chromaShift = Number(this.settings.chromaticShift ?? 0.15) || 0.0;
+        gl.uniform1f(this.uniformLocations.chromatic, chromaticEnabled ? 1.0 : 0.0);
+        gl.uniform1f(this.uniformLocations.chromaticShift, chromaShift);
         gl.activeTexture(gl.TEXTURE5);
         gl.bindTexture(gl.TEXTURE_2D, spriteTex);
         gl.uniform1i(this.uniformLocations.spriteTex, 5);
@@ -1833,6 +2001,10 @@ export class Renderer {
             ? Math.max(0, Math.min(1, this.settings.colorTexBlend))
             : (useColorTex ? 1.0 : 0.0);
         gl.uniform1f(this.gpuUniformLocations.colorTexBlend, colorTexBlend);
+        const chromaticEnabled = String(this.settings.colorMode || '') === 'chromatic';
+        const chromaShift = Number(this.settings.chromaticShift ?? 0.15) || 0.0;
+        gl.uniform1f(this.gpuUniformLocations.chromatic, chromaticEnabled ? 1.0 : 0.0);
+        gl.uniform1f(this.gpuUniformLocations.chromaticShift, chromaShift);
         const countRatio = Number.isFinite(this.settings.countRatio)
             ? Math.max(0, Math.min(1, this.settings.countRatio))
             : 1.0;
@@ -1969,6 +2141,7 @@ export class Renderer {
         const useSprite = !!(this.settings.spriteEnabled && spriteCanvas);
         const useOriginalSpriteColors = useSprite && String(this.settings.spriteColorMode || 'tint') === 'original';
         const rotateSprite = !!this.settings.spriteRotate;
+        const chroma = String(this.settings.colorMode || '') === 'chromatic';
 
         const clamp01 = (v) => Math.max(0, Math.min(1, v));
         const computeGradT = (x, y) => {
@@ -1986,7 +2159,7 @@ export class Renderer {
             const y = (1 - ((p.y * ay) * 0.5 + 0.5)) * height;
             const size = p.size * 2;
             const opacity = p.opacity;
-            const baseHex = p.displayColor || p.color;
+            const baseHex = chroma ? '#ffffff' : (p.displayColor || p.color);
             const layer = (typeof p._layer === 'number') ? p._layer : (p._isAmbient ? 1.0 : 0.0);
             const isBg = layer >= 0.5;
 

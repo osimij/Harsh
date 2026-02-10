@@ -43,11 +43,42 @@ export function sanitizeSvgForLogo(svgString) {
 
         if (otherDrawables.length === 0) return input;
 
+        // Preserve structural rects that are not visible background layers (e.g. Figma clip paths).
+        const protectedContainerSelector = 'defs,clipPath,clippath,mask,symbol,pattern,marker,linearGradient,lineargradient,radialGradient,radialgradient,filter';
+        const referencedIds = new Set();
+        for (const el of Array.from(svg.querySelectorAll('*'))) {
+            const names = (typeof el.getAttributeNames === 'function') ? el.getAttributeNames() : [];
+            for (const attr of names) {
+                const raw = el.getAttribute(attr);
+                if (!raw) continue;
+                const value = String(raw).trim();
+                if (!value) continue;
+
+                // href/xlink:href direct references
+                if ((attr === 'href' || attr === 'xlink:href') && value.startsWith('#')) {
+                    referencedIds.add(value.slice(1).trim());
+                }
+
+                // url(#id) references inside attributes/styles like clip-path, mask, filter, fill, stroke, etc.
+                const re = /url\(\s*#([^)]+)\s*\)/g;
+                let match;
+                while ((match = re.exec(value)) !== null) {
+                    const refId = String(match[1] || '').trim();
+                    if (refId) referencedIds.add(refId);
+                }
+            }
+        }
+
         const approxEq = (a, b, tol) => Math.abs(a - b) <= tol;
         const tolX = Math.max(1e-3, vbW * 0.01);
         const tolY = Math.max(1e-3, vbH * 0.01);
 
         for (const r of rects) {
+            if (r.closest(protectedContainerSelector)) continue;
+
+            const id = String(r.getAttribute('id') || '').trim();
+            if (id && referencedIds.has(id)) continue;
+
             const fill = (r.getAttribute('fill') || '').trim().toLowerCase();
             const style = (r.getAttribute('style') || '').toLowerCase();
             const hasVisibleFill = (fill && fill !== 'none' && fill !== 'transparent') ||
@@ -88,5 +119,3 @@ export function sanitizeSvgForLogo(svgString) {
         return input;
     }
 }
-
-

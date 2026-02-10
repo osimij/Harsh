@@ -77,6 +77,7 @@ export class ParticleForge {
         this._gpuTargetBuildToken = 0;
         this._gpuSingleTime = 0;
         this._rasterRegenToken = 0;
+        this._uploadToken = 0;
 
         // Interactive mode: prefer variety (random scripts per transition).
         this.transitionDirector = new TransitionDirector({ userSeed: this.settings.transitionSeed, mode: 'random' });
@@ -134,6 +135,9 @@ export class ParticleForge {
         // Start render loop
         this.startAnimation();
 
+        // Load preset settings if provided via window globals
+        this.loadPresetSettings();
+
         // Load demo SVG for testing
         this.loadDemoSVG();
     }
@@ -158,6 +162,10 @@ export class ParticleForge {
         }
         if (this.logoSequence && this.logoSequence.sourceType) return this.logoSequence.sourceType;
         return this.currentSourceType || 'svg';
+    }
+
+    isUploadTokenStale(token) {
+        return token !== this._uploadToken;
     }
 
     getDesiredParticleCount({ type = null, useMax = false } = {}) {
@@ -346,6 +354,7 @@ export class ParticleForge {
      * Process SVG string and generate particles
      */
     processSVG(svgString) {
+        const token = ++this._uploadToken;
         try {
             this.stopLogoSequence();
             this.currentSourceType = 'svg';
@@ -480,6 +489,7 @@ export class ParticleForge {
      * Process a raster image and generate particles with per-pixel color.
      */
     async processImage(imageInfo) {
+        const token = ++this._uploadToken;
         try {
             this.stopLogoSequence();
             this.currentSourceType = 'image';
@@ -612,6 +622,7 @@ export class ParticleForge {
      * Process multiple images and start a morphing sequence.
      */
     async processImageSequence(imageInfos) {
+        const token = ++this._uploadToken;
         try {
             this.stopLogoSequence();
             this.currentSourceType = 'image';
@@ -778,6 +789,7 @@ export class ParticleForge {
      * Process a mixed SVG + image sequence (keeps original order).
      */
     async processMixedSequence(items) {
+        const token = ++this._uploadToken;
         try {
             this.stopLogoSequence();
 
@@ -1110,6 +1122,7 @@ export class ParticleForge {
      * Process multiple SVG strings and start a morphing sequence.
      */
     processSVGSequence(svgStrings) {
+        const token = ++this._uploadToken;
         try {
             this.stopLogoSequence();
             this.currentSourceType = 'svg';
@@ -2263,11 +2276,119 @@ export class ParticleForge {
         });
         this.renderer.updateSettings({
             glowIntensity: this.settings.glowIntensity,
-            zoom: this.settings.zoom
+            zoom: this.settings.zoom,
+            colorMode: this.settings.colorMode,
+            chromaticShift: this.settings.chromaticShift,
+            gradientOverlayEnabled: this.settings.gradientOverlayEnabled,
+            gradientColorA: this.settings.gradientColorA,
+            gradientColorB: this.settings.gradientColorB,
+            gradientStrength: this.settings.gradientStrength,
+            gradientDirection: this.settings.gradientDirection
         });
 
         if (this.svgData || this.currentImage || (this.logoSequence && this.logoSequence.sourceType === 'image')) {
             this.regenerateParticles();
+        }
+    }
+
+    /**
+     * Import settings from a JSON string or object, applying them to the running app.
+     * Properties not present in the input are left unchanged.
+     */
+    importSettings(jsonOrObj) {
+        let parsed;
+        if (typeof jsonOrObj === 'string') {
+            try { parsed = JSON.parse(jsonOrObj); } catch (e) {
+                console.error('importSettings: invalid JSON', e);
+                return;
+            }
+        } else {
+            parsed = jsonOrObj;
+        }
+        if (!parsed || typeof parsed !== 'object') return;
+
+        Object.assign(this.settings, parsed);
+
+        // Recreate transition directors with potentially new seed
+        this.transitionDirector = new TransitionDirector({ userSeed: this.settings.transitionSeed, mode: 'random' });
+        this.shapeTransitionDirector = new ShapeTransitionDirector({ userSeed: this.settings.transitionSeed });
+
+        // Sync particle system
+        this.particleSystem.updateSettings({
+            size: this.settings.size,
+            depthVariance: this.settings.depthVariance,
+            animationSpeed: this.settings.animationSpeed,
+            sizeRandom: this.settings.sizeRandom,
+            sizeMin: this.settings.sizeMin,
+            sizeMax: this.settings.sizeMax,
+            opacityRandom: this.settings.opacityRandom,
+            opacityMin: this.settings.opacityMin,
+            opacityMax: this.settings.opacityMax,
+            zoom: this.settings.zoom,
+            squaresEnabled: this.settings.squaresEnabled,
+            squareRatio: this.settings.squareRatio,
+            dissolveCycle: this.settings.dissolveCycle,
+            cycleSeconds: this.settings.cycleSeconds,
+            holdSeconds: this.settings.holdSeconds,
+            chaos: this.settings.chaos
+        });
+
+        // Sync renderer
+        this.renderer.updateSettings({
+            glowIntensity: this.settings.glowIntensity,
+            zoom: this.settings.zoom,
+            colorMode: this.settings.colorMode,
+            chromaticShift: this.settings.chromaticShift,
+            gradientOverlayEnabled: this.settings.gradientOverlayEnabled,
+            gradientColorA: this.settings.gradientColorA,
+            gradientColorB: this.settings.gradientColorB,
+            gradientStrength: this.settings.gradientStrength,
+            gradientDirection: this.settings.gradientDirection
+        });
+
+        // Apply background
+        if (this.settings.backgroundMode === 'custom' && this.settings.backgroundColor) {
+            this.applyBackgroundColor(this.settings.backgroundColor);
+        } else {
+            this.applyBackgroundColor(null);
+        }
+
+        // Regenerate particles if density changed
+        if (parsed.density != null || parsed.logoDensity != null || parsed.imageDensity != null) {
+            if (this.svgData || this.currentImage || (this.logoSequence && this.logoSequence.sourceType === 'image')) {
+                this.regenerateParticles();
+            }
+        }
+
+        // Apply color mode
+        if (parsed.realColors != null) {
+            this.particleSystem.setRealColors(!!this.settings.realColors);
+        }
+        if (parsed.colorMode != null) {
+            this.particleSystem.setColorOverride(this.settings.colorMode);
+        }
+
+        window.dispatchEvent(new CustomEvent('settings-imported', { detail: this.settings }));
+    }
+
+    /**
+     * Load preset settings from `window.PARTICLE_PRESET` (object) or
+     * `window.PARTICLE_PRESET_URL` (fetch JSON). Called after init if either is set.
+     */
+    async loadPresetSettings() {
+        if (window.PARTICLE_PRESET && typeof window.PARTICLE_PRESET === 'object') {
+            this.importSettings(window.PARTICLE_PRESET);
+            return;
+        }
+        if (window.PARTICLE_PRESET_URL) {
+            try {
+                const resp = await fetch(window.PARTICLE_PRESET_URL);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const json = await resp.json();
+                this.importSettings(json);
+            } catch (e) {
+                console.error('loadPresetSettings: failed to fetch preset', e);
+            }
         }
     }
 
@@ -2685,7 +2806,9 @@ export class ParticleForge {
                         sprite: spriteInfo,
                         spriteEnabled,
                         spriteRotate: this.settings.particleIconRotate,
-                        spriteColorMode: this.settings.particleIconColorMode
+                        spriteColorMode: this.settings.particleIconColorMode,
+                        colorMode: this.settings.colorMode,
+                        chromaticShift: this.settings.chromaticShift
                     });
                 } catch (e) {
                     // If GPU mode fails for any reason, avoid a “black screen” by falling back to CPU mode.
@@ -2757,7 +2880,9 @@ export class ParticleForge {
                     sprite: spriteInfo,
                     spriteEnabled,
                     spriteRotate: this.settings.particleIconRotate,
-                    spriteColorMode: this.settings.particleIconColorMode
+                    spriteColorMode: this.settings.particleIconColorMode,
+                    colorMode: this.settings.colorMode,
+                    chromaticShift: this.settings.chromaticShift
                 });
             }
         });
