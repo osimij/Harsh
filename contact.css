@@ -169,7 +169,8 @@ a {
     text-align: center;
     background: var(--contact-bg);
     color: #000;
-    animation: contactSpin 22s linear infinite;
+    animation: contactSpin 8s linear infinite;
+    will-change: transform;
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 

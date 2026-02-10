@@ -73,27 +73,16 @@ a {
 
 .corner-links {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 40px;
-    z-index: 120;
+    top: 40px;
+    left: 40px;
+    z-index: 30;
     display: flex;
     align-items: center;
     gap: 24px;
 }
 
 .corner-links::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 0;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    pointer-events: none;
-    z-index: -1;
+    content: none;
 }
 
 .corner-link {
@@ -477,6 +466,7 @@ html.work-route-detail #detail-view {
     color: inherit;
     transform-origin: center top;
     backface-visibility: hidden;
+    will-change: opacity, transform;
 }
 
 /* Thumbnail — colored background with centered logo */
@@ -744,11 +734,6 @@ html.work-route-detail #detail-view {
         padding: clamp(84px, 11vw, 120px) var(--work-side-inset) clamp(48px, 6vw, 72px);
     }
 
-    .corner-links {
-        top: 40px;
-        left: 40px;
-    }
-
     .work-sidebar-panel {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
@@ -921,7 +906,19 @@ html.work-route-detail #detail-view {
     .corner-links {
         top: 0;
         left: 0;
+        width: 100%;
         padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 12px;
+    }
+
+    .corner-links::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        pointer-events: none;
+        z-index: -1;
     }
 
     .work-sidebar-panel {

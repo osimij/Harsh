@@ -591,11 +591,13 @@ a {
 .hero.loaded .profile-image {
     animation: fadeIn 0.6s ease forwards;
     opacity: 0;
+    will-change: opacity, transform;
 }
 
 .hero.loaded .intro-line {
     animation: fadeIn 0.5s ease forwards;
     opacity: 0;
+    will-change: opacity, transform;
 }
 
 .hero.loaded .intro-line:nth-child(1) { animation-delay: 0.1s; }
@@ -611,6 +613,7 @@ a {
 .hero.loaded .main-logo {
     animation: logoReveal 0.8s ease 0.1s forwards;
     opacity: 0;
+    will-change: opacity, transform;
 }
 
 .hero.loaded .logo-grid {
@@ -748,7 +751,7 @@ a {
 .logo-grid.page-exit .logo-wrapper {
     opacity: 0 !important;
     filter: blur(4px);
-    transition: opacity 1s ease, filter 1s ease;
+    transition: opacity 0.5s ease, filter 0.5s ease;
 }
 
 .logo-grid.page-enter .logo-wrapper {
@@ -760,7 +763,7 @@ a {
 .logo-grid.page-enter-active .logo-wrapper {
     opacity: 0.2;
     filter: blur(0px);
-    transition: opacity 1s ease, filter 1s ease;
+    transition: opacity 0.5s ease, filter 0.5s ease;
 }
 
 .logo-grid.page-enter-active .logo-cell-active .logo-wrapper {
@@ -779,7 +782,7 @@ a {
     gap: 1px;
     padding: 1px;
     background: var(--color-border);
-    transition: opacity 1s ease, filter 1s ease;
+    transition: opacity 0.5s ease, filter 0.5s ease;
 }
 
 .crossfade-clone.fade-out {

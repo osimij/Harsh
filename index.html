@@ -548,17 +548,21 @@
 
                     const curTexIdx = globalIndex % totalLogos;
                     const nextTexIdx = nextGlobalIndex !== null ? (nextGlobalIndex % totalLogos) : curTexIdx;
+                    const curTex = targetTextures[curTexIdx];
+                    const nextTex = targetTextures[nextTexIdx];
 
-                    renderer.renderGPU({
-                        count: gpuSim.count,
-                        texWidth: gpuSim.texWidth,
-                        texHeight: gpuSim.texHeight,
-                        posTex: gpuSim.getPositionTexture(),
-                        velTex: gpuSim.getVelocityTexture(),
-                        randTex: gpuSim.getRandomTexture(),
-                        targetFromTex: targetTextures[curTexIdx],
-                        targetToTex: targetTextures[nextTexIdx]
-                    });
+                    if (curTex && nextTex) {
+                        renderer.renderGPU({
+                            count: gpuSim.count,
+                            texWidth: gpuSim.texWidth,
+                            texHeight: gpuSim.texHeight,
+                            posTex: gpuSim.getPositionTexture(),
+                            velTex: gpuSim.getVelocityTexture(),
+                            randTex: gpuSim.getRandomTexture(),
+                            targetFromTex: curTex,
+                            targetToTex: nextTex
+                        });
+                    }
 
                     animationId = requestAnimationFrame(animate);
                 }
@@ -642,7 +646,7 @@
                 stopCycling();
                 logoGrid.setAttribute('aria-busy', 'true');
 
-                const transitionMs = prefersReducedMotion ? 10 : 1000;
+                const transitionMs = prefersReducedMotion ? 10 : 500;
 
                 // Step 1: Snapshot the grid's viewport position
                 const rect = logoGrid.getBoundingClientRect();
@@ -779,7 +783,8 @@
             // ── Splash screen orchestration ─────────────
 
             const splash = document.querySelector('.splash-screen');
-            const splashAlreadyShown = sessionStorage.getItem('splashShown') === '1';
+            let splashAlreadyShown = false;
+            try { splashAlreadyShown = sessionStorage.getItem('splashShown') === '1'; } catch (_) {}
 
             function runSplashSequence() {
                 return new Promise(resolve => {
@@ -802,14 +807,16 @@
             if (splashAlreadyShown) {
                 splash.style.display = 'none';
                 hero.classList.add('instant');
-                await initParticleSystem();
+                try { await initParticleSystem(); } catch (e) { console.error('Particle init failed:', e); }
                 requestAnimationFrame(() => { hero.classList.add('loaded'); });
             } else {
-                await Promise.all([
-                    runSplashSequence(),
-                    initParticleSystem()
-                ]);
-                sessionStorage.setItem('splashShown', '1');
+                try {
+                    await Promise.all([
+                        runSplashSequence(),
+                        initParticleSystem()
+                    ]);
+                } catch (e) { console.error('Init error:', e); }
+                try { sessionStorage.setItem('splashShown', '1'); } catch (_) {}
                 requestAnimationFrame(() => { hero.classList.add('loaded'); });
             }
 
