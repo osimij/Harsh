@@ -42,6 +42,22 @@
 
     let manifest = [];
     let svgCache = {}; // id → raw svg string
+    let activeFilter = 'all';
+    let allTags = [];
+
+    // --- Timing constants ---
+    const FILTER_FADE_OUT_MS  = 180;
+    const FILTER_FADE_IN_MS   = 280;
+    const FILTER_EASING       = 'cubic-bezier(0.22, 1, 0.36, 1)';
+
+    let isFilterAnimating = false;
+    let queuedFilter = null;
+    let filterAnimationToken = 0;
+    const trackedFilterAnimations = new Set();
+    const pendingFilterTimeouts = new Set();
+
+    // ---- Sidebar indicator state --------------------------------
+    let sidebarIndicator = null;
 
     async function loadManifest() {
         const res = await fetch(MANIFEST_URL);
@@ -95,6 +111,7 @@
             cell.href = `work.html?project=${logo.id}`;
             cell.setAttribute('role', 'listitem');
             cell.setAttribute('aria-label', logo.displayName || logo.name);
+            cell.setAttribute('data-tags', (logo.tags || []).join(','));
 
             // Deduplicate SVG IDs, then recolor if logoColor is set
             let svgStr = deduplicateSvgIds(svgs[i], `wk_${logo.id}`);
@@ -211,15 +228,378 @@
         document.title = `${project.displayName || project.name} — Harsh Bika`;
     }
 
+    // ---- Sidebar & Filtering ------------------------------------
+
+    function extractTags(logos) {
+        const hiddenTags = new Set(['Corporate', '3D', 'Personal', 'Science', 'Tech', 'Streetwear']);
+        const tagSet = new Set();
+        logos.forEach(logo => {
+            if (logo.tags) logo.tags.forEach(t => {
+                if (!hiddenTags.has(t)) tagSet.add(t);
+            });
+        });
+        return Array.from(tagSet);
+    }
+
+    function buildSidebar() {
+        const nav = galleryView.querySelector('.sidebar-nav');
+        if (!nav) return;
+
+        // "All" button
+        const allBtn = document.createElement('button');
+        allBtn.className = 'sidebar-link sidebar-link--active';
+        allBtn.textContent = 'All';
+        allBtn.setAttribute('data-filter', 'all');
+        allBtn.addEventListener('click', handleFilterClick);
+        nav.appendChild(allBtn);
+
+        // Tag buttons
+        allTags.forEach(tag => {
+            const btn = document.createElement('button');
+            btn.className = 'sidebar-link';
+            btn.textContent = tag;
+            btn.setAttribute('data-filter', tag);
+            btn.addEventListener('click', handleFilterClick);
+            nav.appendChild(btn);
+        });
+
+        // Build sliding indicator (desktop only)
+        buildSidebarIndicator(nav);
+    }
+
+    // ---- Sidebar Indicator (desktop) ----------------------------
+
+    function buildSidebarIndicator(nav) {
+        sidebarIndicator = document.createElement('div');
+        sidebarIndicator.className = 'sidebar-indicator';
+        nav.style.position = 'relative';
+        nav.appendChild(sidebarIndicator);
+
+        // Position on the initially active button after layout
+        requestAnimationFrame(() => {
+            const activeBtn = nav.querySelector('.sidebar-link--active');
+            if (activeBtn) positionIndicator(activeBtn, false);
+        });
+    }
+
+    function positionIndicator(targetBtn, animate) {
+        if (!sidebarIndicator || !targetBtn) return;
+
+        const nav = targetBtn.closest('.sidebar-nav');
+        if (!nav) return;
+
+        // Hide on tablet/mobile (nav is row-wrapped)
+        const isDesktop = window.matchMedia('(min-width: 1101px)').matches;
+        if (!isDesktop) {
+            sidebarIndicator.style.opacity = '0';
+            return;
+        }
+
+        const navRect = nav.getBoundingClientRect();
+        const btnRect = targetBtn.getBoundingClientRect();
+
+        const top = btnRect.top - navRect.top;
+        const left = btnRect.left - navRect.left;
+        const width = btnRect.width;
+        const height = btnRect.height;
+
+        const prefersReducedMotion =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!animate || prefersReducedMotion) {
+            sidebarIndicator.style.transform = `translate(${left}px, ${top}px)`;
+            sidebarIndicator.style.width = `${width}px`;
+            sidebarIndicator.style.height = `${height}px`;
+            sidebarIndicator.style.opacity = '0.04';
+            return;
+        }
+
+        trackFilterAnimation(sidebarIndicator.animate(
+            [
+                {
+                    transform: sidebarIndicator.style.transform || `translate(${left}px, ${top}px)`,
+                    width: sidebarIndicator.style.width || `${width}px`,
+                    height: sidebarIndicator.style.height || `${height}px`,
+                    opacity: 0.04
+                },
+                {
+                    transform: `translate(${left}px, ${top}px)`,
+                    width: `${width}px`,
+                    height: `${height}px`,
+                    opacity: 0.04
+                }
+            ],
+            {
+                duration: 280,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                fill: 'forwards'
+            }
+        ));
+
+        // Commit final values
+        sidebarIndicator.style.transform = `translate(${left}px, ${top}px)`;
+        sidebarIndicator.style.width = `${width}px`;
+        sidebarIndicator.style.height = `${height}px`;
+        sidebarIndicator.style.opacity = '0.04';
+    }
+
+    function updateSidebarActiveState(filter) {
+        const links = galleryView.querySelectorAll('.sidebar-link');
+        let targetBtn = null;
+        links.forEach(link => {
+            const isActive = link.getAttribute('data-filter') === filter;
+            link.classList.toggle('sidebar-link--active', isActive);
+            if (isActive) targetBtn = link;
+        });
+
+        // Slide indicator to the new active button
+        if (targetBtn) positionIndicator(targetBtn, true);
+    }
+
+    async function requestFilter(filter) {
+        if (filter === activeFilter && !isFilterAnimating) return;
+
+        queuedFilter = filter;
+        updateSidebarActiveState(filter);
+
+        if (isFilterAnimating) return;
+        isFilterAnimating = true;
+
+        while (queuedFilter !== null) {
+            const nextFilter = queuedFilter;
+            queuedFilter = null;
+            if (nextFilter === activeFilter) continue;
+
+            activeFilter = nextFilter;
+            await applyFilter(nextFilter);
+        }
+
+        isFilterAnimating = false;
+    }
+
+    function handleFilterClick(e) {
+        const filter = e.currentTarget.getAttribute('data-filter');
+        requestFilter(filter).catch(err => {
+            console.error('Filter transition error:', err);
+            isFilterAnimating = false;
+            queuedFilter = null;
+            cancelTrackedFilterAnimations();
+            cancelPendingFilterPhases();
+            const grid = galleryView.querySelector('.work-grid');
+            if (grid) {
+                grid.classList.remove('work-grid--filtering');
+                grid.style.opacity = '';
+                grid.style.transform = '';
+            }
+            updateSidebarActiveState(activeFilter);
+        });
+
+        // On phone layouts, collapse filters after a selection so content returns immediately.
+        const isPhone = window.matchMedia('(max-width: 640px)').matches;
+        if (isPhone) {
+            const sidebar = galleryView.querySelector('.work-sidebar');
+            const toggle = galleryView.querySelector('.sidebar-toggle');
+            if (sidebar && sidebar.classList.contains('sidebar--open')) {
+                sidebar.classList.remove('sidebar--open');
+                if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            }
+        }
+    }
+
+    function trackFilterAnimation(animation) {
+        if (!animation) return animation;
+        trackedFilterAnimations.add(animation);
+        const cleanup = () => trackedFilterAnimations.delete(animation);
+        animation.addEventListener('finish', cleanup, { once: true });
+        animation.addEventListener('cancel', cleanup, { once: true });
+        return animation;
+    }
+
+    function cancelTrackedFilterAnimations() {
+        trackedFilterAnimations.forEach(animation => {
+            try {
+                animation.cancel();
+            } catch (_err) {
+                // Ignore animation cancellation errors from stale handles.
+            }
+        });
+        trackedFilterAnimations.clear();
+    }
+
+    /** Schedule a timeout and track it so rapid filter clicks can cancel pending phases */
+    function scheduleFilterPhase(fn, delayMs) {
+        const id = window.setTimeout(() => {
+            pendingFilterTimeouts.delete(id);
+            fn();
+        }, delayMs);
+        pendingFilterTimeouts.add(id);
+        return id;
+    }
+
+    /** Cancel all pending phased timeouts */
+    function cancelPendingFilterPhases() {
+        pendingFilterTimeouts.forEach(id => window.clearTimeout(id));
+        pendingFilterTimeouts.clear();
+    }
+
+    function cellMatchesFilter(cell, filter) {
+        const tags = (cell.getAttribute('data-tags') || '')
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(Boolean);
+        return filter === 'all' || tags.includes(filter);
+    }
+
+    function applyFilterWithoutMotion(cells, filter) {
+        cells.forEach(cell => {
+            if (cellMatchesFilter(cell, filter)) {
+                cell.removeAttribute('data-filtered-out');
+            } else {
+                cell.setAttribute('data-filtered-out', 'true');
+            }
+        });
+    }
+
+    function applyFilter(filter) {
+        const grid = galleryView.querySelector('.work-grid');
+        if (!grid) return Promise.resolve();
+
+        const cells = Array.from(galleryView.querySelectorAll('.work-cell'));
+        const prefersReducedMotion =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const supportsElementAnimate =
+            cells.length > 0 && typeof cells[0].animate === 'function';
+        const runToken = ++filterAnimationToken;
+
+        grid.classList.add('work-grid--filtering');
+
+        if (prefersReducedMotion || !supportsElementAnimate) {
+            cancelTrackedFilterAnimations();
+            cancelPendingFilterPhases();
+            applyFilterWithoutMotion(cells, filter);
+            grid.classList.remove('work-grid--filtering');
+            return Promise.resolve();
+        }
+
+        cancelTrackedFilterAnimations();
+        cancelPendingFilterPhases();
+
+        return new Promise(resolve => {
+            // ── Phase 1: Fade out the grid ──
+            const fadeOut = grid.animate(
+                [{ opacity: 1 }, { opacity: 0 }],
+                { duration: FILTER_FADE_OUT_MS, easing: FILTER_EASING, fill: 'forwards' }
+            );
+            trackFilterAnimation(fadeOut);
+
+            // ── Phase 2: Swap visibility + fade in ──
+            scheduleFilterPhase(() => {
+                if (runToken !== filterAnimationToken) {
+                    grid.style.opacity = '';
+                    return resolve();
+                }
+
+                // Toggle cell visibility
+                cells.forEach(cell => {
+                    if (cellMatchesFilter(cell, filter)) {
+                        cell.removeAttribute('data-filtered-out');
+                    } else {
+                        cell.setAttribute('data-filtered-out', 'true');
+                    }
+                });
+
+                // Cancel the fade-out fill so we can animate back
+                fadeOut.cancel();
+
+                // Fade in with subtle upward slide
+                const fadeIn = grid.animate(
+                    [
+                        { opacity: 0, transform: 'translateY(12px)' },
+                        { opacity: 1, transform: 'translateY(0)' }
+                    ],
+                    { duration: FILTER_FADE_IN_MS, easing: FILTER_EASING, fill: 'forwards' }
+                );
+                trackFilterAnimation(fadeIn);
+
+                fadeIn.addEventListener('finish', () => {
+                    // Commit final styles and clean up
+                    fadeIn.cancel();
+                    grid.style.opacity = '';
+                    grid.style.transform = '';
+                    grid.classList.remove('work-grid--filtering');
+                    resolve();
+                }, { once: true });
+
+                fadeIn.addEventListener('cancel', () => {
+                    grid.style.opacity = '';
+                    grid.style.transform = '';
+                    grid.classList.remove('work-grid--filtering');
+                    resolve();
+                }, { once: true });
+
+            }, FILTER_FADE_OUT_MS);
+        });
+    }
+
+    function initMobileToggle() {
+        const toggle = galleryView.querySelector('.sidebar-toggle');
+        const sidebar = galleryView.querySelector('.work-sidebar');
+        if (!toggle || !sidebar) return;
+
+        toggle.addEventListener('click', () => {
+            const isOpen = sidebar.classList.toggle('sidebar--open');
+            toggle.setAttribute('aria-expanded', String(isOpen));
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('sidebar--open')) {
+                sidebar.classList.remove('sidebar--open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        const phoneQuery = window.matchMedia('(max-width: 640px)');
+        const resetForLargerScreens = () => {
+            if (!phoneQuery.matches) {
+                sidebar.classList.remove('sidebar--open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        };
+        if (typeof phoneQuery.addEventListener === 'function') {
+            phoneQuery.addEventListener('change', resetForLargerScreens);
+        } else if (typeof phoneQuery.addListener === 'function') {
+            phoneQuery.addListener(resetForLargerScreens);
+        }
+    }
+
+    // ---- Resize: reposition sidebar indicator --------------------
+
+    function initResizeHandler() {
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const activeBtn = galleryView.querySelector('.sidebar-link--active');
+                if (activeBtn) positionIndicator(activeBtn, false);
+            }, 100);
+        });
+    }
+
     // ---- Init ---------------------------------------------------
 
     try {
         await loadManifest();
+        allTags = extractTags(manifest);
 
         if (projectId) {
             await renderDetail(projectId);
         } else {
             await renderGallery();
+            buildSidebar();
+            initMobileToggle();
+            initResizeHandler();
         }
     } catch (err) {
         console.error('Work page error:', err);

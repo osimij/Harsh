@@ -41,7 +41,7 @@
   "particleIconEnabled": false,
   "particleIconColorMode": "tint",
   "particleIconRotate": true,
-  "chromaticShift": 0.15,
+  "chromaticShift": 0.07,
   "backgroundMode": "default",
   "backgroundColor": "#0a0a0f",
   "dissolveCycle": true,

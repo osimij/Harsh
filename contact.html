@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contact — Get in touch with Harsh Bika, logo & brand designer based in India.">
+    <meta name="theme-color" content="#fafafa">
+    <title>Contact — Harsh Bika</title>
+    <link rel="stylesheet" href="contact.css">
+</head>
+<body>
+    <main class="contact-main">
+        <div class="contact-center">
+            <a href="mailto:hello@harshbika.com" class="contact-btn">Contact me</a>
+        </div>
+
+        <section class="contact-meta" aria-label="Quick details">
+            <p>GMT+5:30 (IST) <span class="meta-time-live" id="meta-ist-time" aria-label="Current IST time"></span></p>
+            <p>India</p>
+            <p class="meta-availability">Available for new projects</p>
+        </section>
+
+        <div class="contact-intro">
+            <figure class="contact-image">
+                <img src="assets/hero/profile.jpg" alt="Harsh Bika — Logo & Brand Designer" width="55" height="55">
+            </figure>
+            <h1 class="contact-title">A logo &amp; brand designer based in India, designing identities that mean something.</h1>
+        </div>
+
+        <nav class="contact-socials" aria-label="Social links">
+            <a href="https://x.com/hrshbika" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="X">
+                <span aria-hidden="true">X</span>
+            </a>
+            <a href="https://www.instagram.com/bikayaar/" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Instagram">
+                <span aria-hidden="true">IG</span>
+            </a>
+            <a href="https://www.linkedin.com/in/hrshbika/" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="LinkedIn">
+                <span aria-hidden="true">in</span>
+            </a>
+            <a href="mailto:hello@harshbika.com" class="social-icon email-icon" aria-label="Email">
+                <svg viewBox="1 2.65 24.5 21.2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M2.20703 6.62836L9.84412 10.9556C12.6596 12.5509 13.8492 12.5509 16.6648 10.9556L24.3018 6.62836" />
+                    <path d="M2.22445 14.8869C2.29667 18.2736 2.33278 19.9668 3.58239 21.2213C4.83198 22.4756 6.57112 22.5192 10.0494 22.6066C12.1931 22.6605 14.3157 22.6605 16.4595 22.6066C19.9378 22.5192 21.6768 22.4756 22.9265 21.2213C24.1761 19.9668 24.2122 18.2736 24.2844 14.8869C24.3077 13.798 24.3077 12.7155 24.2844 11.6266C24.2122 8.23997 24.1761 6.54666 22.9265 5.29231C21.6768 4.03795 19.9378 3.99426 16.4595 3.90686C14.3157 3.853 12.1931 3.853 10.0494 3.90685C6.57112 3.99424 4.83198 4.03793 3.58238 5.2923C2.33277 6.54665 2.29667 8.23996 2.22444 11.6266C2.20122 12.7155 2.20123 13.798 2.22445 14.8869Z" />
+                </svg>
+            </a>
+        </nav>
+    </main>
+
+    <script>
+        (function () {
+            const timeEl = document.getElementById('meta-ist-time');
+            if (!timeEl || !Intl || !Intl.DateTimeFormat) return;
+
+            const formatter = new Intl.DateTimeFormat('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            function updateIstTime() {
+                timeEl.textContent = formatter.format(new Date());
+            }
+
+            updateIstTime();
+            setInterval(updateIstTime, 15000);
+        })();
+    </script>
+</body>
+</html>

@@ -41,7 +41,7 @@ export class Renderer {
             spriteRotate: true,
             sprite: null,
             colorMode: 'original',
-            chromaticShift: 0.07
+            chromaticShift: 0.18
         };
 
         // On-canvas overlay (e.g., MagnetTool circle). Stored in clip space so it’s resolution independent.
@@ -243,20 +243,11 @@ export class Renderer {
             uniform float u_chromatic;
             uniform float u_chromaticShift;
             
-            vec3 prismaticColor(float mR, float mG, float mB, float maxA) {
-                vec3 prism = vec3(mR, mG, mB) / max(maxA, 1e-5);
-                float luma = dot(prism, vec3(0.299, 0.587, 0.114));
-                prism = mix(vec3(luma), prism, 1.85);
-                prism = pow(clamp(prism, 0.0, 1.0), vec3(0.92));
-                return clamp(prism, 0.0, 1.0);
-            }
-
             out vec4 fragColor;
             
             void main() {
                 vec2 coord = gl_PointCoord - vec2(0.5);
                 bool chroma = (u_chromatic > 0.5);
-                float chromaCenterWhite = 0.0;
                 vec2 chromaOffsetR = vec2(0.0);
                 vec2 chromaOffsetG = vec2(0.0);
                 vec2 chromaOffsetB = vec2(0.0);
@@ -265,20 +256,11 @@ export class Renderer {
                     float ndcLen = length(ndc);
                     vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
                     float chromaRadius = clamp(ndcLen, 0.0, 1.0);
-                    float chromaScale = 0.2 + 0.8 * (chromaRadius * chromaRadius);
-                    float amt = u_chromaticShift * 0.95 * chromaScale;
-                    vec2 dir120 = vec2(
-                        -0.5 * dir.x - 0.8660254 * dir.y,
-                         0.8660254 * dir.x - 0.5 * dir.y
-                    );
-                    vec2 dir240 = vec2(
-                        -0.5 * dir.x + 0.8660254 * dir.y,
-                        -0.8660254 * dir.x - 0.5 * dir.y
-                    );
-                    chromaOffsetR = dir * amt;
-                    chromaOffsetG = dir120 * (amt * 0.92);
-                    chromaOffsetB = dir240 * amt;
-                    chromaCenterWhite = pow(1.0 - chromaRadius, 1.35) * 0.24;
+                    float chromaScale = chromaRadius * chromaRadius;
+                    vec2 baseOffset = dir * u_chromaticShift * chromaScale;
+                    chromaOffsetR = baseOffset * 0.9;
+                    chromaOffsetG = baseOffset * 0.2;
+                    chromaOffsetB = baseOffset * -1.0;
                 }
 
                 if (u_spriteEnabled > 0.5) {
@@ -303,8 +285,7 @@ export class Renderer {
                         float mB = (aB + aB * u_glowIntensity * 0.35) * v_opacity;
                         float maxA = max(mG, max(mR, mB));
                         if (maxA < 0.01) discard;
-                        vec3 col = prismaticColor(mR, mG, mB, maxA);
-                        col = mix(col, vec3(1.0), chromaCenterWhite);
+                        vec3 col = vec3(mR, mG, mB) / max(maxA, 1e-5);
                         fragColor = vec4(col, maxA);
                         return;
                     }
@@ -367,8 +348,7 @@ export class Renderer {
                     float mB = (coreB + glowB) * v_opacity;
                     float maxA = max(mG, max(mR, mB));
                     if (maxA < 0.01) discard;
-                    vec3 col = prismaticColor(mR, mG, mB, maxA);
-                    col = mix(col, vec3(1.0), chromaCenterWhite);
+                    vec3 col = vec3(mR, mG, mB) / max(maxA, 1e-5);
                     fragColor = vec4(col, maxA);
                     return;
                 }
@@ -654,14 +634,6 @@ export class Renderer {
 	                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 	            }
 
-            vec3 prismaticColor(float mR, float mG, float mB, float maxA) {
-                vec3 prism = vec3(mR, mG, mB) / max(maxA, 1e-5);
-                float luma = dot(prism, vec3(0.299, 0.587, 0.114));
-                prism = mix(vec3(luma), prism, 1.85);
-                prism = pow(clamp(prism, 0.0, 1.0), vec3(0.92));
-                return clamp(prism, 0.0, 1.0);
-            }
-
 	            out vec4 fragColor;
 
             void main() {
@@ -674,7 +646,6 @@ export class Renderer {
                 mat2 rot = mat2(1.0);
 
                 bool chroma = (u_chromatic > 0.5);
-                float chromaCenterWhite = 0.0;
                 vec2 chromaOffsetR = vec2(0.0);
                 vec2 chromaOffsetG = vec2(0.0);
                 vec2 chromaOffsetB = vec2(0.0);
@@ -683,20 +654,11 @@ export class Renderer {
                     float ndcLen = length(ndc);
                     vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
                     float chromaRadius = clamp(ndcLen, 0.0, 1.0);
-                    float chromaScale = 0.2 + 0.8 * (chromaRadius * chromaRadius);
-                    float amt = u_chromaticShift * 0.95 * chromaScale;
-                    vec2 dir120 = vec2(
-                        -0.5 * dir.x - 0.8660254 * dir.y,
-                         0.8660254 * dir.x - 0.5 * dir.y
-                    );
-                    vec2 dir240 = vec2(
-                        -0.5 * dir.x + 0.8660254 * dir.y,
-                        -0.8660254 * dir.x - 0.5 * dir.y
-                    );
-                    chromaOffsetR = dir * amt;
-                    chromaOffsetG = dir120 * (amt * 0.92);
-                    chromaOffsetB = dir240 * amt;
-                    chromaCenterWhite = pow(1.0 - chromaRadius, 1.35) * 0.24;
+                    float chromaScale = chromaRadius * chromaRadius;
+                    vec2 baseOffset = dir * u_chromaticShift * chromaScale;
+                    chromaOffsetR = baseOffset * 0.9;
+                    chromaOffsetG = baseOffset * 0.2;
+                    chromaOffsetB = baseOffset * -1.0;
                 }
 
                 if (u_spriteEnabled > 0.5) {
@@ -820,8 +782,7 @@ export class Renderer {
                     float maxA = max(maskG, max(maskR, maskB));
                     if (maxA < 0.01) discard;
                     alpha = maxA;
-                    base = prismaticColor(maskR, maskG, maskB, maxA);
-                    base = mix(base, vec3(1.0), chromaCenterWhite);
+                    base = vec3(maskR, maskG, maskB) / max(maxA, 1e-5);
                 } else {
                     if (alpha < 0.01) discard;
                     // Color: either "real colors" palette, or user override, else neutral white.
@@ -1833,7 +1794,7 @@ export class Renderer {
         gl.uniform1f(this.uniformLocations.spriteColorMode, (this.settings.spriteColorMode === 'original') ? 1.0 : 0.0);
         gl.uniform1f(this.uniformLocations.spriteRotate, this.settings.spriteRotate ? 1.0 : 0.0);
         const chromaticEnabled = String(this.settings.colorMode || '') === 'chromatic';
-        const chromaShift = Number(this.settings.chromaticShift ?? 0.07) || 0.0;
+        const chromaShift = Number(this.settings.chromaticShift ?? 0.18) || 0.0;
         gl.uniform1f(this.uniformLocations.chromatic, chromaticEnabled ? 1.0 : 0.0);
         gl.uniform1f(this.uniformLocations.chromaticShift, chromaShift);
         gl.activeTexture(gl.TEXTURE5);
@@ -2009,7 +1970,7 @@ export class Renderer {
             : (useColorTex ? 1.0 : 0.0);
         gl.uniform1f(this.gpuUniformLocations.colorTexBlend, colorTexBlend);
         const chromaticEnabled = String(this.settings.colorMode || '') === 'chromatic';
-        const chromaShift = Number(this.settings.chromaticShift ?? 0.07) || 0.0;
+        const chromaShift = Number(this.settings.chromaticShift ?? 0.18) || 0.0;
         gl.uniform1f(this.gpuUniformLocations.chromatic, chromaticEnabled ? 1.0 : 0.0);
         gl.uniform1f(this.gpuUniformLocations.chromaticShift, chromaShift);
         const countRatio = Number.isFinite(this.settings.countRatio)
