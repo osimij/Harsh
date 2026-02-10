@@ -73,8 +73,11 @@ a {
 
 .corner-links {
     position: fixed;
-    top: 40px;
-    left: 40px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 40px;
     z-index: 120;
     display: flex;
     align-items: center;
@@ -84,8 +87,8 @@ a {
 .corner-links::before {
     content: '';
     position: absolute;
-    inset: -10px -14px;
-    border-radius: 999px;
+    inset: 0;
+    border-radius: 0;
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -916,8 +919,9 @@ html.work-route-detail #detail-view {
     }
 
     .corner-links {
-        top: calc(env(safe-area-inset-top, 0px) + 16px);
-        left: 20px;
+        top: 0;
+        left: 0;
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 12px;
     }
 
     .work-sidebar-panel {
