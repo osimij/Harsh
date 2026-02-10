@@ -184,41 +184,82 @@ a {
    NAVIGATION
    ============================================ */
 .nav {
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    z-index: 30;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    gap: 12px;
+    gap: 0;
     order: 1;
-    width: 100%;
+    width: fit-content;
     padding: 0;
     flex-shrink: 0;
 }
 
 .nav-left {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 24px;
 }
 
 .nav-item {
-    display: block;
-    padding: 5px 10px;
-    font-size: var(--font-size-intro);
+    display: inline-block;
+    padding: 0;
+    font-size: 16px;
     font-weight: 400;
     line-height: normal;
-    letter-spacing: var(--letter-spacing-intro);
+    letter-spacing: -0.3px;
     text-transform: uppercase;
     color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 0;
+    opacity: 1;
     cursor: pointer;
 }
 
 .nav-active {
-    padding: 5px 10px;
-    background: var(--color-primary);
-    color: var(--color-bg);
-    border: 1px solid var(--color-primary);
+    opacity: 1;
     white-space: nowrap;
+}
+
+.hero-socials {
+    position: fixed;
+    right: var(--spacing-page);
+    bottom: clamp(18px, 3.2vh, 42px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(10px, 1.4vh, 16px);
+}
+
+.hero-socials a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    color: rgba(255, 255, 255, 0.72);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.hero-socials a:hover,
+.hero-socials a:focus-visible {
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.hero-socials svg {
+    width: auto;
+    height: 24px;
+    fill: currentColor;
+}
+
+.hero-socials a[aria-label="Email"] svg {
+    fill: none;
+    stroke: currentColor;
 }
 
 /* ============================================
@@ -339,6 +380,50 @@ a {
 }
 
 /* ============================================
+   MOBILE LAYOUT TUNING (< 768px)
+   ============================================ */
+@media (max-width: 767px) {
+    .main {
+        grid-template-rows: auto 1fr;
+        padding: 20px 0 20px 0;
+    }
+
+    /* Remove profile + about copy on mobile main screen */
+    .intro-section {
+        display: none;
+    }
+
+    .nav {
+        top: 20px;
+        left: 20px;
+    }
+
+    /* Keep particle area centered, grid fixed to bottom */
+    .logos-section {
+        justify-content: flex-start;
+        align-items: center;
+        min-height: 0;
+    }
+
+    .main-logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .logo-grid {
+        margin-top: auto;
+        margin-bottom: 0;
+    }
+
+    .hero-socials {
+        display: none;
+    }
+}
+
+/* ============================================
    TABLET BREAKPOINT (768px - 1024px)
    ============================================ */
 @media (min-width: 768px) {
@@ -347,19 +432,25 @@ a {
     }
 
     .main {
-        grid-template-columns: minmax(300px, 400px) 1fr;
+        grid-template-columns: 1fr;
         grid-template-rows: 1fr;
         align-items: stretch;
         align-content: stretch;
-        gap: 40px;
+        gap: 0;
         padding: 40px 0 20px 0;
+        position: relative;
     }
 
     .content {
+        position: absolute;
+        left: 0;
+        top: 40px;
+        bottom: 20px;
+        width: min(374px, 36vw);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
+        justify-content: flex-end;
+        z-index: 2;
     }
 
     .intro-section {
@@ -374,24 +465,25 @@ a {
         order: unset;
         width: fit-content;
         justify-content: flex-start;
-        padding-top: 10px;
-        gap: 12px;
+        padding-top: 0;
+        gap: 0;
     }
 
     .nav-left {
-        display: contents;
+        display: flex;
     }
 
     .logos-section {
-        justify-content: space-between;
-        width: var(--main-logo-width);
-        max-width: 100%;
-        justify-self: end;
+        justify-content: center;
+        width: 100%;
+        max-width: min(100%, 900px);
+        justify-self: center;
         flex: unset;
-        padding-top: 50px;
+        padding-top: 0;
     }
 
     .main-logo {
+        width: 100%;
         max-width: var(--main-logo-width);
         height: var(--main-logo-height);
         aspect-ratio: unset;
@@ -407,8 +499,8 @@ a {
    DESKTOP BREAKPOINT (1024px+)
    ============================================ */
 @media (min-width: 1024px) {
-    .main {
-        grid-template-columns: 374px 1fr;
+    .content {
+        width: 374px;
     }
 
     .logo-grid {
@@ -671,6 +763,12 @@ a {
 .nav-item:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+}
+
+.hero-socials a:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
 .logo-cell:focus-visible {

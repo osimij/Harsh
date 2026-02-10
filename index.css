@@ -124,12 +124,38 @@ input[type="range"] {
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 0 var(--space-lg);
     background: var(--bg-overlay);
     backdrop-filter: blur(var(--blur-md));
     border-bottom: 1px solid var(--border-color);
     z-index: 100;
+}
+
+.forge-nav {
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.forge-nav-link {
+    display: inline-block;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    opacity: 1;
+}
+
+.forge-nav-link:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
 }
 
 .header-right {
@@ -980,6 +1006,16 @@ input[type="range"]::-moz-range-thumb {
     
     .header-stats {
         display: none;
+    }
+
+    .forge-nav {
+        top: 20px;
+        left: 20px;
+        gap: 24px;
+    }
+
+    .forge-nav-link {
+        font-size: 16px;
     }
 }
 

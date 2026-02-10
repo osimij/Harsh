@@ -26,10 +26,12 @@
     --work-header-height: 48px;
     --work-layout-max: 1820px;
     --work-main-max: 1220px;
+    --work-card-width: clamp(260px, 24vw, 390px);
     --sidebar-width: clamp(108px, 10vw, 148px);
     --sidebar-gap: clamp(28px, 4vw, 80px);
     --work-fixed-left: clamp(24px, 3.4vw, 56px);
     --work-filter-top: clamp(88px, 9vw, 132px);
+    --work-nav-top: clamp(22px, 2.8vw, 38px);
 }
 
 /* ============================================
@@ -67,6 +69,27 @@ img {
 a {
     color: inherit;
     text-decoration: none;
+}
+
+.corner-links {
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.corner-link {
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    text-transform: uppercase;
+    color: var(--work-text);
+    opacity: 1;
+    line-height: 1;
 }
 
 [hidden] {
@@ -126,8 +149,9 @@ html.work-route-detail #detail-view {
 
 .sidebar-social svg {
     width: auto;
-    height: clamp(13.5px, 1.125vw, 18px);
+    height: 18px;
     fill: var(--work-text);
+    opacity: 0.72;
 }
 
 .header-social a[aria-label="Email"] svg,
@@ -142,8 +166,8 @@ html.work-route-detail #detail-view {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    font-size: clamp(18px, 2vw, 28px);
-    font-weight: 400;
+    font-size: clamp(14.4px, 1.6vw, 22.4px);
+    font-weight: 500;
     letter-spacing: clamp(-0.28px, -0.02vw, -0.16px);
     text-transform: uppercase;
     color: var(--work-text);
@@ -195,7 +219,7 @@ html.work-route-detail #detail-view {
     width: calc(100% - (var(--work-fixed-left) * 2));
     max-width: none;
     margin: 0 auto;
-    padding: clamp(28px, 3.2vw, 48px) 0 clamp(56px, 6vw, 80px);
+    padding: clamp(88px, 9vw, 128px) 0 clamp(56px, 6vw, 80px);
 }
 
 .work-sidebar-panel {
@@ -257,8 +281,11 @@ html.work-route-detail #detail-view {
 
 .sidebar-social {
     align-self: flex-start;
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, 36px);
+    grid-template-rows: repeat(2, 36px);
+    justify-content: start;
+    align-items: center;
     min-width: auto;
     order: 2;
     margin-top: 0;
@@ -266,12 +293,31 @@ html.work-route-detail #detail-view {
     position: fixed;
     left: var(--work-fixed-left);
     bottom: clamp(20px, 2.2vw, 32px);
+    gap: 10px;
     z-index: 60;
 }
 
+.sidebar-social a {
+    width: 22px;
+    height: 22px;
+    opacity: 1;
+}
+
+.sidebar-social a:hover,
+.sidebar-social a:focus-visible {
+    opacity: 1;
+}
+
+.sidebar-social a:hover svg,
+.sidebar-social a:focus-visible svg {
+    opacity: 1;
+}
+
 .work-grid {
-    width: min(100%, var(--work-main-max));
-    margin-inline: auto;
+    width: max-content;
+    max-width: 100%;
+    margin-inline: 0;
+    align-self: flex-end;
 }
 
 .sidebar-nav {
@@ -281,7 +327,17 @@ html.work-route-detail #detail-view {
     width: 100%;
     max-width: 100%;
     margin: 0;
-    gap: 5px;
+    gap: 2px;
+}
+
+.sidebar-approach {
+    margin: 0 0 12px;
+    font-size: 42px;
+    line-height: 1.14;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    color: var(--work-text);
+    text-transform: none;
 }
 
 .sidebar-link {
@@ -393,7 +449,7 @@ html.work-route-detail #detail-view {
    ============================================ */
 .work-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, var(--work-card-width));
     column-gap: var(--work-col-gap);
     row-gap: calc(var(--work-col-gap) * 2);
 }
@@ -476,7 +532,7 @@ html.work-route-detail #detail-view {
    ============================================ */
 .detail-page {
     width: 100%;
-    padding: clamp(28px, 3vw, 40px) var(--work-page-px) clamp(56px, 6vw, 80px);
+    padding: clamp(96px, 9vw, 136px) var(--work-page-px) clamp(56px, 6vw, 80px);
 }
 
 /* Back link */
@@ -670,7 +726,12 @@ html.work-route-detail #detail-view {
         display: block;
         width: 100%;
         margin: 0;
-        padding: clamp(20px, 3vw, 32px) var(--work-side-inset) clamp(48px, 6vw, 72px);
+        padding: clamp(84px, 11vw, 120px) var(--work-side-inset) clamp(48px, 6vw, 72px);
+    }
+
+    .corner-links {
+        top: 40px;
+        left: 40px;
     }
 
     .work-sidebar-panel {
@@ -798,6 +859,9 @@ html.work-route-detail #detail-view {
     }
 
     .work-grid {
+        width: 100%;
+        max-width: none;
+        align-self: stretch;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -819,7 +883,7 @@ html.work-route-detail #detail-view {
     }
 
     .header-wordmark {
-        font-size: 16px;
+        font-size: 12.8px;
         letter-spacing: -0.16px;
     }
 
@@ -834,7 +898,12 @@ html.work-route-detail #detail-view {
     }
 
     .work-page {
-        padding-top: 18px;
+        padding-top: 72px;
+    }
+
+    .corner-links {
+        top: 20px;
+        left: 20px;
     }
 
     .work-sidebar-panel {
@@ -956,7 +1025,8 @@ html.work-route-detail #detail-view {
 
 .detail-back:focus-visible,
 .inquiry-btn:focus-visible,
-.header-wordmark:focus-visible {
+.header-wordmark:focus-visible,
+.corner-link:focus-visible {
     outline: 2px solid var(--work-text);
     outline-offset: 2px;
 }

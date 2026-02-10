@@ -75,6 +75,35 @@
 
     // ---- Sidebar indicator state --------------------------------
     let sidebarIndicator = null;
+    const COMPACT_CARD_TITLE_QUERY = '(max-width: 1100px)';
+
+    function getResponsiveCardTitle(logo) {
+        const fullTitle = logo.displayName || logo.name;
+        const isCompact = window.matchMedia(COMPACT_CARD_TITLE_QUERY).matches;
+
+        if (isCompact && logo.id === 'balanced-pathways') {
+            return 'Balanced Pathways Corp.';
+        }
+
+        return fullTitle;
+    }
+
+    function refreshResponsiveCardTitles() {
+        const cells = galleryView.querySelectorAll('.work-cell');
+        if (!cells.length) return;
+
+        cells.forEach(cell => {
+            const logoId = cell.getAttribute('data-logo-id');
+            if (!logoId) return;
+
+            const logo = manifest.find(item => item.id === logoId);
+            if (!logo) return;
+
+            const titleEl = cell.querySelector('.work-cell__title');
+            if (!titleEl) return;
+            titleEl.textContent = getResponsiveCardTitle(logo);
+        });
+    }
 
     async function loadManifest() {
         const res = await fetch(MANIFEST_URL);
@@ -134,6 +163,7 @@
             cell.href = getProjectHref(logo.id);
             cell.setAttribute('role', 'listitem');
             cell.setAttribute('aria-label', logo.displayName || logo.name);
+            cell.setAttribute('data-logo-id', logo.id);
             cell.setAttribute('data-tags', (logo.tags || []).join(','));
 
             // Deduplicate SVG IDs, then recolor if logoColor is set
@@ -167,7 +197,7 @@
 
             const titleEl = document.createElement('span');
             titleEl.className = 'work-cell__title';
-            titleEl.textContent = logo.displayName || logo.name;
+            titleEl.textContent = getResponsiveCardTitle(logo);
 
             info.appendChild(titleEl);
 
@@ -182,6 +212,8 @@
             cell.appendChild(info);
             grid.appendChild(cell);
         });
+
+        refreshResponsiveCardTitles();
     }
 
     // ---- Detail -------------------------------------------------
@@ -611,6 +643,7 @@
             resizeTimer = setTimeout(() => {
                 const activeBtn = galleryView.querySelector('.sidebar-link--active');
                 if (activeBtn) positionIndicator(activeBtn, false);
+                refreshResponsiveCardTitles();
             }, 100);
         });
     }
