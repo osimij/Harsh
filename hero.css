@@ -107,7 +107,7 @@ a {
    Two-column on desktop, stacked on mobile
    ============================================ */
 .main {
-    max-width: 1700px;
+    max-width: 1900px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr;

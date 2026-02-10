@@ -29,6 +29,7 @@
     --sidebar-width: clamp(108px, 10vw, 148px);
     --sidebar-gap: clamp(28px, 4vw, 80px);
     --work-fixed-left: clamp(24px, 3.4vw, 56px);
+    --work-filter-top: clamp(88px, 9vw, 132px);
 }
 
 /* ============================================
@@ -66,6 +67,18 @@ img {
 a {
     color: inherit;
     text-decoration: none;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+html.work-route-detail #gallery-view {
+    display: none !important;
+}
+
+html.work-route-detail #detail-view {
+    display: block !important;
 }
 
 /* ============================================
@@ -235,8 +248,8 @@ a {
 .work-sidebar {
     position: fixed;
     left: var(--work-fixed-left);
-    top: 50%;
-    transform: translateY(-50%);
+    top: var(--work-filter-top);
+    transform: none;
     width: var(--sidebar-width);
     order: 1;
     z-index: 55;

@@ -13,6 +13,23 @@
 
     // ---- Helpers ------------------------------------------------
 
+    /** Build a gallery URL from the current page URL while preserving the current path shape. */
+    function getGalleryHref() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('project');
+        url.hash = '';
+        const query = url.searchParams.toString();
+        return url.pathname + (query ? `?${query}` : '');
+    }
+
+    /** Build a detail URL from the current page URL while preserving the current path shape. */
+    function getProjectHref(projectId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('project', projectId);
+        url.hash = '';
+        return `${url.pathname}?${url.searchParams.toString()}`;
+    }
+
     /** Deduplicate internal SVG IDs to prevent DOM collisions */
     function deduplicateSvgIds(svgString, prefix) {
         return svgString
@@ -87,11 +104,17 @@
     function showGallery() {
         galleryView.hidden = false;
         detailView.hidden  = true;
+        document.documentElement.classList.remove('work-route-detail');
+        document.body.classList.remove('work-detail-view');
+        window.scrollTo(0, 0);
     }
 
     function showDetail() {
         galleryView.hidden = true;
         detailView.hidden  = false;
+        document.documentElement.classList.add('work-route-detail');
+        document.body.classList.add('work-detail-view');
+        window.scrollTo(0, 0);
     }
 
     // ---- Gallery ------------------------------------------------
@@ -108,7 +131,7 @@
         manifest.forEach((logo, i) => {
             const cell = document.createElement('a');
             cell.className = 'work-cell';
-            cell.href = `work.html?project=${logo.id}`;
+            cell.href = getProjectHref(logo.id);
             cell.setAttribute('role', 'listitem');
             cell.setAttribute('aria-label', logo.displayName || logo.name);
             cell.setAttribute('data-tags', (logo.tags || []).join(','));
@@ -167,11 +190,16 @@
         const project = manifest.find(l => l.id === id);
         if (!project) {
             // Unknown project — redirect to gallery
-            window.location.href = 'work.html';
+            window.location.href = getGalleryHref();
             return;
         }
 
         showDetail();
+
+        const detailBack = document.querySelector('.detail-back');
+        if (detailBack) {
+            detailBack.setAttribute('href', getGalleryHref());
+        }
 
         // Title
         document.getElementById('detail-title').textContent =
@@ -590,6 +618,12 @@
     // ---- Init ---------------------------------------------------
 
     try {
+        if (projectId) {
+            showDetail();
+        } else {
+            showGallery();
+        }
+
         await loadManifest();
         allTags = extractTags(manifest);
 

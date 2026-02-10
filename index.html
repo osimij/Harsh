@@ -38,6 +38,13 @@
         <div class="main">
             <!-- Left Column: Introduction & Navigation -->
             <div class="content">
+                <nav class="nav" aria-label="Primary navigation">
+                    <div class="nav-left">
+                        <a href="contact.html" class="nav-item">Contact</a>
+                        <a href="work.html" class="nav-item">See All Work</a>
+                    </div>
+                </nav>
+
                 <header class="intro-section">
                     <figure class="profile-image">
                         <img
@@ -64,13 +71,6 @@
                         </p>
                     </div>
                 </header>
-
-                <nav class="nav" aria-label="Primary navigation">
-                    <div class="nav-left">
-                        <a href="contact.html" class="nav-item">Contact</a>
-                        <a href="work.html" class="nav-item">See All Work</a>
-                    </div>
-                </nav>
             </div>
 
             <!-- Right Column: Logo Showcase -->
@@ -284,6 +284,22 @@
                 return LOGOS_PER_PAGE;
             }
 
+            /**
+             * Find the next global index (starting at `startGi`) that has a valid GPU target texture.
+             * Returns null when no usable textures exist.
+             */
+            function findNextRenderableGlobalIndex(startGi) {
+                if (!totalLogos || !targetTextures.length) return null;
+
+                for (let offset = 0; offset < totalLogos; offset++) {
+                    const gi = startGi + offset;
+                    const texIdx = ((gi % totalLogos) + totalLogos) % totalLogos;
+                    if (targetTextures[texIdx]) return gi;
+                }
+
+                return null;
+            }
+
             // ── Logo loading ────────────────────────────
 
             async function loadLogos() {
@@ -440,9 +456,14 @@
                     }
                 }
 
-                const initialTex = targetTextures[CONFIG.initialActive];
-                if (initialTex) {
+                const initialGi = findNextRenderableGlobalIndex(globalIndex);
+                if (initialGi !== null) {
+                    globalIndex = initialGi;
+                    nextGlobalIndex = null;
+
+                    const initialTex = targetTextures[initialGi % totalLogos];
                     gpuSim.setTargets({ fromTex: initialTex, toTex: initialTex });
+                    setActiveLogo(globalIndex, true);
                 }
 
                 window.addEventListener('resize', handleResize);
@@ -572,7 +593,9 @@
             function cycleToNext() {
                 if (isPaused || isTransitioning || isPageTransitioning) return;
 
-                const nextGi = globalIndex + 1;
+                const nextGi = findNextRenderableGlobalIndex(globalIndex + 1);
+                if (nextGi === null || nextGi === globalIndex) return;
+
                 const nextPage = pageOf(nextGi);
 
                 if (nextPage !== currentPage) {
@@ -765,7 +788,12 @@
             }
 
             if (!prefersReducedMotion) {
-                setTimeout(startCycling, CONFIG.initialDelay + CONFIG.morphDuration);
+                setTimeout(() => {
+                    cycleToNext();
+                    if (!isPaused && !isPageTransitioning) {
+                        startCycling();
+                    }
+                }, CONFIG.initialDelay);
             }
 
             document.addEventListener('visibilitychange', () => {

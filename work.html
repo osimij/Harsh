@@ -6,6 +6,17 @@
     <meta name="description" content="Work — Logo & brand identity projects by Harsh Bika.">
     <meta name="theme-color" content="#fafafa">
     <title>Work — Harsh Bika</title>
+    <script>
+        (function () {
+            try {
+                if (new URLSearchParams(window.location.search).has('project')) {
+                    document.documentElement.classList.add('work-route-detail');
+                }
+            } catch (_err) {
+                // Ignore URL parsing issues and fall back to JS router state.
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="work.css">
 </head>
 <body>
@@ -44,11 +55,6 @@
         <div class="work-main-panel">
             <div class="work-main-head">
                 <a href="index.html" class="header-wordmark">Harsh Bika</a>
-                <div class="header-inquiry">
-                    <a href="mailto:hello@harshbika.com" class="inquiry-btn">
-                        Work Inquiry
-                    </a>
-                </div>
             </div>
             <div class="work-grid" role="list" aria-label="Logo projects"></div>
         </div>
