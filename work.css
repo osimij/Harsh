@@ -831,6 +831,8 @@ html.work-route-detail #detail-view {
         grid-area: social;
         align-self: start;
         justify-self: end;
+        display: flex;
+        flex-wrap: wrap;
         position: static;
         left: auto;
         bottom: auto;
@@ -898,18 +900,22 @@ html.work-route-detail #detail-view {
     }
 
     .work-page {
-        padding-top: 72px;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
     }
 
     .corner-links {
-        top: 20px;
+        top: calc(env(safe-area-inset-top, 0px) + 16px);
         left: 20px;
     }
 
     .work-sidebar-panel {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "toggle social"
+            "filters filters";
+        align-items: center;
+        width: 100%;
         gap: 10px;
     }
 
@@ -917,11 +923,35 @@ html.work-route-detail #detail-view {
         display: block;
     }
 
+    .sidebar-toggle {
+        grid-area: toggle;
+        margin-bottom: 0;
+    }
+
+    .sidebar-social {
+        grid-area: social;
+        justify-self: start;
+        align-self: center;
+        margin-top: 0;
+        padding-left: 0;
+        gap: 8px;
+    }
+
+    .sidebar-social a {
+        width: 38px;
+        height: 38px;
+    }
+
+    .work-sidebar {
+        grid-area: filters;
+        width: 100%;
+    }
+
     .work-main-head {
         grid-template-columns: 1fr;
         justify-items: start;
         gap: 12px;
-        margin-top: 28px;
+        margin-top: 20px;
     }
 
     .work-main-head .header-wordmark,

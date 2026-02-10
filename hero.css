@@ -383,9 +383,16 @@ a {
    MOBILE LAYOUT TUNING (< 768px)
    ============================================ */
 @media (max-width: 767px) {
+    .hero {
+        padding: 0;
+    }
+
     .main {
-        grid-template-rows: auto 1fr;
-        padding: 20px 0 20px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        height: 100%;
+        padding: calc(env(safe-area-inset-top, 0px) + 16px) 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
     }
 
     /* Remove profile + about copy on mobile main screen */
@@ -394,27 +401,32 @@ a {
     }
 
     .nav {
-        top: 20px;
-        left: 20px;
+        position: static;
+        align-self: flex-start;
+        margin: 0 20px 12px;
     }
 
     /* Keep particle area centered, grid fixed to bottom */
     .logos-section {
-        justify-content: flex-start;
+        flex: 1 1 auto;
+        justify-content: space-between;
         align-items: center;
         min-height: 0;
+        padding: 0 20px;
     }
 
     .main-logo {
         display: flex;
         align-items: center;
         justify-content: center;
-        flex: 1 1 auto;
-        min-height: 0;
+        width: 100%;
+        flex: 1 1 0;
+        min-height: clamp(180px, 42dvh, 420px);
     }
 
     .logo-grid {
-        margin-top: auto;
+        width: min(100%, 560px);
+        margin-top: 12px;
         margin-bottom: 0;
     }
 
@@ -531,6 +543,22 @@ a {
 
     .logo-grid {
         width: 100%;
+    }
+
+    .main {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    }
+
+    .nav {
+        margin: 0 12px 10px;
+    }
+
+    .logos-section {
+        padding: 0 12px;
+    }
+
+    .main-logo {
+        min-height: clamp(150px, 38dvh, 320px);
     }
 }
 
