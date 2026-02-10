@@ -28,7 +28,7 @@
     --work-main-max: 1220px;
     --work-card-width: clamp(260px, 24vw, 390px);
     --sidebar-width: clamp(108px, 10vw, 148px);
-    --sidebar-gap: clamp(28px, 4vw, 80px);
+    --sidebar-gap: clamp(36px, 4vw, 80px);
     --work-fixed-left: clamp(24px, 3.4vw, 56px);
     --work-filter-top: clamp(88px, 9vw, 132px);
     --work-nav-top: clamp(22px, 2.8vw, 38px);
@@ -90,7 +90,7 @@ a {
     font-size: 16px;
     font-weight: 400;
     letter-spacing: -0.3px;
-    text-transform: uppercase;
+    text-transform: none;
     color: var(--work-text);
     opacity: 1;
     line-height: 1;
@@ -173,7 +173,7 @@ html.work-route-detail #detail-view {
     font-size: clamp(14.4px, 1.6vw, 22.4px);
     font-weight: 500;
     letter-spacing: clamp(-0.28px, -0.02vw, -0.16px);
-    text-transform: uppercase;
+    text-transform: none;
     color: var(--work-text);
     white-space: nowrap;
 }
@@ -195,7 +195,7 @@ html.work-route-detail #detail-view {
     font-size: clamp(11px, 0.85vw, 14px);
     font-weight: 400;
     letter-spacing: clamp(-0.14px, -0.01vw, -0.08px);
-    text-transform: uppercase;
+    text-transform: none;
     color: var(--work-text);
     background: #f5f5f7;
     border: 1px solid #ebebeb;
@@ -227,8 +227,8 @@ html.work-route-detail #detail-view {
 }
 
 .work-sidebar-panel {
-    flex: 0 0 var(--sidebar-width);
-    width: var(--sidebar-width);
+    flex: 1 0 var(--sidebar-width);
+    min-width: var(--sidebar-width);
     position: sticky;
     top: 0;
     height: 100dvh;
@@ -240,7 +240,8 @@ html.work-route-detail #detail-view {
 }
 
 .work-main-panel {
-    flex: 1;
+    flex: 0 1 auto;
+    width: fit-content;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -261,7 +262,7 @@ html.work-route-detail #detail-view {
     transform: none;
     grid-column: 2;
     justify-self: center;
-    text-transform: uppercase;
+    text-transform: none;
 }
 
 .work-main-head .header-inquiry {
@@ -275,10 +276,9 @@ html.work-route-detail #detail-view {
    ============================================ */
 .work-sidebar {
     position: fixed;
-    left: var(--work-fixed-left);
+    left: 40px;
     top: var(--work-filter-top);
-    transform: none;
-    width: var(--sidebar-width);
+    width: calc(100vw - 2 * var(--work-fixed-left) - var(--sidebar-gap) - 3 * var(--work-card-width) - 2 * var(--work-col-gap));
     order: 1;
     z-index: 55;
 }
@@ -295,7 +295,7 @@ html.work-route-detail #detail-view {
     margin-top: 0;
     padding-bottom: 0;
     position: fixed;
-    left: var(--work-fixed-left);
+    left: 40px;
     bottom: clamp(20px, 2.2vw, 32px);
     gap: 10px;
     z-index: 60;
@@ -335,8 +335,9 @@ html.work-route-detail #detail-view {
 }
 
 .sidebar-approach {
-    margin: 0 0 12px;
-    font-size: 42px;
+    margin: 0 0 24px;
+    max-width: 350px;
+    font-size: 38px;
     line-height: 1.14;
     letter-spacing: -0.02em;
     font-weight: 500;
@@ -349,12 +350,13 @@ html.work-route-detail #detail-view {
     display: block;
     position: relative;
     font-family: var(--work-font);
-    font-size: clamp(14px, 0.95vw, 16px);
+    font-size: clamp(12px, 0.95vw, 16px);
     font-weight: 470;
     letter-spacing: clamp(-0.15px, -0.01vw, -0.1px);
     color: var(--work-text);
     box-sizing: border-box;
     width: 100%;
+    max-width: 175px;
     min-height: clamp(30px, 2.1vw, 36px);
     padding: 10px 15px;
     border-radius: 7px;
@@ -746,6 +748,7 @@ html.work-route-detail #detail-view {
         position: static;
         top: auto;
         gap: 14px;
+        margin-bottom: 36px;
     }
 
     .work-main-panel {
@@ -839,7 +842,7 @@ html.work-route-detail #detail-view {
         z-index: auto;
         margin-top: 0;
         padding-left: clamp(6px, 1.5vw, 16px);
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
         gap: 10px;
     }
@@ -959,7 +962,7 @@ html.work-route-detail #detail-view {
     .sidebar-approach {
         display: block;
         margin: 0 0 14px;
-        font-size: clamp(44px, 12vw, 56px);
+        font-size: clamp(36px, 10vw, 48px);
         line-height: 1.06;
     }
 
@@ -1004,7 +1007,7 @@ html.work-route-detail #detail-view {
     }
 
     .detail-title {
-        font-size: clamp(32px, 8vw, 48px);
+        font-size: clamp(28px, 7vw, 40px);
         margin-bottom: 32px;
     }
 

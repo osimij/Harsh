@@ -212,7 +212,7 @@ a {
     font-weight: 400;
     line-height: normal;
     letter-spacing: -0.3px;
-    text-transform: uppercase;
+    text-transform: none;
     color: #ffffff;
     border: 0;
     opacity: 1;
