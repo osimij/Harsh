@@ -455,16 +455,6 @@
             updateSidebarActiveState(activeFilter);
         });
 
-        // On phone layouts, collapse filters after a selection so content returns immediately.
-        const isPhone = window.matchMedia('(max-width: 640px)').matches;
-        if (isPhone) {
-            const sidebar = galleryView.querySelector('.work-sidebar');
-            const toggle = galleryView.querySelector('.sidebar-toggle');
-            if (sidebar && sidebar.classList.contains('sidebar--open')) {
-                sidebar.classList.remove('sidebar--open');
-                if (toggle) toggle.setAttribute('aria-expanded', 'false');
-            }
-        }
     }
 
     function trackFilterAnimation(animation) {
@@ -603,37 +593,6 @@
         });
     }
 
-    function initMobileToggle() {
-        const toggle = galleryView.querySelector('.sidebar-toggle');
-        const sidebar = galleryView.querySelector('.work-sidebar');
-        if (!toggle || !sidebar) return;
-
-        toggle.addEventListener('click', () => {
-            const isOpen = sidebar.classList.toggle('sidebar--open');
-            toggle.setAttribute('aria-expanded', String(isOpen));
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && sidebar.classList.contains('sidebar--open')) {
-                sidebar.classList.remove('sidebar--open');
-                toggle.setAttribute('aria-expanded', 'false');
-            }
-        });
-
-        const phoneQuery = window.matchMedia('(max-width: 640px)');
-        const resetForLargerScreens = () => {
-            if (!phoneQuery.matches) {
-                sidebar.classList.remove('sidebar--open');
-                toggle.setAttribute('aria-expanded', 'false');
-            }
-        };
-        if (typeof phoneQuery.addEventListener === 'function') {
-            phoneQuery.addEventListener('change', resetForLargerScreens);
-        } else if (typeof phoneQuery.addListener === 'function') {
-            phoneQuery.addListener(resetForLargerScreens);
-        }
-    }
-
     // ---- Resize: reposition sidebar indicator --------------------
 
     function initResizeHandler() {
@@ -665,7 +624,6 @@
         } else {
             await renderGallery();
             buildSidebar();
-            initMobileToggle();
             initResizeHandler();
         }
     } catch (err) {
