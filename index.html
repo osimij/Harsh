@@ -268,6 +268,78 @@
             let animationId = null;
             let lastTime = 0;
 
+            // Hover-repel: cursor pushes particles away. Smoothed for a soft, fluid feel.
+            const HOVER_REPEL_STRENGTH = 5.0;
+            const HOVER_REPEL_RADIUS_PX = 260;
+            const HOVER_FADE_IN_SEC = 0.18;     // ramp up when cursor enters
+            const HOVER_FADE_OUT_SEC = 0.45;    // gentle settle when cursor leaves
+            const HOVER_TRACKING_RATE = 14;     // higher = cursor follows faster
+            let hoverActive = false;
+            let hoverClientX = 0;
+            let hoverClientY = 0;
+            let hoverSmoothCx = 0;              // smoothed magnet center (clip-space, aspect-corrected)
+            let hoverSmoothCy = 0;
+            let hoverIntensity = 0;             // 0..1 fade for repel strength
+            let hoverInitialized = false;       // snap on first entry to avoid lerping from origin
+
+            function clientToMagnetClip(clientX, clientY, rect) {
+                if (!rect || !(rect.width > 0) || !(rect.height > 0)) return null;
+                const nx = (clientX - rect.left) / rect.width;
+                const ny = (clientY - rect.top) / rect.height;
+                const ax = rect.width > rect.height ? rect.height / rect.width : 1;
+                const ay = rect.height > rect.width ? rect.width / rect.height : 1;
+                return {
+                    cx: (nx * 2 - 1) / ax,
+                    cy: (1 - ny * 2) / ay,
+                    ax,
+                    ay
+                };
+            }
+
+            function updateHoverSmoothing(dt) {
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+
+                if (hoverActive) {
+                    hoverIntensity = Math.min(1, hoverIntensity + dt / HOVER_FADE_IN_SEC);
+                    const target = clientToMagnetClip(hoverClientX, hoverClientY, rect);
+                    if (target) {
+                        if (!hoverInitialized) {
+                            hoverSmoothCx = target.cx;
+                            hoverSmoothCy = target.cy;
+                            hoverInitialized = true;
+                        } else {
+                            const k = 1 - Math.exp(-HOVER_TRACKING_RATE * dt);
+                            hoverSmoothCx += (target.cx - hoverSmoothCx) * k;
+                            hoverSmoothCy += (target.cy - hoverSmoothCy) * k;
+                        }
+                    }
+                } else {
+                    hoverIntensity = Math.max(0, hoverIntensity - dt / HOVER_FADE_OUT_SEC);
+                    if (hoverIntensity === 0) hoverInitialized = false;
+                }
+            }
+
+            function getHoverMagnetParams() {
+                if (hoverIntensity <= 0 || !canvas) return null;
+                const rect = canvas.getBoundingClientRect();
+                if (!(rect.width > 0) || !(rect.height > 0)) return null;
+                const ax = rect.width > rect.height ? rect.height / rect.width : 1;
+                const ay = rect.height > rect.width ? rect.width / rect.height : 1;
+
+                return {
+                    enabled: true,
+                    mode: 'repel',
+                    centerX: hoverSmoothCx,
+                    centerY: hoverSmoothCy,
+                    radiusClipX: (HOVER_REPEL_RADIUS_PX * 2) / rect.width / ax,
+                    radiusClipY: (HOVER_REPEL_RADIUS_PX * 2) / rect.height / ay,
+                    strength: HOVER_REPEL_STRENGTH * hoverIntensity,
+                    zoom: CONFIG.zoom,
+                    depthScale: CONFIG.depthVariance
+                };
+            }
+
             // Logo data loaded from manifest
             let logoManifest = [];
             let svgStrings = [];
@@ -492,6 +564,24 @@
                 }
 
                 window.addEventListener('resize', handleResize);
+
+                canvas.addEventListener('pointerenter', (e) => {
+                    hoverActive = true;
+                    hoverClientX = e.clientX;
+                    hoverClientY = e.clientY;
+                });
+                canvas.addEventListener('pointermove', (e) => {
+                    hoverActive = true;
+                    hoverClientX = e.clientX;
+                    hoverClientY = e.clientY;
+                });
+                canvas.addEventListener('pointerleave', () => {
+                    hoverActive = false;
+                });
+                canvas.addEventListener('pointercancel', () => {
+                    hoverActive = false;
+                });
+
                 startAnimationLoop();
             }
 
@@ -512,6 +602,8 @@
                 function animate(currentTime) {
                     const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.05);
                     lastTime = currentTime;
+
+                    updateHoverSmoothing(deltaTime);
 
                     let morphT = 1, scatterT = 0, chaosT = 0, attractT = 1, settleT = 1;
 
@@ -543,7 +635,8 @@
                         vortexStrength: 1.5, vortexRadius: 0.7,
                         vortex1: [0.0, 0.0], vortex2: [-0.25, 0.2], vortex3: [0.3, -0.15],
                         repulseStrength: 1.2, attractStrength: 2.8,
-                        drag: 1.2, maxSpeed: 2.5
+                        drag: 1.2, maxSpeed: 2.5,
+                        magnet: getHoverMagnetParams()
                     });
 
                     const curTexIdx = globalIndex % totalLogos;
