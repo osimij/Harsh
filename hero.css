@@ -275,7 +275,7 @@ a {
     max-width: 100%;
     order: 2;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* Main Logo Display */
@@ -285,7 +285,7 @@ a {
     flex: 1;
     min-height: 0;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #particle-canvas {
