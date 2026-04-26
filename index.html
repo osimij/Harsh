@@ -40,8 +40,9 @@
             <div class="content">
                 <nav class="nav" aria-label="Primary navigation">
                     <div class="nav-left">
+                        <img src="Harsh-Logo.svg" alt="Harsh" class="nav-logo" width="28" height="28">
+                        <a href="work.html" class="nav-item">Work</a>
                         <a href="contact.html" class="nav-item">Contact</a>
-                        <a href="work.html" class="nav-item">All Work</a>
                     </div>
                 </nav>
 
@@ -271,9 +272,9 @@
             // Hover-repel: cursor pushes particles away. Smoothed for a soft, fluid feel.
             const HOVER_REPEL_STRENGTH = 5.0;
             const HOVER_REPEL_RADIUS_PX = 260;
-            const HOVER_FADE_IN_SEC = 0.18;     // ramp up when cursor enters
-            const HOVER_FADE_OUT_SEC = 0.45;    // gentle settle when cursor leaves
-            const HOVER_TRACKING_RATE = 14;     // higher = cursor follows faster
+            const HOVER_FADE_IN_SEC = 0.08;     // ramp up when cursor enters (short to keep size consistent)
+            const HOVER_FADE_OUT_SEC = 0.35;    // gentle settle when cursor leaves
+            const HOVER_TRACKING_RATE = 22;     // higher = cursor follows faster
             let hoverActive = false;
             let hoverClientX = 0;
             let hoverClientY = 0;
@@ -281,6 +282,18 @@
             let hoverSmoothCy = 0;
             let hoverIntensity = 0;             // 0..1 fade for repel strength
             let hoverInitialized = false;       // snap on first entry to avoid lerping from origin
+            let canvasInnerScale = 1.0;         // compensates renderer zoom when canvas bleeds out
+
+            // Read --canvas-bleed (a percentage like "8%") from .main-logo and
+            // return the per-side bleed as a fraction. JS uses this to size
+            // the WebGL pixel buffer and to compensate the renderer zoom so
+            // the visible logo stays the same size despite the bigger canvas.
+            function getCanvasBleedFraction() {
+                if (!canvas || !canvas.parentElement) return 0;
+                const raw = getComputedStyle(canvas.parentElement).getPropertyValue('--canvas-bleed');
+                const pct = parseFloat(raw);
+                return Number.isFinite(pct) ? pct / 100 : 0;
+            }
 
             function clientToMagnetClip(clientX, clientY, rect) {
                 if (!rect || !(rect.width > 0) || !(rect.height > 0)) return null;
@@ -320,22 +333,39 @@
                 }
             }
 
-            function getHoverMagnetParams() {
+            function getHoverMagnetParams(settleT = 1) {
                 if (hoverIntensity <= 0 || !canvas) return null;
                 const rect = canvas.getBoundingClientRect();
                 if (!(rect.width > 0) || !(rect.height > 0)) return null;
                 const ax = rect.width > rect.height ? rect.height / rect.width : 1;
                 const ay = rect.height > rect.width ? rect.width / rect.height : 1;
 
+                // Match the renderer's posNorm so the magnet's coord frame aligns
+                // with where particles are visually drawn. Without this, the cursor
+                // appears offset from the actual repel center (worse near edges).
+                const dvc = Math.max(0, Math.min(1, CONFIG.depthVariance));
+                const posNorm = 0.985 / (1.0 + dvc * 0.3);
+                const invPosNorm = 1.0 / posNorm;
+
+                // The shader pushes particles each frame, then a lock-to-target force
+                // pulls them back. In steady state the lock is strong so the hole sits
+                // at a small equilibrium. During transitions the lock weakens, which
+                // would balloon the hole. Mirror the shader's lockFade curve and dampen
+                // the magnet during low-lock windows — but keep a healthy floor so
+                // hovering during a deform still pushes particles visibly.
+                const t = Math.max(0, Math.min(1, (settleT - 0.35) / 0.65));
+                const lockFade = t * t * (3 - 2 * t);
+                const settleScale = Math.max(0.55, lockFade);
+
                 return {
                     enabled: true,
                     mode: 'repel',
-                    centerX: hoverSmoothCx,
-                    centerY: hoverSmoothCy,
-                    radiusClipX: (HOVER_REPEL_RADIUS_PX * 2) / rect.width / ax,
-                    radiusClipY: (HOVER_REPEL_RADIUS_PX * 2) / rect.height / ay,
-                    strength: HOVER_REPEL_STRENGTH * hoverIntensity,
-                    zoom: CONFIG.zoom,
+                    centerX: hoverSmoothCx * invPosNorm,
+                    centerY: hoverSmoothCy * invPosNorm,
+                    radiusClipX: ((HOVER_REPEL_RADIUS_PX * 2) / rect.width / ax) * invPosNorm,
+                    radiusClipY: ((HOVER_REPEL_RADIUS_PX * 2) / rect.height / ay) * invPosNorm,
+                    strength: HOVER_REPEL_STRENGTH * hoverIntensity * settleScale,
+                    zoom: CONFIG.zoom * canvasInnerScale,
                     depthScale: CONFIG.depthVariance
                 };
             }
@@ -489,9 +519,12 @@
                     rect = container.getBoundingClientRect();
                 }
 
+                const bleedFrac = getCanvasBleedFraction();
+                const factor = 1 + 2 * bleedFrac;
+                canvasInnerScale = 1 / factor;
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
+                canvas.width = rect.width * factor * dpr;
+                canvas.height = rect.height * factor * dpr;
 
                 renderer = new Renderer(canvas);
                 if (!renderer.gl) {
@@ -503,7 +536,7 @@
 
                 renderer.settings.glowIntensity = CONFIG.glowIntensity;
                 renderer.settings.depthVariance = CONFIG.depthVariance;
-                renderer.settings.zoom = CONFIG.zoom;
+                renderer.settings.zoom = CONFIG.zoom * canvasInnerScale;
                 renderer.settings.userSize = CONFIG.particleSize;
                 renderer.settings.useColorOverride = true;
                 const hexToRgb = (hex) => {
@@ -565,20 +598,23 @@
 
                 window.addEventListener('resize', handleResize);
 
-                canvas.addEventListener('pointerenter', (e) => {
+                // Pointer events fire on .main-logo (the original visible region)
+                // because the canvas itself bleeds outward with pointer-events: none.
+                const hoverEl = canvas.parentElement || canvas;
+                hoverEl.addEventListener('pointerenter', (e) => {
                     hoverActive = true;
                     hoverClientX = e.clientX;
                     hoverClientY = e.clientY;
                 });
-                canvas.addEventListener('pointermove', (e) => {
+                hoverEl.addEventListener('pointermove', (e) => {
                     hoverActive = true;
                     hoverClientX = e.clientX;
                     hoverClientY = e.clientY;
                 });
-                canvas.addEventListener('pointerleave', () => {
+                hoverEl.addEventListener('pointerleave', () => {
                     hoverActive = false;
                 });
-                canvas.addEventListener('pointercancel', () => {
+                hoverEl.addEventListener('pointercancel', () => {
                     hoverActive = false;
                 });
 
@@ -589,9 +625,13 @@
                 if (!canvas || !renderer) return;
                 const container = canvas.parentElement;
                 const rect = container.getBoundingClientRect();
+                const bleedFrac = getCanvasBleedFraction();
+                const factor = 1 + 2 * bleedFrac;
+                canvasInnerScale = 1 / factor;
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
+                canvas.width = rect.width * factor * dpr;
+                canvas.height = rect.height * factor * dpr;
+                renderer.settings.zoom = CONFIG.zoom * canvasInnerScale;
             }
 
             // ── Animation loop ──────────────────────────
@@ -636,7 +676,7 @@
                         vortex1: [0.0, 0.0], vortex2: [-0.25, 0.2], vortex3: [0.3, -0.15],
                         repulseStrength: 1.2, attractStrength: 2.8,
                         drag: 1.2, maxSpeed: 2.5,
-                        magnet: getHoverMagnetParams()
+                        magnet: getHoverMagnetParams(settleT)
                     });
 
                     const curTexIdx = globalIndex % totalLogos;

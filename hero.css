@@ -212,7 +212,7 @@ a {
     font-weight: 400;
     line-height: normal;
     letter-spacing: -0.3px;
-    text-transform: none;
+    text-transform: uppercase;
     color: #ffffff;
     border: 0;
     opacity: 1;
@@ -222,6 +222,16 @@ a {
 .nav-active {
     opacity: 1;
     white-space: nowrap;
+}
+
+.nav-logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 1px;
+    margin-right: 4px;
+    filter: brightness(0) invert(1);
 }
 
 .hero-socials {
@@ -286,14 +296,19 @@ a {
     min-height: 0;
     position: relative;
     overflow: visible;
+    /* Particle canvas bleeds outward by this percentage on each side
+       so repelled particles don't get cropped at the edges. JS reads
+       this value to size the WebGL drawing buffer and compensate zoom. */
+    --canvas-bleed: 8%;
 }
 
 #particle-canvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: calc(var(--canvas-bleed, 0%) * -1);
+    left: calc(var(--canvas-bleed, 0%) * -1);
+    width: calc(100% + var(--canvas-bleed, 0%) * 2);
+    height: calc(100% + var(--canvas-bleed, 0%) * 2);
+    pointer-events: none;
 }
 
 /* ============================================
