@@ -185,7 +185,7 @@ a {
    ============================================ */
 .nav {
     position: fixed;
-    top: 40px;
+    top: 20px;
     left: 40px;
     z-index: 30;
     display: flex;
@@ -208,7 +208,7 @@ a {
 .nav-item {
     display: inline-block;
     padding: 0;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 400;
     line-height: normal;
     letter-spacing: -0.3px;
@@ -231,6 +231,51 @@ a {
     flex-shrink: 0;
     border-radius: 1px;
     margin-right: 4px;
+    filter: brightness(0) invert(1);
+}
+
+.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 14px var(--spacing-page) 0 var(--spacing-page);
+    color: #ffffff;
+    pointer-events: none;
+}
+
+.site-nav-logo-link,
+.site-nav-link {
+    pointer-events: auto;
+}
+
+.site-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: clamp(24px, 3vw, 48px);
+}
+
+.site-nav-link {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16.5px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.site-nav-logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 1px;
     filter: brightness(0) invert(1);
 }
 
@@ -421,6 +466,14 @@ a {
         margin: 0 20px 12px;
     }
 
+    .site-nav {
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
+    }
+
+    .site-nav-links {
+        gap: 20px;
+    }
+
     /* Keep particle area centered, grid fixed to bottom */
     .logos-section {
         flex: 1 1 auto;
@@ -566,6 +619,15 @@ a {
 
     .nav {
         margin: 0 12px 10px;
+    }
+
+    .site-nav {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .site-nav-links {
+        gap: 16px;
     }
 
     .logos-section {
@@ -807,6 +869,12 @@ a {
 
 /* Focus states for keyboard navigation */
 .nav-item:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.site-nav-logo-link:focus-visible,
+.site-nav-link:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }

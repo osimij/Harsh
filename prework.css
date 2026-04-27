@@ -187,6 +187,10 @@ ul {
     pointer-events: none;
 }
 
+.prework-header.padding-1 {
+    padding-top: 14px;
+}
+
 .prework-header a,
 .prework-header li,
 .prework-header h1 {
@@ -219,15 +223,16 @@ ul {
 
 .header-nav {
     display: flex;
-    gap: 0.555556vw;
+    justify-content: flex-end;
+    gap: clamp(24px, 3vw, 48px);
 }
 
 @media (max-width: 1023px) {
-    .header-nav { gap: 1.04167vw; }
-    .header-nav { width: 32.5926vw; }
+    .header-nav { gap: 20px; }
+    .header-nav { width: auto; }
 }
 @media (min-width: 768px) {
-    .header-nav { width: 32.5926vw; }
+    .header-nav { width: auto; }
 }
 
 .nav-item a {
@@ -236,8 +241,8 @@ ul {
     text-transform: uppercase;
 }
 
-.nav-about a {
-    text-align: start;
+.nav-item {
+    width: auto !important;
 }
 
 .nav-item .nav-shop-link {

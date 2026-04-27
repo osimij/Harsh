@@ -582,16 +582,8 @@
                     </a>
                     <nav aria-label="Primary navigation">
                         <ul class="case-header-nav">
-                            <li class="case-nav-item case-span-w-1 case-nav-hide-mobile">
-                                <a href="index.html#about">about</a>
-                            </li>
                             <li class="case-nav-item case-span-w-1">
-                                <a href="${escapeHtml(getGalleryHref())}" class="case-work-link">
-                                    <svg class="case-nav-sep" viewBox="0 0 16 16" aria-hidden="true">
-                                        <path d="M2 13L14 3" stroke="currentColor" stroke-width="1" fill="none"/>
-                                    </svg>
-                                    <span>Work</span>
-                                </a>
+                                <a href="${escapeHtml(getGalleryHref())}">Work</a>
                             </li>
                             <li class="case-nav-item case-span-w-1 case-nav-mobile-wide">
                                 <a href="contact.html">Contact</a>
@@ -599,9 +591,6 @@
                         </ul>
                     </nav>
                     <a href="${escapeHtml(getGalleryHref())}" class="case-mobile-work-link" aria-label="Back to work">
-                        <svg class="case-nav-sep" viewBox="0 0 16 16" aria-hidden="true">
-                            <path d="M2 13L14 3" stroke="currentColor" stroke-width="1" fill="none"/>
-                        </svg>
                         <span>Work</span>
                     </a>
                 </div>

@@ -395,14 +395,17 @@ export class GPUParticleSim {
 	                        float falloff = fall * fall;
 	
 	                        // Direction in ellipse space -> back into clip space.
-	                        vec2 dirEll = dn / dist;
+	                        vec2 seedDir = rnd4.xy * 2.0 - 1.0;
+	                        vec2 centerDir = (dot(seedDir, seedDir) > 1e-6) ? normalize(seedDir) : vec2(1.0, 0.0);
+	                        vec2 dirEll = (dist > 1e-4) ? (dn / dist) : centerDir;
 	                        vec2 dirClip = dirEll * r;
 	
 	                        float base = u_magnetStrength * 0.35;
 	                        float dClip = base * falloff * u_dt * u_magnetSign;
 	                        float dSim = dClip / factor;
+	                        vec2 push = dirClip * dSim;
 	
-	                        pos.xy += dirClip * dSim;
+	                        pos.xy += push;
 	
 	                        // Keep within the sim's soft bounds
 	                        float rr = length(pos.xy);

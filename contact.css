@@ -64,7 +64,7 @@ a {
 
 .corner-links {
     position: fixed;
-    top: 40px;
+    top: 20px;
     left: 40px;
     z-index: 30;
     display: flex;
@@ -74,7 +74,7 @@ a {
 
 .corner-link {
     display: inline-block;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 400;
     letter-spacing: -0.3px;
     text-transform: uppercase;
@@ -88,6 +88,62 @@ a {
     outline-offset: 2px;
 }
 
+.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 14px 40px 0 14px;
+    color: var(--contact-text);
+    pointer-events: none;
+}
+
+.site-nav-logo-link,
+.site-nav-link {
+    pointer-events: auto;
+}
+
+.site-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: clamp(24px, 3vw, 48px);
+}
+
+.site-nav-link {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16.5px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.site-nav-logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 1px;
+}
+
+.site-nav-logo-link:focus-visible,
+.site-nav-link:focus-visible {
+    outline: 2px solid var(--contact-text);
+    outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .site-nav-logo {
+        filter: brightness(0) invert(1);
+    }
+}
+
 .contact-main {
     position: relative;
     min-height: 100vh;
@@ -98,7 +154,7 @@ a {
 
 .contact-meta {
     position: fixed;
-    top: 40px;
+    top: 52px;
     left: 40px;
     right: 40px;
     z-index: 20;
@@ -297,6 +353,14 @@ a {
         top: calc(env(safe-area-inset-top, 0px) + 16px);
         left: 20px;
         gap: 18px;
+    }
+
+    .site-nav {
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
+    }
+
+    .site-nav-links {
+        gap: 20px;
     }
 
     .contact-meta {

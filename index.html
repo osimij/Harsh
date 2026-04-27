@@ -12,7 +12,7 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css">
+    <link rel="stylesheet" href="hero.css?v=nav-spacing-20260427">
 </head>
 <body>
     <!-- Splash Screen Overlay -->
@@ -38,11 +38,13 @@
         <div class="main">
             <!-- Left Column: Introduction & Navigation -->
             <div class="content">
-                <nav class="nav" aria-label="Primary navigation">
-                    <div class="nav-left">
-                        <img src="Harsh-Logo.svg" alt="Harsh" class="nav-logo" width="28" height="28">
-                        <a href="work.html" class="nav-item">Work</a>
-                        <a href="contact.html" class="nav-item">Contact</a>
+                <nav class="site-nav" aria-label="Primary navigation">
+                    <a href="index.html" class="site-nav-logo-link" aria-label="Home">
+                        <img src="Harsh-Logo.svg" alt="Harsh" class="site-nav-logo" width="28" height="28">
+                    </a>
+                    <div class="site-nav-links">
+                        <a href="work.html" class="site-nav-link">Work</a>
+                        <a href="contact.html" class="site-nav-link">Contact</a>
                     </div>
                 </nav>
 
@@ -271,7 +273,8 @@
 
             // Hover-repel: cursor pushes particles away. Smoothed for a soft, fluid feel.
             const HOVER_REPEL_STRENGTH = 5.0;
-            const HOVER_REPEL_RADIUS_PX = 260;
+            const HOVER_REPEL_RADIUS_MAX_PX = 320;
+            const HOVER_REPEL_RADIUS_RATIO = 0.42;
             const HOVER_FADE_IN_SEC = 0.08;     // ramp up when cursor enters (short to keep size consistent)
             const HOVER_FADE_OUT_SEC = 0.35;    // gentle settle when cursor leaves
             const HOVER_TRACKING_RATE = 22;     // higher = cursor follows faster
@@ -309,6 +312,15 @@
                 };
             }
 
+            function getHoverRepelRadiusPx(rect) {
+                const shortestSide = Math.min(rect.width, rect.height);
+                if (!(shortestSide > 0)) return HOVER_REPEL_RADIUS_MAX_PX;
+
+                // Keep the field big enough to feel soft, but not so large that
+                // hovering one point pushes the entire logo off its canvas.
+                return Math.max(120, Math.min(HOVER_REPEL_RADIUS_MAX_PX, shortestSide * HOVER_REPEL_RADIUS_RATIO));
+            }
+
             function updateHoverSmoothing(dt) {
                 if (!canvas) return;
                 const rect = canvas.getBoundingClientRect();
@@ -330,6 +342,23 @@
                 } else {
                     hoverIntensity = Math.max(0, hoverIntensity - dt / HOVER_FADE_OUT_SEC);
                     if (hoverIntensity === 0) hoverInitialized = false;
+                }
+            }
+
+            function syncHoverFromPointer(clientX, clientY) {
+                if (!canvas) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const isInsideCanvas =
+                    clientX >= rect.left &&
+                    clientX <= rect.right &&
+                    clientY >= rect.top &&
+                    clientY <= rect.bottom;
+
+                hoverActive = isInsideCanvas;
+                if (isInsideCanvas) {
+                    hoverClientX = clientX;
+                    hoverClientY = clientY;
                 }
             }
 
@@ -356,14 +385,15 @@
                 const t = Math.max(0, Math.min(1, (settleT - 0.35) / 0.65));
                 const lockFade = t * t * (3 - 2 * t);
                 const settleScale = Math.max(0.55, lockFade);
+                const radiusPx = getHoverRepelRadiusPx(rect);
 
                 return {
                     enabled: true,
                     mode: 'repel',
                     centerX: hoverSmoothCx * invPosNorm,
                     centerY: hoverSmoothCy * invPosNorm,
-                    radiusClipX: ((HOVER_REPEL_RADIUS_PX * 2) / rect.width / ax) * invPosNorm,
-                    radiusClipY: ((HOVER_REPEL_RADIUS_PX * 2) / rect.height / ay) * invPosNorm,
+                    radiusClipX: ((radiusPx * 2) / rect.width / ax) * invPosNorm,
+                    radiusClipY: ((radiusPx * 2) / rect.height / ay) * invPosNorm,
                     strength: HOVER_REPEL_STRENGTH * hoverIntensity * settleScale,
                     zoom: CONFIG.zoom * canvasInnerScale,
                     depthScale: CONFIG.depthVariance
@@ -598,23 +628,20 @@
 
                 window.addEventListener('resize', handleResize);
 
-                // Pointer events fire on .main-logo (the original visible region)
-                // because the canvas itself bleeds outward with pointer-events: none.
-                const hoverEl = canvas.parentElement || canvas;
-                hoverEl.addEventListener('pointerenter', (e) => {
-                    hoverActive = true;
-                    hoverClientX = e.clientX;
-                    hoverClientY = e.clientY;
-                });
-                hoverEl.addEventListener('pointermove', (e) => {
-                    hoverActive = true;
-                    hoverClientX = e.clientX;
-                    hoverClientY = e.clientY;
-                });
-                hoverEl.addEventListener('pointerleave', () => {
+                // The canvas intentionally bleeds past .main-logo so edge particles
+                // do not get clipped. Track the full canvas rectangle from the document
+                // so the visible edges repel too, while keeping the canvas itself
+                // pointer-events:none so the logo grid remains clickable.
+                document.addEventListener('pointermove', (e) => {
+                    syncHoverFromPointer(e.clientX, e.clientY);
+                }, { passive: true });
+                document.addEventListener('pointerleave', () => {
                     hoverActive = false;
-                });
-                hoverEl.addEventListener('pointercancel', () => {
+                }, { passive: true });
+                document.addEventListener('pointercancel', () => {
+                    hoverActive = false;
+                }, { passive: true });
+                window.addEventListener('blur', () => {
                     hoverActive = false;
                 });
 

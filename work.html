@@ -19,7 +19,7 @@
             }
         })();
     </script>
-    <link rel="stylesheet" href="work.css">
+    <link rel="stylesheet" href="work.css?v=nav-spacing-20260427">
 </head>
 <body>
     <!-- Case-study preloader: visible on initial detail page load until media is at least half-loaded -->
@@ -32,9 +32,14 @@
         </div>
     </div>
 
-    <nav class="corner-links" aria-label="Primary navigation">
-        <a href="contact.html" class="corner-link">Contact</a>
-        <a href="index.html" class="corner-link">Home</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html" class="site-nav-logo-link" aria-label="Home">
+            <img src="Harsh-Logo.svg" alt="Harsh" class="site-nav-logo" width="28" height="28">
+        </a>
+        <div class="site-nav-links">
+            <a href="work.html" class="site-nav-link">Work</a>
+            <a href="contact.html" class="site-nav-link">Contact</a>
+        </div>
     </nav>
 
     <!-- Gallery View -->
@@ -83,6 +88,6 @@
     </main>
 
     <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
-    <script src="js/work.js"></script>
+    <script src="js/work.js?v=nav-spacing-20260427"></script>
 </body>
 </html>
