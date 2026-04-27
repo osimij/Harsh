@@ -265,7 +265,7 @@ export class Renderer {
                     float ndcLen = length(ndc);
                     vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
                     float chromaRadius = clamp(ndcLen, 0.0, 1.0);
-                    float chromaScale = 0.2 + 0.8 * (chromaRadius * chromaRadius);
+                    float chromaScale = 0.7 + 0.3 * chromaRadius;
                     float amt = u_chromaticShift * 0.95 * chromaScale;
                     vec2 dir120 = vec2(
                         -0.5 * dir.x - 0.8660254 * dir.y,
@@ -278,7 +278,7 @@ export class Renderer {
                     chromaOffsetR = dir * amt;
                     chromaOffsetG = dir120 * (amt * 0.92);
                     chromaOffsetB = dir240 * amt;
-                    chromaCenterWhite = pow(1.0 - chromaRadius, 1.35) * 0.24;
+                    chromaCenterWhite = pow(1.0 - chromaRadius, 1.35) * 0.06;
                 }
 
                 if (u_spriteEnabled > 0.5) {
@@ -683,7 +683,7 @@ export class Renderer {
                     float ndcLen = length(ndc);
                     vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
                     float chromaRadius = clamp(ndcLen, 0.0, 1.0);
-                    float chromaScale = 0.2 + 0.8 * (chromaRadius * chromaRadius);
+                    float chromaScale = 0.7 + 0.3 * chromaRadius;
                     float amt = u_chromaticShift * 0.95 * chromaScale;
                     vec2 dir120 = vec2(
                         -0.5 * dir.x - 0.8660254 * dir.y,
@@ -696,7 +696,7 @@ export class Renderer {
                     chromaOffsetR = dir * amt;
                     chromaOffsetG = dir120 * (amt * 0.92);
                     chromaOffsetB = dir240 * amt;
-                    chromaCenterWhite = pow(1.0 - chromaRadius, 1.35) * 0.24;
+                    chromaCenterWhite = pow(1.0 - chromaRadius, 1.35) * 0.06;
                 }
 
                 if (u_spriteEnabled > 0.5) {
@@ -1076,12 +1076,33 @@ export class Renderer {
             uniform sampler2D u_scene;
             uniform sampler2D u_bloom;
             uniform float u_bloomIntensity;
+            uniform float u_caStrength;
             out vec4 fragColor;
             void main() {
-                vec4 scene = texture(u_scene, v_uv);
-                vec3 bloom = texture(u_bloom, v_uv).rgb;
-                vec3 col = scene.rgb + bloom * u_bloomIntensity;
-                fragColor = vec4(col, scene.a);
+                vec3 col;
+                float aOut;
+                if (u_caStrength > 1e-4) {
+                    // Radial chromatic aberration: shift R, G, B channels
+                    // along the vector from screen center, intensity grows
+                    // with radius. Classic camera-style RGB fringe.
+                    vec2 dir = v_uv - vec2(0.5);
+                    float r2 = dot(dir, dir);
+                    vec2 ofs = dir * (u_caStrength * (0.6 + 1.4 * r2));
+                    vec4 sR = texture(u_scene, v_uv + ofs);
+                    vec4 sG = texture(u_scene, v_uv);
+                    vec4 sB = texture(u_scene, v_uv - ofs);
+                    vec3 bR = texture(u_bloom, v_uv + ofs * 0.6).rgb;
+                    vec3 bG = texture(u_bloom, v_uv).rgb;
+                    vec3 bB = texture(u_bloom, v_uv - ofs * 0.6).rgb;
+                    col = vec3(sR.r, sG.g, sB.b) + vec3(bR.r, bG.g, bB.b) * u_bloomIntensity;
+                    aOut = max(sR.a, max(sG.a, sB.a));
+                } else {
+                    vec4 scene = texture(u_scene, v_uv);
+                    vec3 bloom = texture(u_bloom, v_uv).rgb;
+                    col = scene.rgb + bloom * u_bloomIntensity;
+                    aOut = scene.a;
+                }
+                fragColor = vec4(col, aOut);
             }
         `;
 
@@ -1115,7 +1136,8 @@ export class Renderer {
 
             uComp_scene: gl.getUniformLocation(progComposite, 'u_scene'),
             uComp_bloom: gl.getUniformLocation(progComposite, 'u_bloom'),
-            uComp_intensity: gl.getUniformLocation(progComposite, 'u_bloomIntensity')
+            uComp_intensity: gl.getUniformLocation(progComposite, 'u_bloomIntensity'),
+            uComp_ca: gl.getUniformLocation(progComposite, 'u_caStrength')
         };
     }
 
@@ -2116,6 +2138,9 @@ export class Renderer {
         gl.bindTexture(gl.TEXTURE_2D, post.bloomTex1);
         gl.uniform1i(post.uComp_bloom, 1);
         gl.uniform1f(post.uComp_intensity, 0.85 + (this.settings.glowIntensity ?? 0.4) * 0.65);
+        const caOn = String(this.settings.colorMode || '') === 'chromatic';
+        const caShift = Number(this.settings.chromaticShift ?? 0.07) || 0;
+        gl.uniform1f(post.uComp_ca, caOn ? caShift * 0.18 : 0);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         gl.bindVertexArray(null);

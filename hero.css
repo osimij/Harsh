@@ -37,7 +37,7 @@
     --spacing-nav-gap: 7px;
 
     /* Sizes */
-    --profile-size: 66px;
+    --profile-size: 48px;
     --profile-radius: 3px;
     --logo-cell-width: 175px;
     --logo-cell-height: 110px;
@@ -134,7 +134,7 @@ a {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 12px;
+    gap: 7.5px;
     order: 3;
     padding: 10px 20px;
     flex-shrink: 0;
@@ -164,8 +164,8 @@ a {
     font-weight: 400;
     line-height: var(--line-height-intro);
     letter-spacing: var(--letter-spacing-intro);
-    text-transform: uppercase;
     color: var(--color-text);
+    text-transform: uppercase;
 }
 
 .intro-line {
@@ -257,14 +257,20 @@ a {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: clamp(24px, 3vw, 48px);
+    gap: clamp(14px, 1.6vw, 24px);
+}
+
+.site-nav-text-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(9px, 1vw, 14px);
 }
 
 .site-nav-link {
     display: inline-block;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
-    line-height: 16.5px;
+    line-height: 19.5px;
     letter-spacing: 0;
     text-transform: uppercase;
     white-space: nowrap;
@@ -364,7 +370,7 @@ a {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(2, auto);
-    width: min(100%, 553px);
+    width: min(100%, 498px);
     margin-inline: auto;
     gap: 1px;
     padding: 1px;
@@ -471,7 +477,11 @@ a {
     }
 
     .site-nav-links {
-        gap: 20px;
+        gap: 14px;
+    }
+
+    .site-nav-text-links {
+        gap: 12px;
     }
 
     /* Keep particle area centered, grid fixed to bottom */
@@ -493,7 +503,7 @@ a {
     }
 
     .logo-grid {
-        width: min(100%, 560px);
+        width: min(100%, 504px);
         margin-top: 12px;
         margin-bottom: 0;
     }
@@ -538,7 +548,7 @@ a {
         text-align: left;
         order: unset;
         padding: 0 0 20px 0;
-        gap: var(--spacing-section);
+        gap: 7.5px;
     }
 
     .nav {
@@ -570,7 +580,7 @@ a {
     }
 
     .logo-grid {
-        max-width: min(473px, 33.6vw);
+        max-width: min(426px, 30.24vw);
     }
 
 }
@@ -584,7 +594,7 @@ a {
     }
 
     .logo-grid {
-        max-width: min(553px, 33.6vw);
+        max-width: min(498px, 30.24vw);
     }
 }
 
@@ -602,7 +612,7 @@ a {
         --spacing-page: 20px;
         --font-size-intro: 12px;
         --font-size-nav: 14px;
-        --profile-size: 56px;
+        --profile-size: 40px;
     }
 
     .intro-text {
@@ -627,7 +637,11 @@ a {
     }
 
     .site-nav-links {
-        gap: 16px;
+        gap: 12px;
+    }
+
+    .site-nav-text-links {
+        gap: 10px;
     }
 
     .logos-section {
@@ -641,71 +655,169 @@ a {
 
 /* ============================================
    ANIMATIONS
+   Smooth blur + slide + fade reveal system.
+   Uses easeOutQuart for a soft, decelerating feel.
    ============================================ */
-@keyframes fadeIn {
-    from {
+@keyframes blurFadeUp {
+    0% {
         opacity: 0;
-        transform: translateY(10px);
+        filter: blur(14px);
+        transform: translate3d(0, 24px, 0);
     }
-    to {
+    60% {
+        filter: blur(2px);
+    }
+    100% {
         opacity: 1;
-        transform: translateY(0);
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
     }
 }
 
-@keyframes logoReveal {
-    from {
+@keyframes blurFadeDown {
+    0% {
         opacity: 0;
-        transform: scale(0.95);
+        filter: blur(14px);
+        transform: translate3d(0, -20px, 0);
     }
-    to {
+    60% {
+        filter: blur(2px);
+    }
+    100% {
         opacity: 1;
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes blurFadeLeft {
+    0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform: translate3d(-28px, 0, 0);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes blurFadeRight {
+    0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform: translate3d(28px, 0, 0);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes blurScaleIn {
+    0% {
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(0.92);
+    }
+    55% {
+        filter: blur(3px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
         transform: scale(1);
     }
 }
 
-/* Initial load animations — staggered intro reveal */
-.hero.loaded .profile-image {
-    animation: fadeIn 0.6s ease forwards;
+/* Initial load — pre-animation hidden state on every animated element */
+.hero:not(.instant) .site-nav-logo,
+.hero:not(.instant) .site-nav-links,
+.hero:not(.instant) .profile-image,
+.hero:not(.instant) .intro-line,
+.hero:not(.instant) .main-logo,
+.hero:not(.instant) .logo-grid,
+.hero:not(.instant) .hero-socials a {
     opacity: 0;
-    will-change: opacity, transform;
+    will-change: opacity, transform, filter;
+}
+
+/* Easing token shared by every reveal */
+.hero.loaded .site-nav-logo,
+.hero.loaded .site-nav-links,
+.hero.loaded .profile-image,
+.hero.loaded .intro-line,
+.hero.loaded .main-logo,
+.hero.loaded .logo-grid,
+.hero.loaded .hero-socials a {
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: forwards;
+}
+
+/* Top nav — drops in from above with a soft blur */
+.hero.loaded .site-nav-logo {
+    animation: blurFadeDown 0.9s 0.05s forwards;
+}
+
+.hero.loaded .site-nav-links {
+    animation: blurFadeDown 1s 0.18s forwards;
+}
+
+/* Intro column — staggered upward reveal */
+.hero.loaded .profile-image {
+    animation: blurScaleIn 1.1s 0.25s forwards;
 }
 
 .hero.loaded .intro-line {
-    animation: fadeIn 0.5s ease forwards;
-    opacity: 0;
-    will-change: opacity, transform;
+    animation: blurFadeUp 1s forwards;
 }
 
-.hero.loaded .intro-line:nth-child(1) { animation-delay: 0.1s; }
-.hero.loaded .intro-line:nth-child(2) { animation-delay: 0.2s; }
-.hero.loaded .intro-line:nth-child(3) { animation-delay: 0.3s; }
-.hero.loaded .intro-line:nth-child(4) { animation-delay: 0.4s; }
+.hero.loaded .intro-line:nth-child(1) { animation-delay: 0.40s; }
+.hero.loaded .intro-line:nth-child(2) { animation-delay: 0.52s; }
+.hero.loaded .intro-line:nth-child(3) { animation-delay: 0.64s; }
+.hero.loaded .intro-line:nth-child(4) { animation-delay: 0.76s; }
 
-.hero.loaded .nav {
-    animation: fadeIn 0.6s ease 0.5s forwards;
-    opacity: 0;
-}
-
+/* Logo showcase — soft scale + blur reveal */
 .hero.loaded .main-logo {
-    animation: logoReveal 0.8s ease 0.1s forwards;
-    opacity: 0;
-    will-change: opacity, transform;
+    animation: blurScaleIn 1.4s 0.3s forwards;
 }
 
 .hero.loaded .logo-grid {
-    animation: fadeIn 0.6s ease 0.3s forwards;
-    opacity: 0;
+    animation: blurFadeUp 1.1s 0.6s forwards;
 }
 
-.hero.instant.loaded .profile-image,
-.hero.instant.loaded .intro-line,
-.hero.instant.loaded .nav,
-.hero.instant.loaded .main-logo,
-.hero.instant.loaded .logo-grid {
+/* Social links — slide in from the left, last */
+.hero.loaded .hero-socials a {
+    animation: blurFadeLeft 0.9s forwards;
+}
+
+.hero.loaded .hero-socials a:nth-child(1) { animation-delay: 0.95s; }
+.hero.loaded .hero-socials a:nth-child(2) { animation-delay: 1.05s; }
+.hero.loaded .hero-socials a:nth-child(3) { animation-delay: 1.15s; }
+.hero.loaded .hero-socials a:nth-child(4) { animation-delay: 1.25s; }
+
+/* Instant mode (returning visitor) — skip the choreography.
+   We only target the parent of the CTA (.site-nav-links), so the CTA's
+   rainbow animation keeps running unaffected. */
+.hero.instant .site-nav-logo,
+.hero.instant .site-nav-links,
+.hero.instant .profile-image,
+.hero.instant .intro-line,
+.hero.instant .main-logo,
+.hero.instant .logo-grid,
+.hero.instant .hero-socials a {
     animation: none;
     opacity: 1;
     transform: none;
+    filter: none;
 }
 
 /* ============================================

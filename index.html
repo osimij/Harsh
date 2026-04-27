@@ -12,7 +12,8 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css?v=nav-spacing-20260427">
+    <link rel="stylesheet" href="hero.css?v=blur-reveal-20260427">
+    <link rel="stylesheet" href="lets-work-together.css?v=lwt-reveal-20260427">
 </head>
 <body>
     <!-- Splash Screen Overlay -->
@@ -43,8 +44,11 @@
                         <img src="Harsh-Logo.svg" alt="Harsh" class="site-nav-logo" width="28" height="28">
                     </a>
                     <div class="site-nav-links">
-                        <a href="work.html" class="site-nav-link">Work</a>
-                        <a href="contact.html" class="site-nav-link">Contact</a>
+                        <div class="site-nav-text-links">
+                            <a href="work.html" class="site-nav-link">[WORK]</a>
+                            <a href="contact.html" class="site-nav-link">[CONTACT]</a>
+                        </div>
+                        <button type="button" class="site-nav-cta" data-lwt-open>Let's Work Together</button>
                     </div>
                 </nav>
 
@@ -66,8 +70,7 @@
                             <span class="text-regular">In Sanskrit, it means Joy.</span>
                         </p>
                         <p class="intro-line">
-                            <span class="text-regular">Joy by origin, Rough</span><br>
-                            <span class="text-regular">by translation.</span>
+                            <span class="text-regular">Joy by origin, Rough by translation.</span>
                         </p>
                         <p class="intro-line">
                             <span class="text-regular">I design logos and brand systems</span>
@@ -272,12 +275,12 @@
             let lastTime = 0;
 
             // Hover-repel: cursor pushes particles away. Smoothed for a soft, fluid feel.
-            const HOVER_REPEL_STRENGTH = 5.0;
-            const HOVER_REPEL_RADIUS_MAX_PX = 320;
-            const HOVER_REPEL_RADIUS_RATIO = 0.42;
-            const HOVER_FADE_IN_SEC = 0.08;     // ramp up when cursor enters (short to keep size consistent)
-            const HOVER_FADE_OUT_SEC = 0.35;    // gentle settle when cursor leaves
-            const HOVER_TRACKING_RATE = 22;     // higher = cursor follows faster
+            const HOVER_REPEL_STRENGTH = 4.4;
+            const HOVER_REPEL_RADIUS_MAX_PX = 340;
+            const HOVER_REPEL_RADIUS_RATIO = 0.46;
+            const HOVER_FADE_IN_SEC = 0.18;     // gentle ramp so the field swells in instead of popping
+            const HOVER_FADE_OUT_SEC = 0.55;    // longer settle so particles flow back, not snap
+            const HOVER_TRACKING_RATE = 13;     // softer follow so the field trails the cursor like a wake
             let hoverActive = false;
             let hoverClientX = 0;
             let hoverClientY = 0;
@@ -1007,5 +1010,6 @@
             });
         })();
     </script>
+    <script src="js/lets-work-together.js?v=lwt-native-20260427"></script>
 </body>
 </html>

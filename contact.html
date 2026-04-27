@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
     <title>Contact — Harsh Bika</title>
     <link rel="stylesheet" href="contact.css?v=nav-spacing-20260427">
-
+    <link rel="stylesheet" href="lets-work-together.css?v=lwt-native-20260427">
 </head>
 <body>
     <nav class="site-nav" aria-label="Primary navigation">
@@ -16,8 +16,11 @@
             <img src="Harsh-Logo.svg" alt="Harsh" class="site-nav-logo" width="28" height="28">
         </a>
         <div class="site-nav-links">
-            <a href="work.html" class="site-nav-link">Work</a>
-            <a href="contact.html" class="site-nav-link">Contact</a>
+            <div class="site-nav-text-links">
+                <a href="work.html" class="site-nav-link">[WORK]</a>
+                <a href="contact.html" class="site-nav-link">[CONTACT]</a>
+            </div>
+            <button type="button" class="site-nav-cta" data-lwt-open>Let's Work Together</button>
         </div>
     </nav>
 
@@ -78,5 +81,6 @@
             setInterval(updateIstTime, 15000);
         })();
     </script>
+    <script src="js/lets-work-together.js?v=lwt-native-20260427"></script>
 </body>
 </html>

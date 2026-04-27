@@ -381,32 +381,48 @@ export class GPUParticleSim {
 	                    float depth = pos.z * u_magnetDepthScale;
 	                    float scale = 1.0 - depth * 0.3;
 	                    float factor = max(1e-4, u_magnetZoom * scale);
-	
+
 	                    vec2 clipPos = pos.xy * factor;
 	                    vec2 d = clipPos - u_magnetCenter;
-	
+
 	                    // Normalize into ellipse space so the circle stays round in pixels.
 	                    vec2 r = max(vec2(1e-6), u_magnetRadius);
 	                    vec2 dn = d / r;
 	                    float dist2 = dot(dn, dn);
 	                    if (dist2 < 1.0) {
 	                        float dist = sqrt(max(1e-10, dist2));
+
+	                        // Smootherstep (cubic) falloff so the edge of the influence
+	                        // disk blends imperceptibly into the rest of the field.
 	                        float fall = 1.0 - dist;
-	                        float falloff = fall * fall;
-	
+	                        float falloff = fall * fall * (3.0 - 2.0 * fall);
+
+	                        // Soft dead-zone right at the cursor: avoids a singular
+	                        // direction when a particle sits exactly under the pointer
+	                        // and prevents the visible "pinch" at center.
+	                        float centerEase = smoothstep(0.0, 0.18, dist);
+	                        falloff *= centerEase;
+
 	                        // Direction in ellipse space -> back into clip space.
 	                        vec2 seedDir = rnd4.xy * 2.0 - 1.0;
 	                        vec2 centerDir = (dot(seedDir, seedDir) > 1e-6) ? normalize(seedDir) : vec2(1.0, 0.0);
 	                        vec2 dirEll = (dist > 1e-4) ? (dn / dist) : centerDir;
 	                        vec2 dirClip = dirEll * r;
-	
-	                        float base = u_magnetStrength * 0.35;
+
+	                        // Position push gives instant response so the cursor "feels" connected.
+	                        float base = u_magnetStrength * 0.22;
 	                        float dClip = base * falloff * u_dt * u_magnetSign;
 	                        float dSim = dClip / factor;
 	                        vec2 push = dirClip * dSim;
-	
 	                        pos.xy += push;
-	
+
+	                        // Velocity impulse adds momentum so particles trail behind
+	                        // the cursor and flow back smoothly when it moves away,
+	                        // instead of snapping. This is what reads as "fluid".
+	                        float velBase = u_magnetStrength * 0.55;
+	                        float velImpulse = velBase * falloff * u_dt * u_magnetSign;
+	                        vel.xy += dirClip * (velImpulse / factor);
+
 	                        // Keep within the sim's soft bounds
 	                        float rr = length(pos.xy);
 	                        if (rr > bound) {
