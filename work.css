@@ -92,6 +92,7 @@ body {
     text-rendering: optimizeLegibility;
     min-height: 100vh;
     min-height: 100dvh;
+    overflow-x: hidden;
     transition: background 0.25s ease, color 0.25s ease;
 }
 
@@ -1957,6 +1958,18 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
         width: 100%;
         grid-template-columns: 1fr;
         row-gap: 22px;
+    }
+
+    .site-nav-logo,
+    .site-nav-links,
+    .work-sidebar-panel,
+    .work-grid,
+    .work-cell,
+    .detail-page {
+        animation: none;
+        opacity: 1;
+        filter: none;
+        transform: none;
     }
 
     .work-cell__info {

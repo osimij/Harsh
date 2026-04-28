@@ -80,6 +80,56 @@
     }
 }
 
+/* Shared mobile nav guardrails.
+   Every page carries this same top nav, and on narrow phones the CTA was
+   wide enough to create horizontal overflow. Keep the desktop composition,
+   but make the mobile header fit the viewport instead of stretching it. */
+@media (max-width: 720px) {
+    .site-nav {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+        overflow: hidden;
+        gap: 10px;
+    }
+
+    .site-nav-logo-link {
+        flex: 0 0 auto;
+    }
+
+    .site-nav-links {
+        min-width: 0;
+        flex: 0 1 auto;
+        gap: clamp(8px, 2.2vw, 12px);
+    }
+
+    .site-nav-text-links {
+        min-width: 0;
+        gap: clamp(8px, 2vw, 10px);
+    }
+
+    .site-nav-link {
+        font-size: 12px;
+        line-height: 1.35;
+    }
+
+    .site-nav-cta {
+        flex: 0 1 auto;
+        max-width: min(132px, 33vw);
+        min-width: 0;
+        justify-content: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 640px) {
+    .site-nav-cta {
+        display: none;
+    }
+}
+
 /* ============================================
    PANEL — anchored, animated from button rect
    ============================================ */

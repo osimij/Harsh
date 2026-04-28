@@ -72,6 +72,7 @@
 html, body {
     height: 100%;
     overflow: hidden;
+    max-width: 100%;
 }
 
 body {
@@ -1007,6 +1008,35 @@ input[type="range"]::-moz-range-thumb {
     
     .header-stats {
         display: none;
+    }
+
+    .header {
+        padding: 54px 12px 8px;
+        min-height: 108px;
+    }
+
+    .header-right {
+        min-width: 0;
+        gap: var(--space-sm);
+    }
+
+    .header-upload-btn {
+        max-width: 46vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .upload-zone {
+        inset: 24px 16px;
+        border-radius: 14px;
+    }
+
+    .upload-content {
+        padding: var(--space-lg);
+    }
+
+    .upload-title {
+        font-size: clamp(1rem, 5vw, var(--text-xl));
     }
 
     .forge-nav {

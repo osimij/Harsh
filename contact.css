@@ -37,6 +37,8 @@
 html,
 body {
     min-height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 body {
@@ -534,13 +536,27 @@ a {
 
     .contact-title {
         width: min(100%, 640px);
+        max-width: 100%;
         font-size: clamp(21px, 6.4vw, 32px);
         line-height: 1.15;
+        overflow-wrap: break-word;
     }
 
     .contact-btn {
         width: clamp(150px, 52vw, 220px);
         font-size: clamp(13px, 3.8vw, 16px);
+    }
+
+    .site-nav-logo,
+    .site-nav-links,
+    .contact-center,
+    .contact-meta,
+    .contact-intro,
+    .contact-socials a {
+        animation: none;
+        opacity: 1;
+        filter: none;
+        transform: none;
     }
 }
 

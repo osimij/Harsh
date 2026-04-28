@@ -65,6 +65,7 @@ html {
     -webkit-text-size-adjust: 100%;
     height: 100%;
     overflow: hidden;
+    max-width: 100%;
 }
 
 body {
@@ -77,6 +78,7 @@ body {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+    max-width: 100%;
 }
 
 img {
@@ -510,6 +512,16 @@ a {
 
     .hero-socials {
         display: none;
+    }
+
+    .hero:not(.instant) .site-nav-logo,
+    .hero:not(.instant) .site-nav-links,
+    .hero:not(.instant) .main-logo,
+    .hero:not(.instant) .logo-grid {
+        animation: none;
+        opacity: 1;
+        filter: none;
+        transform: none;
     }
 }
 
