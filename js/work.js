@@ -389,6 +389,7 @@
             detailCleanup();
             detailCleanup = null;
         }
+        document.querySelectorAll('body > .case-thumb-nav').forEach(nav => nav.remove());
     }
 
     // ---- Gallery ------------------------------------------------
@@ -663,6 +664,11 @@
             <div class="case-transition-shade" data-transition-shade aria-hidden="true"></div>
         `;
 
+        const thumbNav = detailView.querySelector('.case-thumb-nav');
+        if (thumbNav) {
+            document.body.appendChild(thumbNav);
+        }
+
         detailView.dataset.previousProject = adjacent.previous ? adjacent.previous.id : '';
         detailView.dataset.nextProject = adjacent.next ? adjacent.next.id : '';
     }
@@ -741,8 +747,9 @@
 
     function initCaseStudyInteractions() {
         const galleryItems = Array.from(detailView.querySelectorAll('.case-g-item'));
-        const thumbs = Array.from(detailView.querySelectorAll('.case-thumb'));
-        const thumbMarker = detailView.querySelector('#case-thumb-marker');
+        const thumbNav = document.querySelector('body > .case-thumb-nav') || detailView.querySelector('.case-thumb-nav');
+        const thumbs = Array.from((thumbNav || detailView).querySelectorAll('.case-thumb'));
+        const thumbMarker = (thumbNav || detailView).querySelector('#case-thumb-marker');
         const scrollPct = detailView.querySelector('#case-scroll-pct');
         const transitionCleanup = initProjectTransition();
         let activeFrame = null;
@@ -809,6 +816,9 @@
             window.removeEventListener('scroll', requestActiveUpdate);
             window.removeEventListener('resize', requestActiveUpdate);
             transitionCleanup();
+            if (thumbNav && thumbNav.parentElement === document.body) {
+                thumbNav.remove();
+            }
         };
     }
 
