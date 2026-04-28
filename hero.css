@@ -282,7 +282,7 @@ a {
     height: 28px;
     flex-shrink: 0;
     border-radius: 1px;
-    filter: brightness(0) invert(1);
+    filter: brightness(0) invert(1) !important;
 }
 
 .hero-socials {
@@ -302,7 +302,7 @@ a {
     justify-content: center;
     width: 30px;
     height: 30px;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.5);
     transition: color var(--transition-fast), transform var(--transition-fast);
 }
 

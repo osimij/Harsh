@@ -7,30 +7,22 @@
     <meta name="theme-color" content="#000000">
     <title>Prework - Harsh Bika</title>
     <link rel="stylesheet" href="prework.css?v=nav-spacing-20260427">
+    <link rel="stylesheet" href="lets-work-together.css?v=lwt-figma-20260428e">
 </head>
 <body class="margin-x-1">
 
-    <!-- ================= HEADER (fixed top bar) ================= -->
-    <header class="prework-header padding-1">
-        <div class="header-row">
-            <a href="index.html" aria-label="Back to home" class="header-logo-link">
-                <h1 class="header-logo span-w-2">Harsh Bika</h1>
-            </a>
-
-            <nav aria-label="Primary navigation">
-                <ul class="header-nav">
-                    <li class="nav-item nav-shop span-w-1">
-                        <a href="work.html" class="nav-shop-link">
-                            <span>Work</span>
-                        </a>
-                    </li>
-                    <li class="nav-item nav-playground span-w-1 nav-mobile-wide">
-                        <a href="contact.html">Contact</a>
-                    </li>
-                </ul>
-            </nav>
+    <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html" class="site-nav-logo-link" aria-label="Home">
+            <img src="Harsh-Logo.svg" alt="Harsh" class="site-nav-logo" width="28" height="28">
+        </a>
+        <div class="site-nav-links">
+            <div class="site-nav-text-links">
+                <a href="work.html" class="site-nav-link">[WORK]</a>
+                <a href="contact.html" class="site-nav-link">[CONTACT]</a>
+            </div>
+            <button type="button" class="site-nav-cta" data-lwt-open>Let's Work Together</button>
         </div>
-    </header>
+    </nav>
 
     <!-- ================= WHITE CARD (case-study section) ================= -->
     <section class="white-card span-w-screen">
@@ -312,5 +304,6 @@
     </footer>
 
     <script src="js/prework.js"></script>
+    <script src="js/lets-work-together.js?v=lwt-figma-20260428e"></script>
 </body>
 </html>

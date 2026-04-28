@@ -1082,20 +1082,29 @@ export class Renderer {
                 vec3 col;
                 float aOut;
                 if (u_caStrength > 1e-4) {
-                    // Radial chromatic aberration: shift R, G, B channels
-                    // along the vector from screen center, intensity grows
-                    // with radius. Classic camera-style RGB fringe.
+                    // Prismatic chromatic aberration: 6 wavelength taps along
+                    // the radial axis (red→orange→yellow→green→cyan→blue).
+                    // Strength is zero at center and ramps up sharply toward
+                    // the corners, so the logo core stays crisp.
                     vec2 dir = v_uv - vec2(0.5);
-                    float r2 = dot(dir, dir);
-                    vec2 ofs = dir * (u_caStrength * (0.6 + 1.4 * r2));
-                    vec4 sR = texture(u_scene, v_uv + ofs);
-                    vec4 sG = texture(u_scene, v_uv);
-                    vec4 sB = texture(u_scene, v_uv - ofs);
+                    float rad = length(dir) * 1.41421356;
+                    float falloff = smoothstep(0.28, 0.95, rad);
+                    falloff = falloff * falloff;
+                    vec2 ofs = dir * (u_caStrength * falloff * 3.5);
+                    vec4 s0 = texture(u_scene, v_uv + ofs);          // red
+                    vec4 s1 = texture(u_scene, v_uv + ofs * 0.6);    // orange
+                    vec4 s2 = texture(u_scene, v_uv + ofs * 0.25);   // yellow
+                    vec4 s3 = texture(u_scene, v_uv - ofs * 0.25);   // green
+                    vec4 s4 = texture(u_scene, v_uv - ofs * 0.6);    // cyan
+                    vec4 s5 = texture(u_scene, v_uv - ofs);          // blue
+                    float cR = (s0.r * 1.0 + s1.r * 0.75 + s2.r * 0.45) / 2.2;
+                    float cG = (s1.g * 0.45 + s2.g * 0.85 + s3.g * 0.85 + s4.g * 0.45) / 2.6;
+                    float cB = (s4.b * 0.75 + s5.b * 1.0 + s3.b * 0.45) / 2.2;
                     vec3 bR = texture(u_bloom, v_uv + ofs * 0.6).rgb;
                     vec3 bG = texture(u_bloom, v_uv).rgb;
                     vec3 bB = texture(u_bloom, v_uv - ofs * 0.6).rgb;
-                    col = vec3(sR.r, sG.g, sB.b) + vec3(bR.r, bG.g, bB.b) * u_bloomIntensity;
-                    aOut = max(sR.a, max(sG.a, sB.a));
+                    col = vec3(cR, cG, cB) + vec3(bR.r, bG.g, bB.b) * u_bloomIntensity;
+                    aOut = max(max(s0.a, s5.a), max(s2.a, s3.a));
                 } else {
                     vec4 scene = texture(u_scene, v_uv);
                     vec3 bloom = texture(u_bloom, v_uv).rgb;

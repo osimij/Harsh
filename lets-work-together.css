@@ -133,6 +133,26 @@
     opacity: 1;
 }
 
+/* Closing — the panel morphs back into the nav button. Background,
+   border, and shadow shift to match the button while the box shrinks
+   to the button's rect. Card contents fade out quickly so the panel
+   is empty for the rest of the morph. At the end, JS snap-swaps to
+   the real button — its text appears at that exact moment, with no
+   text rendered inside the panel beforehand. */
+.lwt-modal[data-closing="true"] {
+    pointer-events: none;
+    background-color: transparent;
+    border-color: rgba(127, 127, 127, 0.55);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    transition: top    0.55s cubic-bezier(0.4, 0, 0.2, 1),
+                right  0.55s cubic-bezier(0.4, 0, 0.2, 1),
+                width  0.55s cubic-bezier(0.4, 0, 0.2, 1),
+                height 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.4s ease 0.1s,
+                border-color 0.45s ease 0.1s,
+                box-shadow 0.35s ease;
+}
+
 /* ---------- Card (single-screen form, no scroll) ---------- */
 .lwt-card {
     position: relative;
@@ -144,14 +164,63 @@
     display: flex;
     flex-direction: column;
     opacity: 0;
-    /* Fast fade so the closing motion reads as "the box snaps shut",
-       not "text reflows while the box shrinks". */
+    /* Default fade-out used during open's pre-reveal phase. */
     transition: opacity 0.12s ease;
 }
 
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-card {
     opacity: 1;
     transition: opacity 0.25s ease 0.2s;
+}
+
+/* On close, fade the card content out quickly so the panel is empty
+   while it morphs into the button shape. */
+.lwt-modal[data-closing="true"] .lwt-card {
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+/* ---------- Morph label ----------
+   Anchored to the panel's top-right corner with intrinsic size — the
+   modal's top-right is locked to the trigger button's top-right, so this
+   sits exactly where the button text is, throughout the entire shrink.
+   No drifting, no offset. Becomes visible ~50ms into the close (i.e.
+   500ms before the morph completes), so the user reads "LET'S WORK
+   TOGETHER" while the panel is still shrinking into place. */
+.lwt-morph-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 0;
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 6px 14px;
+    box-sizing: border-box;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--lwt-text);
+
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+.lwt-modal[data-closing="true"] .lwt-morph-label {
+    opacity: 1;
+    /* Fully visible by ~50ms into the 550ms close, i.e. 500ms before
+       the morph completes. */
+    transition: opacity 0.05s ease;
+}
+
+.lwt-card {
+    z-index: 1;
 }
 
 /* ---------- Close (×) inside the card ---------- */
@@ -184,12 +253,12 @@
 
 /* ---------- Header ---------- */
 .lwt-title {
-    margin: 0 0 4px;
+    margin: 0 0 22px;
     padding-right: 28px;
     font-family: var(--lwt-sans);
-    font-size: 19px;
+    font-size: 22px;
     font-weight: 500;
-    line-height: 1.3;
+    line-height: 1.25;
     letter-spacing: -0.015em;
     color: var(--lwt-text);
 }
@@ -206,35 +275,43 @@
     gap: 0;
 }
 
+/* Rows stack a sentence-case label above the field. Only the
+   text-input rows (.lwt-row-line) carry an underline — the chips and
+   textarea rows have no row-level border. */
 .lwt-row {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
-    padding: 14px 0;
-    border-top: 1px solid var(--lwt-line);
+    gap: 6px;
+    padding: 18px 0 0;
+    border: 0;
 }
 
 .lwt-row:first-of-type {
-    border-top: 0;
+    padding-top: 10px;
 }
 
-/* The message row consumes whatever vertical space is left so the
-   panel reads as one continuous, fully-utilized form. */
+.lwt-row-line {
+    border-bottom: 1px solid var(--lwt-line);
+}
+
+/* The message row sits at its natural height — its textarea has a
+   fixed-ish height, so the panel hugs the content instead of stretching. */
 .lwt-row-message {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-height: 0;
     justify-content: flex-start;
-    padding-bottom: 4px;
+    padding-bottom: 0;
+    gap: 10px;
 }
 
 .lwt-row-label {
     font-family: var(--lwt-sans);
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 400;
     line-height: 1.4;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--lwt-text-muted);
 }
 
@@ -259,12 +336,31 @@
     transition: border-color 0.2s ease;
 }
 
+/* Textarea wrapper — bordered rounded box around the message field.
+   Fixed height so the panel hugs its content instead of growing the box
+   to absorb the leftover panel space. */
+.lwt-textarea-wrap {
+    flex: 0 0 auto;
+    height: 175px;
+    display: flex;
+    border: 1px solid var(--lwt-line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    transition: border-color 0.2s ease;
+}
+
+.lwt-textarea-wrap:focus-within {
+    border-color: var(--lwt-line-active);
+}
+
 .lwt-row-message textarea {
     flex: 1 1 auto;
     min-height: 0;
+    width: 100%;
     height: 100%;
     resize: none;
-    padding: 4px 0;
+    padding: 0;
+    border: 0;
     line-height: 1.55;
 }
 
@@ -278,6 +374,11 @@
     color: var(--lwt-text);
 }
 
+.lwt-row:has(input:focus),
+.lwt-row:has(textarea:focus) {
+    border-bottom-color: var(--lwt-line-active);
+}
+
 /* ---------- Project type: chip selector ---------- */
 .lwt-chips {
     display: flex;
@@ -289,17 +390,17 @@
 .lwt-chip {
     display: inline-flex;
     align-items: center;
-    padding: 6px 11px;
+    padding: 7px 12px;
     cursor: pointer;
     font-family: var(--lwt-sans);
-    font-size: 11.5px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     line-height: 1.2;
     letter-spacing: 0;
-    color: var(--lwt-text-muted);
+    color: var(--lwt-text);
     background: transparent;
     border: 1px solid var(--lwt-line);
-    border-radius: 999px;
+    border-radius: 5px;
     transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -327,11 +428,24 @@
     outline-offset: 3px;
 }
 
+/* ---------- Minimum budget note (above the actions) ---------- */
+.lwt-min-note {
+    margin: 0;
+    padding-top: 16px;
+    font-family: var(--lwt-sans);
+    font-size: 9.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--lwt-text);
+}
+
 /* ---------- Actions (pinned at the bottom of the panel) ---------- */
 .lwt-actions {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid var(--lwt-line);
+    margin-top: 14px;
+    padding-top: 0;
+    border-top: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -342,14 +456,15 @@
 .lwt-submit {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     margin: 0;
-    padding: 10px 18px;
+    padding: 12px 22px;
     font-family: var(--lwt-sans);
     font-size: 11px;
     font-weight: 500;
     line-height: 1.4;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     white-space: nowrap;
     background: transparent;
@@ -358,8 +473,13 @@
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
+.lwt-submit {
+    padding: 12px 44px;
+}
+
 .lwt-cancel {
-    color: var(--lwt-text-muted);
+    padding: 12px 28px;
+    color: var(--lwt-text-faint);
     border: 1px solid var(--lwt-line);
 }
 

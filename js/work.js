@@ -58,11 +58,28 @@
     const PRELOADER_FILL_HOLD_MS = 240;
     const PRELOADER_SAFETY_MS = 6000;
 
+    let casePreloaderPathLength = 0;
+
+    function ensureCasePreloaderPathLength() {
+        if (casePreloaderPathLength) return casePreloaderPathLength;
+        const shape = document.getElementById('case-preloader-shape');
+        if (shape && typeof shape.getTotalLength === 'function') {
+            casePreloaderPathLength = shape.getTotalLength();
+            const path = document.getElementById('case-preloader-path');
+            if (path) {
+                path.style.strokeDasharray = String(casePreloaderPathLength);
+                path.style.strokeDashoffset = String(casePreloaderPathLength);
+            }
+        }
+        return casePreloaderPathLength;
+    }
+
     function setCasePreloaderProgress(pct) {
         const clamped = Math.max(0, Math.min(100, pct));
-        const fill = document.getElementById('case-preloader-fill');
-        if (fill) fill.style.width = `${clamped}%`;
-        const frame = document.querySelector('.case-preloader-frame');
+        const len = ensureCasePreloaderPathLength();
+        const path = document.getElementById('case-preloader-path');
+        if (path && len) path.style.strokeDashoffset = String(len * (1 - clamped / 100));
+        const frame = document.getElementById('case-preloader-frame');
         if (frame) frame.setAttribute('aria-valuenow', String(Math.round(clamped)));
     }
 

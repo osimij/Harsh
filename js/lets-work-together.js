@@ -13,11 +13,19 @@
         'Identity',
         'Logo',
         'Collaboration',
-        'Other',
+        'Something else',
     ];
 
-    const PANEL_W = '25vw';
-    const PANEL_H = '65vh';
+    function clamp(min, val, max) {
+        return Math.max(min, Math.min(max, val));
+    }
+
+    function panelSize() {
+        return {
+            w: clamp(360, window.innerWidth * 0.32, 440),
+            h: clamp(540, window.innerHeight * 0.68, 615),
+        };
+    }
 
     let modalRoot = null;
     let activeTrigger = null;
@@ -35,39 +43,43 @@
 
     function buildModalMarkup() {
         return `
+            <span class="lwt-morph-label" aria-hidden="true">Let's Work Together</span>
             <div class="lwt-card" role="document">
                 <button type="button" class="lwt-close" aria-label="Close" data-lwt-close>&times;</button>
 
                 <h3 class="lwt-title" id="lwt-title">Tell me about your project</h3>
 
                 <form class="lwt-form" id="lwt-form" novalidate>
-                    <div class="lwt-row">
-                        <label class="lwt-row-label" for="lwt-name">Name</label>
-                        <input id="lwt-name" type="text" name="name" placeholder="your name" autocomplete="name" required>
+                    <div class="lwt-row lwt-row-line">
+                        <label class="lwt-row-label" for="lwt-name">What's your name?</label>
+                        <input id="lwt-name" type="text" name="name" autocomplete="name" required>
                     </div>
 
-                    <div class="lwt-row">
-                        <label class="lwt-row-label" for="lwt-email">Email</label>
-                        <input id="lwt-email" type="email" name="email" placeholder="you@domain.com" autocomplete="email" required>
+                    <div class="lwt-row lwt-row-line">
+                        <label class="lwt-row-label" for="lwt-email">What's your email?</label>
+                        <input id="lwt-email" type="email" name="email" autocomplete="email" required>
                     </div>
 
-                    <div class="lwt-row">
-                        <span class="lwt-row-label">What's it about?</span>
+                    <div class="lwt-row lwt-row-chips">
+                        <span class="lwt-row-label">What it's about?</span>
                         <div class="lwt-chips" role="radiogroup" aria-label="Project type">
                             ${buildChips()}
                         </div>
                     </div>
 
                     <div class="lwt-row lwt-row-message">
-                        <label class="lwt-row-label" for="lwt-message">Message</label>
-                        <textarea id="lwt-message" name="message" placeholder="what you're working on, timelines, anything I should know" required></textarea>
+                        <label class="lwt-row-label" for="lwt-message">And your message</label>
+                        <div class="lwt-textarea-wrap">
+                            <textarea id="lwt-message" name="message" placeholder="You know, what are you working on, your timelines, anything I should know" required></textarea>
+                        </div>
                     </div>
+
+                    <p class="lwt-min-note">Min. project budget: $10K</p>
 
                     <div class="lwt-actions">
                         <button type="button" class="lwt-cancel" data-lwt-close>Cancel</button>
                         <button type="submit" class="lwt-submit">
                             <span>Send</span>
-                            <span class="lwt-submit-arrow" aria-hidden="true">&rarr;</span>
                         </button>
                     </div>
                     <p class="lwt-status" id="lwt-status" role="status" aria-live="polite"></p>
@@ -113,10 +125,11 @@
     function applyTarget(el, anchorRect) {
         // Keep the same top/right anchor as the trigger button so the panel
         // grows downward and leftward from the button's corner.
+        const size = panelSize();
         el.style.top = anchorRect.top + 'px';
         el.style.right = (window.innerWidth - anchorRect.right) + 'px';
-        el.style.width = PANEL_W;
-        el.style.height = PANEL_H;
+        el.style.width = size.w + 'px';
+        el.style.height = size.h + 'px';
     }
 
     function open(trigger) {
@@ -164,15 +177,33 @@
         const onEnd = (e) => {
             if (e.target !== root || e.propertyName !== 'width') return;
             root.removeEventListener('transitionend', onEnd);
+
+            // The panel has now shrunk to button-rect with the button's
+            // border, transparent background and no shadow. Reveal the
+            // actual button (its text appears at this exact moment) and
+            // snap-hide the panel without transitions, so the post-close
+            // style reset doesn't flicker.
+            trigger.style.visibility = '';
+            root.style.transition = 'none';
+            root.style.opacity = '0';
+            // Force the snap to commit before we tear data-closing down.
+            void root.offsetHeight;
+
             root.dataset.open = 'false';
             delete root.dataset.closing;
             root.setAttribute('aria-hidden', 'true');
-            // Wipe inline so a reopen starts clean.
-            root.style.top = '';
-            root.style.right = '';
-            root.style.width = '';
-            root.style.height = '';
-            trigger.style.visibility = '';
+
+            // Clean up inline overrides on the next frame, after the snap
+            // has rendered, so the panel never flashes back into view.
+            requestAnimationFrame(() => {
+                root.style.top = '';
+                root.style.right = '';
+                root.style.width = '';
+                root.style.height = '';
+                root.style.transition = '';
+                root.style.opacity = '';
+            });
+
             isAnimating = false;
 
             const status = root.querySelector('#lwt-status');

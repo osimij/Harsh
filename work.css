@@ -141,7 +141,7 @@ a {
     justify-content: space-between;
     align-items: center;
     width: 100vw;
-    padding: 14px 40px 0 14px;
+    padding: 14px 40px 0 40px;
     color: var(--work-text);
     pointer-events: none;
 }
@@ -155,14 +155,20 @@ a {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: clamp(24px, 3vw, 48px);
+    gap: clamp(14px, 1.6vw, 24px);
+}
+
+.site-nav-text-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(9px, 1vw, 14px);
 }
 
 .site-nav-link {
     display: inline-block;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
-    line-height: 16.5px;
+    line-height: 19.5px;
     letter-spacing: 0;
     text-transform: uppercase;
     white-space: nowrap;
@@ -1575,39 +1581,108 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
 
 /* ============================================
    LOAD ANIMATION
+   Smooth blur + slide + fade reveal — staggered intro for the
+   nav, sidebar, and project grid. Easing matches the homepage.
    ============================================ */
-@keyframes workFadeUp {
-    from {
+@keyframes workBlurFadeUp {
+    0% {
         opacity: 0;
-        transform: translateY(16px);
+        filter: blur(12px);
+        transform: translate3d(0, 22px, 0);
     }
-    to {
+    60% {
+        filter: blur(2px);
+    }
+    100% {
         opacity: 1;
-        transform: translateY(0);
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
     }
+}
+
+@keyframes workBlurFadeDown {
+    0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform: translate3d(0, -18px, 0);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes workBlurFadeRight {
+    0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform: translate3d(-26px, 0, 0);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* Pre-animation hidden state */
+.site-nav-logo,
+.site-nav-links,
+.work-sidebar-panel,
+.work-grid,
+.work-cell,
+.detail-page {
+    will-change: opacity, transform, filter;
+}
+
+.site-nav-logo,
+.site-nav-links,
+.work-sidebar-panel,
+.work-grid {
+    opacity: 0;
+}
+
+.site-nav-logo {
+    animation: workBlurFadeDown 0.9s 0.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.site-nav-links {
+    animation: workBlurFadeDown 1s 0.18s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.work-sidebar-panel {
+    animation: workBlurFadeRight 1s 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .work-grid {
-    animation: workFadeUp 0.5s ease forwards;
+    animation: workBlurFadeUp 0.9s 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .work-cell {
-    opacity: 1;
-    animation: workFadeUp 0.4s ease forwards;
+    opacity: 0;
+    animation: workBlurFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.work-cell:nth-child(1) { animation-delay: 0.05s; }
-.work-cell:nth-child(2) { animation-delay: 0.1s; }
-.work-cell:nth-child(3) { animation-delay: 0.15s; }
-.work-cell:nth-child(4) { animation-delay: 0.2s; }
-.work-cell:nth-child(5) { animation-delay: 0.25s; }
-.work-cell:nth-child(6) { animation-delay: 0.3s; }
-.work-cell:nth-child(7) { animation-delay: 0.35s; }
-.work-cell:nth-child(8) { animation-delay: 0.4s; }
-.work-cell:nth-child(9) { animation-delay: 0.45s; }
+.work-cell:nth-child(1) { animation-delay: 0.55s; }
+.work-cell:nth-child(2) { animation-delay: 0.62s; }
+.work-cell:nth-child(3) { animation-delay: 0.69s; }
+.work-cell:nth-child(4) { animation-delay: 0.76s; }
+.work-cell:nth-child(5) { animation-delay: 0.83s; }
+.work-cell:nth-child(6) { animation-delay: 0.90s; }
+.work-cell:nth-child(7) { animation-delay: 0.97s; }
+.work-cell:nth-child(8) { animation-delay: 1.04s; }
+.work-cell:nth-child(9) { animation-delay: 1.11s; }
+.work-cell:nth-child(n+10) { animation-delay: 1.18s; }
 
 .detail-page {
-    animation: workFadeUp 0.5s ease forwards;
+    animation: workBlurFadeUp 0.7s 0.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* ============================================
@@ -1970,39 +2045,20 @@ html.case-loading.case-preloader-fading .case-preloader {
     opacity: 0;
 }
 
-.case-preloader-frame {
-    position: relative;
-    width: clamp(96px, 9vw, 132px);
-    aspect-ratio: 1 / 1;
-    background: #828282;
-    overflow: hidden;
-    isolation: isolate;
-}
-
-.case-preloader-fill {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0%;
-    height: 100%;
-    background: #000000;
-    z-index: 1;
-    transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 .case-preloader-logo {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    fill: #ffffff;
+    width: clamp(140px, 16vw, 220px);
+    height: auto;
     pointer-events: none;
+    overflow: visible;
+}
+
+#case-preloader-path {
+    transition: stroke-dashoffset 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
     .case-preloader,
-    .case-preloader-fill {
+    #case-preloader-path {
         transition: none;
     }
 }

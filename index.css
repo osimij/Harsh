@@ -123,9 +123,10 @@ input[type="range"] {
 .header {
     grid-column: 1 / -1;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: flex-end;
-    padding: 0 var(--space-lg);
+    padding: 56px var(--space-lg) 8px;
+    min-height: 110px;
     background: var(--bg-overlay);
     backdrop-filter: blur(var(--blur-md));
     border-bottom: 1px solid var(--border-color);
@@ -1033,4 +1034,65 @@ input[type="range"]::-moz-range-thumb {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* ============================================
+   SITE NAV (shared primary navigation)
+   ============================================ */
+.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 130;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 14px 40px 0 40px;
+    color: var(--text-primary);
+    pointer-events: none;
+}
+
+.site-nav-logo-link,
+.site-nav-link {
+    pointer-events: auto;
+}
+
+.site-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: clamp(14px, 1.6vw, 24px);
+}
+
+.site-nav-text-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(9px, 1vw, 14px);
+}
+
+.site-nav-link {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 19.5px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+
+.site-nav-logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 1px;
+    filter: brightness(0) invert(1);
+}
+
+.site-nav-logo-link:focus-visible,
+.site-nav-link:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
 }

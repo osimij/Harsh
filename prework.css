@@ -1039,3 +1039,63 @@ ul {
 .footer-contact:hover {
     text-decoration: underline;
 }
+
+/* ============================================
+   SITE NAV (shared primary navigation)
+   ============================================ */
+.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 130;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 14px 40px 0 40px;
+    color: #000000;
+    pointer-events: none;
+}
+
+.site-nav-logo-link,
+.site-nav-link {
+    pointer-events: auto;
+}
+
+.site-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: clamp(14px, 1.6vw, 24px);
+}
+
+.site-nav-text-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(9px, 1vw, 14px);
+}
+
+.site-nav-link {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 19.5px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: #000000;
+}
+
+.site-nav-logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 1px;
+}
+
+.site-nav-logo-link:focus-visible,
+.site-nav-link:focus-visible {
+    outline: 2px solid #000000;
+    outline-offset: 2px;
+}
