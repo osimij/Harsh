@@ -45,7 +45,14 @@ export class RasterPointSampler {
         await drawSvgToCanvas(ctx, size, size, svgString);
 
         const img = ctx.getImageData(0, 0, size, size);
-        const { fillMask, edgeMask, bounds } = buildMasks(img.data, size, size, alphaThreshold);
+        const composite = detectCompositeComposition(img.data, alphaThreshold);
+        const maskOpts = composite ? {
+            maskMode: 'luma',
+            lumaThreshold: composite.threshold,
+            lumaContrast: true,
+            lumaReference: composite.foregroundLuma
+        } : {};
+        const { fillMask, edgeMask, bounds } = buildMasks(img.data, size, size, alphaThreshold, maskOpts);
 
         const data = new Float32Array(cap * 4);
         if (!bounds) return { data, width, height };
@@ -221,7 +228,14 @@ export class RasterPointSampler {
         await drawSvgToCanvas(ctx, size, size, svgString);
 
         const img = ctx.getImageData(0, 0, size, size);
-        const { fillMask, edgeMask, bounds } = buildMasks(img.data, size, size, alphaThreshold);
+        const composite = detectCompositeComposition(img.data, alphaThreshold);
+        const maskOpts = composite ? {
+            maskMode: 'luma',
+            lumaThreshold: composite.threshold,
+            lumaContrast: true,
+            lumaReference: composite.foregroundLuma
+        } : {};
+        const { fillMask, edgeMask, bounds } = buildMasks(img.data, size, size, alphaThreshold, maskOpts);
         if (!bounds) return [];
 
         const { minX, minY, maxX, maxY } = bounds;
@@ -602,6 +616,78 @@ function estimateBackgroundLuma(rgba, w, h, alphaThreshold) {
     if (samples.length < 16) return null;
     samples.sort((a, b) => a - b);
     return samples[samples.length >> 1];
+}
+
+/**
+ * Detect a "composite" SVG layout — a dominant background fill with a smaller
+ * foreground fill drawn on top (e.g. white sticker + black wordmark in Rivet).
+ * Returns the foreground luma + a luma-contrast threshold so callers can
+ * mask out the foreground as a cutout rather than letting the union read
+ * as a single featureless blob.
+ *
+ * Returns null for single-color SVGs and gradient logos where many similar
+ * lumas blend continuously — those are rendered correctly by the default
+ * alpha mask.
+ */
+function detectCompositeComposition(rgba, alphaThreshold) {
+    const buckets = 16;
+    const bucketSize = 256 / buckets;
+    const histogram = new Uint32Array(buckets);
+    let totalOpaque = 0;
+    for (let i = 0; i < rgba.length; i += 4) {
+        const a = rgba[i + 3] | 0;
+        if (a <= alphaThreshold) continue;
+        const r = rgba[i] | 0;
+        const g = rgba[i + 1] | 0;
+        const b = rgba[i + 2] | 0;
+        const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        const idx = Math.min(buckets - 1, Math.max(0, Math.floor(luma / bucketSize)));
+        histogram[idx]++;
+        totalOpaque++;
+    }
+    if (totalOpaque < 200) return null;
+
+    let bgBucket = 0;
+    let bgCount = 0;
+    for (let i = 0; i < buckets; i++) {
+        if (histogram[i] > bgCount) { bgCount = histogram[i]; bgBucket = i; }
+    }
+
+    const minSeparation = 6;
+    let fgBucket = -1;
+    let fgCount = 0;
+    for (let i = 0; i < buckets; i++) {
+        if (Math.abs(i - bgBucket) >= minSeparation && histogram[i] > fgCount) {
+            fgCount = histogram[i];
+            fgBucket = i;
+        }
+    }
+    if (fgBucket < 0 || fgCount < 80) return null;
+
+    const bgFraction = bgCount / totalOpaque;
+    const fgFraction = fgCount / totalOpaque;
+    if (bgFraction < 0.55) return null;
+    if (fgFraction < 0.003 || fgFraction > 0.45) return null;
+
+    // Valley check: a real composite has near-empty buckets between the bg
+    // and fg peaks (anti-aliased edges add a thin bridge but not a continuous
+    // gradient). Continuous-luma logos like HypeProxies fail this check.
+    const lo = Math.min(bgBucket, fgBucket) + 1;
+    const hi = Math.max(bgBucket, fgBucket) - 1;
+    let middleCount = 0;
+    for (let i = lo; i <= hi; i++) middleCount += histogram[i];
+    const middleFraction = middleCount / totalOpaque;
+    if (middleFraction > Math.max(0.06, fgFraction * 2.5)) return null;
+
+    const fgLuma = (fgBucket + 0.5) * bucketSize;
+    const bgLuma = (bgBucket + 0.5) * bucketSize;
+    const threshold = Math.max(24, Math.abs(bgLuma - fgLuma) * 0.4);
+
+    return {
+        backgroundLuma: bgLuma,
+        foregroundLuma: fgLuma,
+        threshold
+    };
 }
 
 function buildMasks(rgba, w, h, alphaThreshold, opts = {}) {

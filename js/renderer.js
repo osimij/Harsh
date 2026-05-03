@@ -736,14 +736,15 @@ export class Renderer {
                 vec2 chromaOffsetB = vec2(0.0);
                 if (chroma) {
                     // Logo-space chromatic: direction radial from the LOGO
-                    // center, so the visible aberration matches the legacy
-                    // small-canvas look even when the canvas is stretched
-                    // across the whole viewport.
+                    // center. Chebyshev (max-axis) radius is used so the
+                    // per-particle chroma ramp is consistent across logos of
+                    // any aspect ratio — wide/short marks would otherwise
+                    // have low Euclidean radius and lose their fringing.
                     float logoLen = length(v_logoXY);
                     vec2 dir = (logoLen > 1e-4) ? (v_logoXY / logoLen) : vec2(1.0, 0.0);
-                    float chromaRadius = clamp(logoLen, 0.0, 1.0);
-                    float chromaScale = 0.7 + 0.3 * chromaRadius;
-                    float amt = u_chromaticShift * 0.95 * chromaScale;
+                    float chromaRadius = clamp(max(abs(v_logoXY.x), abs(v_logoXY.y)), 0.0, 1.0);
+                    float chromaScale = 0.78 + 0.22 * chromaRadius;
+                    float amt = u_chromaticShift * 0.85 * chromaScale;
                     vec2 dir120 = vec2(
                         -0.5 * dir.x - 0.8660254 * dir.y,
                          0.8660254 * dir.x - 0.5 * dir.y
@@ -1143,28 +1144,37 @@ export class Renderer {
             uniform sampler2D u_bloom;
             uniform float u_bloomIntensity;
             uniform float u_caStrength;
-            uniform vec2 u_caCenter;   // UV-space center of the logo (default 0.5, 0.5)
-            uniform float u_caRadius;  // UV-space half-extent of the logo (default 0.5)
+            uniform vec2 u_caCenter;       // UV-space center of the logo
+            uniform float u_caRadius;      // reference half-extent for offset MAGNITUDE (consistent across logos)
+            uniform vec2 u_caHalfExtent;   // per-axis half-extent of the LOGO in UV (for falloff)
             out vec4 fragColor;
             void main() {
                 vec3 col;
                 float aOut;
                 if (u_caStrength > 1e-4) {
                     // Prismatic chromatic aberration: 6 wavelength taps along
-                    // the radial axis. Direction and falloff are anchored to
-                    // the LOGO (passed in via u_caCenter / u_caRadius) so the
-                    // visible aberration is identical whether the canvas is
-                    // sized to the logo (legacy) or stretched across the
-                    // entire viewport (homepage stage). The offset magnitude
-                    // is scaled by the logo's size so the per-pixel shift
-                    // matches the legacy "logo fills canvas" look.
+                    // the radial axis. Falloff is normalized by the logo's
+                    // per-axis half-extent so wide and tall marks ramp up at
+                    // their own edges. Offset MAGNITUDE uses the canvas-box
+                    // reference (u_caRadius) so a near-square logo and a
+                    // very-wide logo get the same fringe at their edges.
+                    vec2 caExt = max(u_caHalfExtent, vec2(1e-4));
                     float rNorm = max(u_caRadius, 1e-4);
-                    vec2 logoUV = (v_uv - u_caCenter) / (rNorm * 2.0) + 0.5;
-                    vec2 dir = logoUV - vec2(0.5);
-                    float rad = length(dir) * 1.41421356;
-                    float falloff = smoothstep(0.28, 0.95, rad);
+                    vec2 dirRaw = v_uv - u_caCenter;
+                    vec2 normDir = dirRaw / caExt;
+                    float cheb = max(abs(normDir.x), abs(normDir.y));
+                    float falloff = smoothstep(0.18, 1.05, cheb);
                     falloff = falloff * falloff;
-                    vec2 ofs = dir * (u_caStrength * falloff * 3.5) * (rNorm * 2.0);
+                    float floorAmt = 0.35;
+                    float strength = mix(floorAmt, 1.0, clamp(falloff, 0.0, 1.0));
+                    float dirLen = length(dirRaw);
+                    vec2 dirUnit = (dirLen > 1e-6) ? (dirRaw / dirLen) : vec2(1.0, 0.0);
+                    // Logo-relative Euclidean distance (capped at the corner) — drives
+                    // the per-fragment offset magnitude. Combined with rNorm as the
+                    // reference, the offset at the same LOGO-relative position is
+                    // identical for wide and tall marks.
+                    float normLen = min(length(normDir), 1.0);
+                    vec2 ofs = dirUnit * rNorm * normLen * (u_caStrength * strength * 3.5);
                     vec4 s0 = texture(u_scene, v_uv + ofs);          // red
                     vec4 s1 = texture(u_scene, v_uv + ofs * 0.6);    // orange
                     vec4 s2 = texture(u_scene, v_uv + ofs * 0.25);   // yellow
@@ -1222,7 +1232,8 @@ export class Renderer {
             uComp_intensity: gl.getUniformLocation(progComposite, 'u_bloomIntensity'),
             uComp_ca: gl.getUniformLocation(progComposite, 'u_caStrength'),
             uComp_caCenter: gl.getUniformLocation(progComposite, 'u_caCenter'),
-            uComp_caRadius: gl.getUniformLocation(progComposite, 'u_caRadius')
+            uComp_caRadius: gl.getUniformLocation(progComposite, 'u_caRadius'),
+            uComp_caHalfExtent: gl.getUniformLocation(progComposite, 'u_caHalfExtent')
         };
     }
 
@@ -2248,7 +2259,9 @@ export class Renderer {
         gl.uniform1f(post.uComp_intensity, 0.85 + (this.settings.glowIntensity ?? 0.4) * 0.65);
         const caOn = String(this.settings.colorMode || '') === 'chromatic';
         const caShift = Number(this.settings.chromaticShift ?? 0.07) || 0;
-        gl.uniform1f(post.uComp_ca, caOn ? caShift * 0.18 : 0);
+        // 0.11 is the "subtle but consistent" sweet spot — enough fringing
+        // on every logo without the wide-mark "lens flare" look.
+        gl.uniform1f(post.uComp_ca, caOn ? caShift * 0.11 : 0);
         // Logo's UV-space center and half-extent in the canvas, so the
         // chromatic aberration is anchored to the LOGO instead of the
         // canvas center. Defaults map to the legacy "logo fills canvas"
@@ -2263,6 +2276,26 @@ export class Renderer {
         const caRadius = innerScale * 0.5;
         gl.uniform2f(post.uComp_caCenter, caCenterX, caCenterY);
         gl.uniform1f(post.uComp_caRadius, caRadius);
+        // Per-axis logo half-extent in canvas UV. The falloff cheb is normalized
+        // by this so wide and tall logos ramp up at their own visible edges,
+        // and the offset MAGNITUDE (driven by u_caRadius) stays consistent
+        // across logos so a near-square mark doesn't get a louder fringe than
+        // a very-wide mark of the same brand system.
+        const logoAspectRaw = Number(this.settings.currentLogoAspect);
+        let caHalfExtentX = caRadius;
+        let caHalfExtentY = caRadius;
+        if (Number.isFinite(logoAspectRaw) && logoAspectRaw > 0) {
+            const z = Number(this.settings.zoom) || (1.25 * innerScale);
+            const depthScale = Math.max(0, Math.min(1, Number(this.settings.depthVariance ?? 0.5)));
+            const posNorm = 0.985 / (1.0 + depthScale * 0.3);
+            const aspect = this._getAspectScale();
+            const logoAspect = Math.max(1e-4, logoAspectRaw);
+            const pExtX = logoAspect >= 1 ? 1 : logoAspect;
+            const pExtY = logoAspect >= 1 ? (1 / logoAspect) : 1;
+            caHalfExtentX = pExtX * z * posNorm * aspect.x * 0.5;
+            caHalfExtentY = pExtY * z * posNorm * aspect.y * 0.5;
+        }
+        gl.uniform2f(post.uComp_caHalfExtent, caHalfExtentX, caHalfExtentY);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         gl.bindVertexArray(null);

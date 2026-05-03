@@ -74,7 +74,7 @@
                         </div>
                     </div>
 
-                    <p class="lwt-min-note">Min. project budget: $10K</p>
+                    <p class="lwt-min-note">Min. project budget: $5K</p>
 
                     <div class="lwt-actions">
                         <button type="button" class="lwt-cancel" data-lwt-close>Cancel</button>

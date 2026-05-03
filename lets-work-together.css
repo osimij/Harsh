@@ -642,6 +642,7 @@
 .lwt-modal .lwt-title,
 .lwt-modal .lwt-row,
 .lwt-modal .lwt-chip,
+.lwt-modal .lwt-min-note,
 .lwt-modal .lwt-actions,
 .lwt-modal .lwt-close {
     opacity: 0;
@@ -652,6 +653,7 @@
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-title,
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-row,
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-chip,
+.lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-min-note,
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-actions,
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-close {
     animation-fill-mode: forwards;
@@ -685,8 +687,12 @@
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-chip:nth-of-type(3) { animation-delay: 1.04s; }
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-chip:nth-of-type(4) { animation-delay: 1.10s; }
 
+.lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-min-note {
+    animation: lwtBlurFadeUp 0.55s 0.96s forwards;
+}
+
 .lwt-modal[data-open="true"]:not([data-closing="true"]) .lwt-actions {
-    animation: lwtBlurFadeUp 0.55s 1.0s forwards;
+    animation: lwtBlurFadeUp 0.55s 1.04s forwards;
 }
 
 /* ---------- Reduced motion ---------- */
@@ -702,6 +708,7 @@
     .lwt-modal .lwt-title,
     .lwt-modal .lwt-row,
     .lwt-modal .lwt-chip,
+    .lwt-modal .lwt-min-note,
     .lwt-modal .lwt-actions,
     .lwt-modal .lwt-close {
         animation: none !important;

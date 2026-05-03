@@ -8,8 +8,9 @@
 (async function () {
     'use strict';
 
-    const MANIFEST_URL = 'assets/logos/logos.json';
-    const LOGOS_DIR    = 'assets/logos/';
+    const MANIFEST_URL  = 'assets/logos/logos.json';
+    const LOGOS_DIR     = 'assets/logos/';        // wordmark (logo + text)
+    const SYMBOLS_DIR   = 'assets/logos/symbol/'; // symbol-only mark, used by gallery cards
 
     // ---- Helpers ------------------------------------------------
 
@@ -366,12 +367,19 @@
         manifest = data.logos;
     }
 
-    /** Fetch a single SVG and cache it. Returns null for image-based logos. */
+    /**
+     * Fetch a single SVG and cache it. Returns null for image-based logos.
+     * Prefers the symbol-only variant in `assets/logos/symbol/` and falls back
+     * to the wordmark when no symbol is available.
+     */
     async function fetchSvg(logo) {
         if (logo.imageFile) return null;
         if (svgCache[logo.id]) return svgCache[logo.id];
-        const res = await fetch(LOGOS_DIR + logo.file);
-        if (!res.ok) throw new Error(`Failed to load ${logo.file}`);
+        let res = await fetch(SYMBOLS_DIR + logo.file);
+        if (!res.ok) {
+            res = await fetch(LOGOS_DIR + logo.file);
+            if (!res.ok) throw new Error(`Failed to load ${logo.file}`);
+        }
         const text = await res.text();
         svgCache[logo.id] = text;
         return text;

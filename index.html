@@ -7,6 +7,24 @@
     <meta name="theme-color" content="#111111">
 
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="/profile-pic.png">
+    <link rel="canonical" href="https://harshbika.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Harsh Bika">
+    <meta property="og:url" content="https://harshbika.com/">
+    <meta property="og:title" content="Harsh — Logo & Brand Designer">
+    <meta property="og:description" content="Logo Designer & Brand Systems Creator. Joy by origin, rough by translation.">
+    <meta property="og:image" content="https://harshbika.com/assets/hero/profile.jpg">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="1024">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Harsh — Logo & Brand Designer">
+    <meta name="twitter:description" content="Logo Designer & Brand Systems Creator. Joy by origin, rough by translation.">
+    <meta name="twitter:image" content="https://harshbika.com/assets/hero/profile.jpg">
 
     <!-- Preload critical assets -->
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
@@ -81,7 +99,7 @@
                     <p class="project-tags">Logo, Corporate, Branding</p>
                 </aside>
 
-                <div class="logo-grid" role="list" aria-label="Logo portfolio">
+                <div class="logo-grid" aria-label="Logo portfolio">
                 </div>
                 <div id="page-announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
             </div>
@@ -126,7 +144,7 @@
          */
         import { GPUParticleSim } from './js/gpu-particle-sim.js';
         import { RasterPointSampler } from './js/raster-point-sampler.js';
-        import { Renderer } from './js/renderer.js?v=chroma-logo-anchored-20260504d';
+        import { Renderer } from './js/renderer.js?v=chroma-isotropic-20260504a';
 
         (async function() {
             'use strict';
@@ -159,21 +177,21 @@
                 initialDelay: 500,
                 initialActive: 2,
                 particleCount: 350000,
-                particleSize: 1.2,
+                particleSize: 1,
                 particleColor: '#ffffff',
                 glowIntensity: 0.4,
-                depthVariance: 0.5,
-                zoom: 1.25,
+                depthVariance: 0.25,
+                zoom: 1.1,
                 sizeRandom: 1.0,
                 opacityRandom: 1.0,
                 sizeMin: 0.8,
-                sizeMax: 1.2,
+                sizeMax: 1.1,
                 opacityMin: 0.4,
                 opacityMax: 1.0,
                 squaresEnabled: true,
                 squareRatio: 0.25,
                 colorMode: 'chromatic',
-                chromaticShift: 0.07,
+                chromaticShift: 0.05,
                 gradientOverlayEnabled: false,
                 gradientColorA: '#00d4ff',
                 gradientColorB: '#a855f7',
@@ -258,16 +276,14 @@
                 }
             }
 
-            // Paging constants
-            const LOGOS_PER_PAGE = 9;
+            // Rail constants
             const RAIL_REPEAT_COPIES = 15;
             const RAIL_MIDDLE_COPY = Math.floor(RAIL_REPEAT_COPIES / 2);
+            const RAIL_VISIBLE_DISTANCE = 2;
 
             // State — global index tracks position across ALL logos
             let globalIndex = CONFIG.initialActive;
             let nextGlobalIndex = null;
-            let currentPage = 0;
-            let isPageTransitioning = false;
 
             let cycleTimer = null;
             let pauseTimer = null;
@@ -302,9 +318,9 @@
             let canvasRenderOffsetX = 0;        // keeps the logo centered on .main-logo inside the full-page canvas
             let canvasRenderOffsetY = 0;
 
-            // The homepage canvas is fixed to the viewport so ambient particles can
-            // exist around the logo. These metrics preserve the original logo size
-            // and center by compensating inside WebGL, not by moving layout boxes.
+            // The homepage canvas is fixed to the viewport so the particle field
+            // has room to bleed around the logo. These metrics preserve the original
+            // logo size and center by compensating inside WebGL, not by moving layout boxes.
             function measureParticleCanvas() {
                 const stage = particleStage || (canvas && canvas.parentElement);
                 if (!canvas || !stage) {
@@ -357,320 +373,6 @@
                 }
 
                 return metrics;
-            }
-
-            function syncAmbientParticleCanvas() {
-                if (!ambientCanvas || !particleStage) return;
-
-                const rect = ambientCanvas.getBoundingClientRect();
-                const cssWidth = Math.max(1, rect.width || window.innerWidth || 1);
-                const cssHeight = Math.max(1, rect.height || window.innerHeight || 1);
-                const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-                ambientCanvas.width = Math.max(1, Math.round(cssWidth * dpr));
-                ambientCanvas.height = Math.max(1, Math.round(cssHeight * dpr));
-
-                ambientContext = ambientCanvas.getContext('2d');
-                if (!ambientContext) return;
-
-                ambientContext.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-                const logoRect = particleStage.getBoundingClientRect();
-                const logoCx = logoRect.left + logoRect.width / 2;
-                const logoCy = logoRect.top + logoRect.height / 2;
-                const logoRadius = Math.max(1, Math.min(logoRect.width, logoRect.height) / 2);
-                const isPhone = window.matchMedia(PHONE_PARTICLE_QUERY).matches;
-                const fieldCount = isPhone ? 130 : 230;
-                const haloCount = isPhone ? 600 : 1000;
-
-                // Collect rects of UI we don't want particles to overlap.
-                const exclusionMargin = 18;
-                const exclusionSelectors = [
-                    '.logo-grid',
-                    '.project-meta',
-                    '.intro-section',
-                    '.hero-socials',
-                    '.site-nav'
-                ];
-                const exclusionRects = [];
-                for (const sel of exclusionSelectors) {
-                    const el = document.querySelector(sel);
-                    if (!el) continue;
-                    const r = el.getBoundingClientRect();
-                    if (!(r.width > 0 && r.height > 0)) continue;
-                    exclusionRects.push({
-                        left: r.left - exclusionMargin,
-                        right: r.right + exclusionMargin,
-                        top: r.top - exclusionMargin,
-                        bottom: r.bottom + exclusionMargin
-                    });
-                }
-                const insideExclusion = (x, y) => {
-                    for (const r of exclusionRects) {
-                        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return true;
-                    }
-                    return false;
-                };
-
-                let seed = 0x9e3779b9;
-                const rand = () => {
-                    seed |= 0;
-                    seed = (seed + 0x6d2b79f5) | 0;
-                    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-                    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-                    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-                };
-
-                ambientParticles = [];
-
-                // Outer field — sparse outliers, same as before.
-                let fieldPlaced = 0;
-                let fieldGuard = 0;
-                while (fieldPlaced < fieldCount && fieldGuard < fieldCount * 12) {
-                    fieldGuard++;
-                    const angle = rand() * Math.PI * 2;
-                    const radius = logoRadius * (1.95 + Math.pow(rand(), 0.85) * 1.95);
-                    const px = logoCx + Math.cos(angle) * radius * (1.0 + rand() * 0.35);
-                    const py = logoCy + Math.sin(angle) * radius * (0.85 + rand() * 0.3);
-                    if (insideExclusion(px, py)) continue;
-                    const dx = px - logoCx;
-                    const dy = py - logoCy;
-                    ambientParticles.push({
-                        x: px,
-                        y: py,
-                        ax: Math.atan2(dy, dx),
-                        ar: Math.sqrt(dx * dx + dy * dy),
-                        cx: logoCx,
-                        cy: logoCy,
-                        size: 0.9 + rand() * 1.1,
-                        alpha: 0.16 + rand() * 0.24,
-                        phase: rand() * Math.PI * 2,
-                        speed: 0.55 + rand() * 0.75,
-                        drift: 9 + rand() * 18,
-                        orbitSpeed: (rand() - 0.5) * 0.04,
-                        chroma: 0,
-                        far: true
-                    });
-                    fieldPlaced++;
-                }
-
-                // Halo — echoes the CURRENT logo's silhouette, pushed outward.
-                const logoIdx = ((globalIndex % totalLogos) + totalLogos) % totalLogos;
-                const silhouette = logoSilhouettes[logoIdx] || [];
-
-                if (silhouette.length > 0) {
-                    // The logo's particles render filling roughly .main-logo bounds, so
-                    // map normalized silhouette (-1..1) directly via logoRadius and push
-                    // outward to form a halo just outside the logo's own particle cluster.
-                    const haloOuterScale = 1.35;
-                    const haloRadialOffset = 0.18;
-                    const targetCount = Math.min(silhouette.length, haloCount);
-
-                    for (let i = 0; i < targetCount; i++) {
-                        // Pick a silhouette point — stride to spread evenly if list > target.
-                        const sIdx = (i * Math.max(1, Math.floor(silhouette.length / targetCount))) % silhouette.length;
-                        const pt = silhouette[sIdx];
-                        if (!pt) continue;
-
-                        const localR = Math.sqrt(pt.x * pt.x + pt.y * pt.y);
-                        const localA = Math.atan2(pt.y, pt.x);
-
-                        // Push outward: scale silhouette size up + add a small radial offset.
-                        // This keeps the silhouette shape but lifts it OUTSIDE the logo's particles.
-                        const outR = (localR + haloRadialOffset) * haloOuterScale + (rand() - 0.5) * 0.06;
-                        const screenR = outR * logoRadius;
-
-                        const px = logoCx + Math.cos(localA) * screenR;
-                        const py = logoCy + Math.sin(localA) * screenR;
-                        if (insideExclusion(px, py)) continue;
-
-                        const closeness = Math.max(0, 1 - Math.abs(localR - 0.7) / 0.7);
-                        ambientParticles.push({
-                            x: px,
-                            y: py,
-                            ax: localA,
-                            ar: screenR,
-                            cx: logoCx,
-                            cy: logoCy,
-                            size: 1.0 + rand() * 1.2,
-                            alpha: 0.24 + closeness * 0.30 + rand() * 0.14,
-                            phase: rand() * Math.PI * 2,
-                            speed: 0.55 + rand() * 0.85,
-                            drift: 5 + rand() * 11,
-                            // Slow orbital motion — particles drift around the logo center.
-                            orbitSpeed: (rand() - 0.5) * 0.06,
-                            chroma: 0,
-                            far: false
-                        });
-                    }
-                } else {
-                    // Fallback: original lumpy-ring approach if no silhouette is loaded yet.
-                    const noisePhase1 = rand() * Math.PI * 2;
-                    const noisePhase2 = rand() * Math.PI * 2;
-                    let haloPlaced = 0;
-                    let haloGuard = 0;
-                    while (haloPlaced < haloCount && haloGuard < haloCount * 10) {
-                        haloGuard++;
-                        const angle = rand() * Math.PI * 2;
-                        const u = rand();
-                        const radialNoise =
-                            0.18 * Math.sin(angle * 3 + noisePhase1) +
-                            0.12 * Math.sin(angle * 5 + noisePhase2);
-                        const t = 1 - Math.pow(Math.abs(u - 0.5) * 2, 1.4);
-                        const radius = logoRadius * (1.45 + (u - 0.5) * 0.65 + radialNoise);
-                        const px = logoCx + Math.cos(angle) * radius;
-                        const py = logoCy + Math.sin(angle) * radius;
-                        if (insideExclusion(px, py)) continue;
-                        ambientParticles.push({
-                            x: px,
-                            y: py,
-                            ax: angle,
-                            ar: radius,
-                            cx: logoCx,
-                            cy: logoCy,
-                            size: 1.0 + rand() * 1.2,
-                            alpha: 0.22 + t * 0.32 + rand() * 0.14,
-                            phase: rand() * Math.PI * 2,
-                            speed: 0.6 + rand() * 0.95,
-                            drift: 6 + rand() * 13,
-                            orbitSpeed: (rand() - 0.5) * 0.05,
-                            chroma: 0,
-                            far: false
-                        });
-                        haloPlaced++;
-                    }
-                }
-
-                drawAmbientParticles(performance.now());
-                if (!prefersReducedMotion && !ambientAnimationId) {
-                    ambientAnimationId = requestAnimationFrame(animateAmbientParticles);
-                }
-            }
-
-            // Update each halo particle's TARGET position to match a new logo silhouette,
-            // so the draw loop can tween every particle from its current position to the
-            // new shape over the same duration as the WebGL logo morph.
-            function setAmbientMorphTargets(silhouette) {
-                if (!silhouette || !silhouette.length || !particleStage) return false;
-                if (!ambientParticles.length) return false;
-
-                const logoRect = particleStage.getBoundingClientRect();
-                const logoCx = logoRect.left + logoRect.width / 2;
-                const logoCy = logoRect.top + logoRect.height / 2;
-                const logoRadius = Math.max(1, Math.min(logoRect.width, logoRect.height) / 2);
-
-                const haloOuterScale = 1.35;
-                const haloRadialOffset = 0.18;
-
-                let assignIdx = 0;
-                for (const p of ambientParticles) {
-                    if (p.far) continue; // outliers are not part of the silhouette tween
-                    const sIdx = assignIdx % silhouette.length;
-                    assignIdx++;
-                    const pt = silhouette[sIdx];
-                    if (!pt) continue;
-
-                    const localR = Math.sqrt(pt.x * pt.x + pt.y * pt.y);
-                    const localA = Math.atan2(pt.y, pt.x);
-                    const screenR = (localR + haloRadialOffset) * haloOuterScale * logoRadius;
-
-                    p.fromAx = p.ax;
-                    p.fromAr = p.ar;
-                    p.fromCx = p.cx;
-                    p.fromCy = p.cy;
-                    p.targetAx = localA;
-                    p.targetAr = screenR;
-                    p.targetCx = logoCx;
-                    p.targetCy = logoCy;
-                }
-
-                ambientMorphActive = true;
-                ambientMorphStartTime = performance.now();
-                return true;
-            }
-
-            function drawAmbientParticles(time) {
-                if (!ambientCanvas || !ambientContext || !ambientParticles.length) return;
-
-                const rect = ambientCanvas.getBoundingClientRect();
-                const cssWidth = Math.max(1, rect.width || window.innerWidth || 1);
-                const cssHeight = Math.max(1, rect.height || window.innerHeight || 1);
-                const t = time * 0.001;
-
-                ambientContext.clearRect(0, 0, cssWidth, cssHeight);
-
-                // Compute global morph progress (0..1, eased) — same timing as logo.
-                let morphEased = 1;
-                let morphFinishing = false;
-                if (ambientMorphActive) {
-                    const elapsed = time - ambientMorphStartTime;
-                    const linearT = Math.min(elapsed / CONFIG.morphDuration, 1);
-                    morphEased = easeInOutCubic(linearT);
-                    if (linearT >= 1) morphFinishing = true;
-                }
-
-                for (const p of ambientParticles) {
-                    const breathe = 0.65 + 0.35 * Math.sin(t * p.speed + p.phase);
-                    const wobbleX = Math.cos(t * (p.speed * 0.72) + p.phase) * p.drift;
-                    const wobbleY = Math.sin(t * (p.speed * 0.86) + p.phase * 1.37) * p.drift;
-
-                    // Resolve the particle's CURRENT base orbital state. If a morph is
-                    // active and this particle has a target, lerp from→target along the
-                    // shortest angular path; otherwise use its stored ax/ar/cx/cy.
-                    let baseAx = p.ax;
-                    let baseAr = p.ar;
-                    let baseCx = p.cx;
-                    let baseCy = p.cy;
-                    if (ambientMorphActive && p.targetAx !== undefined) {
-                        let dAx = p.targetAx - p.fromAx;
-                        if (dAx > Math.PI) dAx -= Math.PI * 2;
-                        else if (dAx < -Math.PI) dAx += Math.PI * 2;
-                        baseAx = p.fromAx + dAx * morphEased;
-                        baseAr = p.fromAr + (p.targetAr - p.fromAr) * morphEased;
-                        baseCx = p.fromCx + (p.targetCx - p.fromCx) * morphEased;
-                        baseCy = p.fromCy + (p.targetCy - p.fromCy) * morphEased;
-                        if (morphFinishing) {
-                            p.ax = p.targetAx;
-                            p.ar = p.targetAr;
-                            p.cx = p.targetCx;
-                            p.cy = p.targetCy;
-                            p.targetAx = undefined;
-                        }
-                    }
-
-                    const hasOrbit = (baseAr !== undefined && baseCx !== undefined);
-                    const ox = hasOrbit ? (baseCx + Math.cos(baseAx + t * p.orbitSpeed) * baseAr) : p.x;
-                    const oy = hasOrbit ? (baseCy + Math.sin(baseAx + t * p.orbitSpeed) * baseAr) : p.y;
-
-                    const x = ox + wobbleX;
-                    const y = oy + wobbleY;
-                    const alpha = p.alpha * (0.75 + 0.30 * breathe);
-                    const size = p.size * (0.85 + 0.22 * breathe);
-
-                    ambientContext.globalAlpha = alpha;
-                    ambientContext.fillStyle = '#ffffff';
-                    ambientContext.fillRect(x, y, size, size);
-
-                    if (!p.far && p.chroma > 0.58) {
-                        const split = 0.65 + p.chroma * 0.9;
-                        ambientContext.globalAlpha = alpha * 0.32;
-                        ambientContext.fillStyle = '#7fd7ff';
-                        ambientContext.fillRect(x + split, y, size, size);
-                        ambientContext.fillStyle = '#ff8bd6';
-                        ambientContext.fillRect(x - split, y, size, size);
-                    }
-                }
-
-                ambientContext.globalAlpha = 1;
-
-                if (morphFinishing) {
-                    ambientMorphActive = false;
-                }
-            }
-
-            function animateAmbientParticles(time) {
-                ambientAnimationId = requestAnimationFrame(animateAmbientParticles);
-                drawAmbientParticles(time);
             }
 
             function clientToMagnetClip(clientX, clientY, rect) {
@@ -781,19 +483,14 @@
 
             // Logo data loaded from manifest
             let logoManifest = [];
-            let svgStrings = [];
+            let svgStrings = [];        // wordmark (logo + text) — assets/logos/*.svg, used by the bottom ticker thumbnails
+            let canvasSvgStrings = [];  // symbol-only — assets/logos/symbol/*.svg, falls back to wordmark
+            let logoAspects = [];       // bw/bh of the particle-rendered SVG, used by the CA shader
 
             // DOM Elements
             const hero = document.querySelector('.hero');
             const canvas = document.getElementById('particle-canvas');
             const particleStage = canvas ? canvas.parentElement : null;
-            let ambientCanvas = null;
-            let ambientContext = null;
-            let ambientAnimationId = null;
-            let ambientParticles = [];
-            const logoSilhouettes = [];
-            let ambientMorphActive = false;
-            let ambientMorphStartTime = 0;
             const logoGrid = document.querySelector('.logo-grid');
             const pageAnnounce = document.getElementById('page-announce');
             const projectMeta = document.querySelector('.project-meta');
@@ -822,31 +519,7 @@
             // Check for reduced motion preference
             const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            // ── Paging helpers ──────────────────────────
-
-            function totalPages() {
-                return Math.ceil(totalLogos / LOGOS_PER_PAGE);
-            }
-
-            /** Which page does global index `gi` fall on? */
-            function pageOf(gi) {
-                return Math.floor(gi / LOGOS_PER_PAGE);
-            }
-
-            /** Which cell (0-5) within its page does `gi` map to? */
-            function cellOf(gi) {
-                return gi % LOGOS_PER_PAGE;
-            }
-
-            /** Global index from page + cell */
-            function globalOf(page, cell) {
-                return page * LOGOS_PER_PAGE + cell;
-            }
-
-            /** How many logos does page `p` show? Always 6 (wraps around manifest). */
-            function logosOnPage(p) {
-                return LOGOS_PER_PAGE;
-            }
+            // ── Rail helpers ────────────────────────────
 
             /**
              * Find the next global index (starting at `startGi`) that has a valid GPU target texture.
@@ -862,6 +535,25 @@
                 }
 
                 return null;
+            }
+
+            function findPreviousRenderableGlobalIndex(startGi) {
+                if (!totalLogos || !targetTextures.length) return null;
+
+                for (let offset = 0; offset < totalLogos; offset++) {
+                    const gi = startGi - offset;
+                    const texIdx = ((gi % totalLogos) + totalLogos) % totalLogos;
+                    if (targetTextures[texIdx]) return gi;
+                }
+
+                return null;
+            }
+
+            function focusCellByGlobalIndex(gi) {
+                const targetCell = cells.find(cell => Number(cell.dataset.globalIndex) === gi);
+                if (targetCell && !targetCell.hasAttribute('aria-hidden')) {
+                    targetCell.focus({ preventScroll: true });
+                }
             }
 
             // ── Logo loading ────────────────────────────
@@ -887,7 +579,40 @@
                     })
                 );
                 svgStrings = await Promise.all(fetches);
+
+                // Particle canvas prefers symbol-only variants from assets/logos/symbol/.
+                // If a logo has no symbol variant, fall back to the wordmark so every
+                // logo still morphs.
+                const canvasFetches = logoManifest.map((logo, idx) =>
+                    fetch(`assets/logos/symbol/${logo.file}`)
+                        .then(r => (r.ok ? r.text() : svgStrings[idx]))
+                        .catch(() => svgStrings[idx])
+                );
+                canvasSvgStrings = await Promise.all(canvasFetches);
+
                 totalLogos = logoManifest.length;
+                logoAspects = canvasSvgStrings.map(parseSvgAspect);
+            }
+
+            function parseSvgAspect(svgString) {
+                const s = String(svgString || '');
+                const vb = s.match(/viewBox\s*=\s*"([^"]+)"/);
+                if (vb) {
+                    const parts = vb[1].trim().split(/[\s,]+/);
+                    if (parts.length === 4) {
+                        const w = Number(parts[2]);
+                        const h = Number(parts[3]);
+                        if (w > 0 && h > 0) return w / h;
+                    }
+                }
+                const wm = s.match(/<svg[^>]*\swidth\s*=\s*"([\d.]+)/);
+                const hm = s.match(/<svg[^>]*\sheight\s*=\s*"([\d.]+)/);
+                if (wm && hm) {
+                    const w = parseFloat(wm[1]);
+                    const h = parseFloat(hm[1]);
+                    if (w > 0 && h > 0) return w / h;
+                }
+                return 1.0;
             }
 
             function deduplicateSvgIds(svgString, prefix) {
@@ -896,14 +621,13 @@
                                 .replace(/#clip(\d)/g, `#${prefix}_clip$1`);
             }
 
-            // ── Grid building (paged) ───────────────────
+            // ── Rail building ───────────────────────────
 
             /**
-             * Build the logo grid for a specific page.
+             * Build the logo rail.
              * Renders repeated copies so the bottom rail reads as an infinite strip.
              */
-            function buildLogoGrid(page) {
-                currentPage = page;
+            function buildLogoGrid() {
                 logoGrid.innerHTML = '';
 
                 for (let copy = 0; copy < RAIL_REPEAT_COPIES; copy++) {
@@ -915,14 +639,14 @@
 
                     const btn = document.createElement('button');
                     btn.className = 'logo-cell' + (isActive ? ' logo-cell-active' : '');
-                    btn.setAttribute('role', 'listitem');
+                    btn.type = 'button';
                     btn.setAttribute('data-logo', logo.id);
                     btn.setAttribute('data-logo-index', String(wrappedIdx));
                     btn.setAttribute('data-rail-copy', String(copy));
                     btn.setAttribute('data-global-index', String(gi));
                     btn.setAttribute('aria-label', `View ${logo.name} logo`);
                     btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-                    btn.setAttribute('tabindex', '0');
+                    btn.setAttribute('tabindex', '-1');
 
                     let thumbSvg = deduplicateSvgIds(svgStrings[wrappedIdx], `logo_${logo.id}_r${copy}_c${cell}`);
                     thumbSvg = thumbSvg.replace(/fill="#111111"/g, 'fill="currentColor"');
@@ -1017,7 +741,7 @@
 
                 rasterSampler = new RasterPointSampler();
 
-                for (const svgString of svgStrings) {
+                for (const svgString of canvasSvgStrings) {
                     try {
                         const { texture } = await rasterSampler.sampleToTexture(
                             gl, svgString, CONFIG.particleCount,
@@ -1042,12 +766,22 @@
 
                 window.addEventListener('resize', handleResize);
 
-                // The canvas intentionally bleeds past .main-logo so edge particles
-                // do not get clipped. Track the full canvas rectangle from the document
-                // so the visible edges repel too, while keeping the canvas itself
-                // pointer-events:none so the logo grid remains clickable.
+                // Mouse uses continuous hover-to-repel. Touch/pen instead does a
+                // tap-to-repel pulse so scrolling on mobile/tablet doesn't drag the
+                // repel field around the page.
+                let tapHoverTimer = null;
                 document.addEventListener('pointermove', (e) => {
+                    if (e.pointerType !== 'mouse') return;
                     syncHoverFromPointer(e.clientX, e.clientY);
+                }, { passive: true });
+                document.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType === 'mouse') return;
+                    syncHoverFromPointer(e.clientX, e.clientY);
+                    if (tapHoverTimer) clearTimeout(tapHoverTimer);
+                    tapHoverTimer = setTimeout(() => {
+                        hoverActive = false;
+                        tapHoverTimer = null;
+                    }, 260);
                 }, { passive: true });
                 document.addEventListener('pointerleave', () => {
                     hoverActive = false;
@@ -1065,7 +799,7 @@
             function handleResize() {
                 if (!canvas || !renderer) return;
                 syncParticleCanvasSize();
-                updateRailPosition(cellOf(globalIndex));
+                updateRailPosition(globalIndex);
             }
 
             // ── Animation loop ──────────────────────────
@@ -1118,6 +852,12 @@
                     const nextTexIdx = nextGlobalIndex !== null ? (nextGlobalIndex % totalLogos) : curTexIdx;
                     const curTex = targetTextures[curTexIdx];
                     const nextTex = targetTextures[nextTexIdx];
+
+                    const fromAspect = logoAspects[curTexIdx];
+                    const toAspect = logoAspects[nextTexIdx];
+                    if (Number.isFinite(fromAspect) && Number.isFinite(toAspect)) {
+                        renderer.settings.currentLogoAspect = fromAspect + (toAspect - fromAspect) * morphT;
+                    }
 
                     if (curTex && nextTex) {
                         renderer.renderGPU({
@@ -1268,10 +1008,19 @@
                 cells.forEach((cell) => {
                     const cellGi = Number(cell.dataset.globalIndex);
                     const isActive = cellGi === gi;
+                    const dist = Math.abs(cellGi - gi);
+                    const isVisibleRailCell = dist <= RAIL_VISIBLE_DISTANCE;
+
                     cell.classList.toggle('logo-cell-active', isActive);
                     cell.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    if (isVisibleRailCell) {
+                        cell.removeAttribute('aria-hidden');
+                    } else {
+                        cell.setAttribute('aria-hidden', 'true');
+                    }
+                    cell.tabIndex = isVisibleRailCell ? 0 : -1;
+
                     // Distance-based fade: 0..2 = clearly visible, 3..5 = progressive fade, 6+ = hidden.
-                    const dist = Math.abs(cellGi - gi);
                     cell.dataset.railDistance = dist > 5 ? '99' : String(dist);
                 });
                 updateRailPosition(gi);
@@ -1288,99 +1037,24 @@
                 } else if (skipMorph) {
                     globalIndex = gi;
                 }
+
+                if (pageAnnounce && logo) {
+                    pageAnnounce.textContent = `Showing ${logo.name}`;
+                }
             }
 
-            // ── Paging transitions ──────────────────────
+            // ── Rail cycling ────────────────────────────
 
             /**
-             * Cycle to the next logo. If we've reached the end of the current page,
-             * trigger a page transition instead.
+             * Cycle to the next logo in the continuous rail.
              */
             function cycleToNext() {
-                if (isPaused || isTransitioning || isPageTransitioning) return;
+                if (isPaused || isTransitioning) return;
 
                 const nextGi = findNextRenderableGlobalIndex(globalIndex + 1);
                 if (nextGi === null || nextGi === globalIndex) return;
 
-                const nextPage = pageOf(nextGi);
-
-                if (totalPages() <= 1) {
-                    setActiveLogo(nextGi);
-                    return;
-                }
-
-                if (nextPage !== currentPage) {
-                    // We've cycled through all cells on this page — transition to next page
-                    const destinationPage = nextPage % totalPages();
-                    transitionToPage(destinationPage);
-                } else {
-                    setActiveLogo(nextGi);
-                }
-            }
-
-            /**
-             * Simultaneous crossfade using a body-level clone.
-             * The clone is placed in document.body with position:fixed so it is
-             * completely isolated from .logo-grid's CSS cascade and layout.
-             */
-            function transitionToPage(newPage) {
-                isPageTransitioning = true;
-                stopCycling();
-                logoGrid.setAttribute('aria-busy', 'true');
-
-                const transitionMs = prefersReducedMotion ? 10 : 500;
-
-                // Step 1: Snapshot the grid's viewport position
-                const rect = logoGrid.getBoundingClientRect();
-
-                // Step 2: Deep-clone the grid and restyle as a fixed overlay
-                const clone = logoGrid.cloneNode(true);
-                clone.className = 'crossfade-clone';
-                clone.removeAttribute('role');
-                clone.removeAttribute('aria-label');
-                clone.setAttribute('aria-hidden', 'true');
-                clone.style.top = rect.top + 'px';
-                clone.style.left = rect.left + 'px';
-                clone.style.width = rect.width + 'px';
-                clone.style.height = rect.height + 'px';
-                // Step 3: Append clone to body (completely outside .logo-grid)
-                document.body.appendChild(clone);
-
-                // Step 4: Rebuild the real grid with new page content
-                const firstGi = globalOf(newPage, 0);
-                buildLogoGrid(newPage);
-
-                // Step 5: Set new grid cells to hidden (blur-in start state)
-                logoGrid.classList.add('page-enter');
-
-                // Force reflow so browser registers initial hidden state
-                void logoGrid.offsetHeight;
-
-                // Step 6: Simultaneously fade out clone + blur in new grid
-                logoGrid.classList.remove('page-enter');
-                logoGrid.classList.add('page-enter-active');
-                clone.classList.add('fade-out');
-
-                // Step 7: Cleanup after transition completes
-                setTimeout(() => {
-                    logoGrid.classList.remove('page-enter-active');
-                    if (clone.parentNode) clone.parentNode.removeChild(clone);
-                    logoGrid.setAttribute('aria-busy', 'false');
-                    isPageTransitioning = false;
-
-                    // Morph particles to the first logo on the new page
-                    setActiveLogo(firstGi);
-
-                    // Announce page change for screen readers
-                    const pageNum = newPage + 1;
-                    const firstName = logoManifest[firstGi % totalLogos].name;
-                    pageAnnounce.textContent = `Page ${pageNum} of ${totalPages()}, showing ${firstName}`;
-
-                    // Resume auto-cycling
-                    if (!isPaused) {
-                        startCycling();
-                    }
-                }, transitionMs);
+                setActiveLogo(nextGi);
             }
 
             // ── Cycling controls ────────────────────────
@@ -1412,7 +1086,6 @@
             // ── Event handlers ──────────────────────────
 
             function handleCellClick(event) {
-                if (isPageTransitioning) return;
                 const cell = event.currentTarget;
                 const gi = parseInt(cell.getAttribute('data-global-index'), 10);
 
@@ -1423,16 +1096,14 @@
             }
 
             function handleKeyDown(event) {
-                if (isPageTransitioning) return;
                 const cell = event.currentTarget;
-                const cellIdx = Array.from(cells).indexOf(cell);
-                let newCellIdx = cellIdx;
+                const gi = parseInt(cell.getAttribute('data-global-index'), 10);
+                if (isNaN(gi)) return;
 
                 switch (event.key) {
                     case 'Enter':
                     case ' ': {
                         event.preventDefault();
-                        const gi = parseInt(cell.getAttribute('data-global-index'), 10);
                         if (!isNaN(gi) && gi !== globalIndex && !isTransitioning) {
                             setActiveLogo(gi);
                             pauseCycling();
@@ -1440,25 +1111,29 @@
                         break;
                     }
                     case 'ArrowRight':
+                    case 'ArrowDown': {
                         event.preventDefault();
-                        newCellIdx = (cellIdx + 1) % LOGOS_PER_PAGE;
-                        cells[newCellIdx].focus();
+                        if (isTransitioning) break;
+                        const nextGi = findNextRenderableGlobalIndex(globalIndex + 1);
+                        if (nextGi !== null && nextGi !== globalIndex) {
+                            setActiveLogo(nextGi);
+                            focusCellByGlobalIndex(nextGi);
+                            pauseCycling();
+                        }
                         break;
+                    }
                     case 'ArrowLeft':
+                    case 'ArrowUp': {
                         event.preventDefault();
-                        newCellIdx = (cellIdx - 1 + LOGOS_PER_PAGE) % LOGOS_PER_PAGE;
-                        cells[newCellIdx].focus();
+                        if (isTransitioning) break;
+                        const previousGi = findPreviousRenderableGlobalIndex(globalIndex - 1);
+                        if (previousGi !== null && previousGi !== globalIndex) {
+                            setActiveLogo(previousGi);
+                            focusCellByGlobalIndex(previousGi);
+                            pauseCycling();
+                        }
                         break;
-                    case 'ArrowDown':
-                        event.preventDefault();
-                        newCellIdx = (cellIdx + 3) % LOGOS_PER_PAGE;
-                        cells[newCellIdx].focus();
-                        break;
-                    case 'ArrowUp':
-                        event.preventDefault();
-                        newCellIdx = (cellIdx - 3 + LOGOS_PER_PAGE) % LOGOS_PER_PAGE;
-                        cells[newCellIdx].focus();
-                        break;
+                    }
                 }
             }
 
@@ -1482,8 +1157,7 @@
             await loadMainSettingsFile();
             applyResponsiveParticleCount();
             await loadLogos();
-            currentPage = pageOf(globalIndex);
-            buildLogoGrid(currentPage);
+            buildLogoGrid();
             setActiveLogo(globalIndex, true);
 
             if (splashAlreadyShown) {
@@ -1505,7 +1179,7 @@
             if (!prefersReducedMotion) {
                 setTimeout(() => {
                     cycleToNext();
-                    if (!isPaused && !isPageTransitioning) {
+                    if (!isPaused) {
                         startCycling();
                     }
                 }, CONFIG.initialDelay);
@@ -1522,7 +1196,7 @@
                     if (!animationId) {
                         startAnimationLoop();
                     }
-                    if (!isPaused && !isPageTransitioning) {
+                    if (!isPaused) {
                         startCycling();
                     }
                 }

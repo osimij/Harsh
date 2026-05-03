@@ -1,6 +1,128 @@
 {
   "logos": [
     {
+      "id": "automaison",
+      "file": "Automaison.svg",
+      "name": "Automaison",
+      "displayName": "Automaison",
+      "initialActive": true,
+      "tags": ["Logo", "Branding", "Tech"],
+      "description": "Brand identity for Automaison — a refined wordmark engineered for an automation platform, balancing precision with approachable personality.",
+      "year": "2025",
+      "thumbnailBg": "#0F1B33",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "dream-culture",
+      "file": "Dream Culture.svg",
+      "name": "Dream Culture",
+      "displayName": "Dream Culture",
+      "tags": ["Logo", "Branding", "Identity"],
+      "description": "Identity system for Dream Culture — a confident, expressive wordmark for a brand built around imagination and self-expression.",
+      "year": "2025",
+      "thumbnailBg": "#5B2C82",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "hype-proxies",
+      "file": "HypeProxies.svg",
+      "name": "HypeProxies",
+      "displayName": "HypeProxies",
+      "tags": ["Logo", "Tech", "Branding"],
+      "description": "Brand mark for HypeProxies — a sharp, modern identity for a residential proxy service, blending speed cues with technical credibility.",
+      "year": "2025",
+      "thumbnailBg": "#0F3D2E",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "influence-pro",
+      "file": "InfluencePro.svg",
+      "name": "InfluencePro",
+      "displayName": "InfluencePro",
+      "tags": ["Logo", "Branding", "Identity"],
+      "description": "Identity for InfluencePro — a polished mark for an influencer marketing platform, communicating reach and professional polish.",
+      "year": "2025",
+      "thumbnailBg": "#1E3A8A",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "north-systems",
+      "file": "NorthSystems.svg",
+      "name": "NorthSystems",
+      "displayName": "NorthSystems",
+      "tags": ["Logo", "Corporate", "Tech"],
+      "description": "Corporate identity for NorthSystems — a steady, directional mark anchored by a stylized peak that signals reliability and strategic direction.",
+      "year": "2025",
+      "thumbnailBg": "#0A0E27",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "phanmotion",
+      "file": "Phanmotion.svg",
+      "name": "Phanmotion",
+      "displayName": "Phanmotion",
+      "tags": ["Logo", "Branding", "Motion"],
+      "description": "Brand identity for Phanmotion — a kinetic mark for a motion design studio, distilling energy and movement into a single confident form.",
+      "year": "2025",
+      "thumbnailBg": "#9B1D6F",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "primos-car-wash",
+      "file": "Primo's Car Wash.svg",
+      "name": "Primo's Car Wash",
+      "displayName": "Primo's Car Wash",
+      "tags": ["Logo", "Branding", "Identity"],
+      "description": "Identity for Primo's Car Wash — a bold, friendly mark with retro service-era roots, designed to feel iconic on signage and apparel alike.",
+      "year": "2025",
+      "thumbnailBg": "#D62828",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "rivet",
+      "file": "Rivet.svg",
+      "name": "Rivet",
+      "displayName": "Rivet",
+      "tags": ["Logo", "Branding", "Industrial"],
+      "description": "Brand identity for Rivet — a structural, no-nonsense wordmark for an industrial brand, with weight and confidence built into every form.",
+      "year": "2025",
+      "thumbnailBg": "#1F1F1F",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "sorcerer",
+      "file": "Sorcerer.svg",
+      "name": "Sorcerer",
+      "displayName": "Sorcerer",
+      "tags": ["Logo", "Branding", "Identity"],
+      "description": "Identity for Sorcerer — a mysterious wordmark with arcane character, designed to feel otherworldly while remaining unmistakably modern.",
+      "year": "2025",
+      "thumbnailBg": "#2A0E5C",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "urbanscapes",
+      "file": "URBANSCAPES.svg",
+      "name": "URBANSCAPES",
+      "displayName": "URBANSCAPES",
+      "tags": ["Logo", "Branding", "Architecture"],
+      "description": "Identity for URBANSCAPES — a structured, architectural wordmark inspired by city skylines and urban geometry.",
+      "year": "2025",
+      "thumbnailBg": "#3F3F3F",
+      "logoColor": "#FFFFFF"
+    },
+    {
+      "id": "wellio",
+      "file": "Wellio.svg",
+      "name": "Wellio",
+      "displayName": "Wellio",
+      "tags": ["Logo", "Branding", "Wellness"],
+      "description": "Brand identity for Wellio — a warm, approachable mark for a wellness platform, balancing care with quiet confidence.",
+      "year": "2025",
+      "thumbnailBg": "#1F6B4F",
+      "logoColor": "#FFFFFF"
+    },
+    {
       "id": "caviar-cocktails",
       "imageFile": "assets/CandC-icon.png",
       "name": "Caviar & Cocktails",
@@ -57,7 +179,6 @@
       "file": "Balanced Pathways Corporation.svg",
       "name": "Balanced Pathways Corporation",
       "displayName": "Balanced Pathways Corporation",
-      "initialActive": true,
       "tags": ["Logo", "Corporate", "Branding"],
       "description": "Corporate identity for Balanced Pathways Corporation — a mark that communicates stability, direction, and professional integrity.",
       "year": "2024",
