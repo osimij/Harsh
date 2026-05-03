@@ -12,7 +12,7 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css?v=socials-opacity-20260428">
+    <link rel="stylesheet" href="hero.css?v=work-nav-20260428">
     <link rel="stylesheet" href="lets-work-together.css?v=lwt-figma-20260428e">
 </head>
 <body>
@@ -84,6 +84,11 @@
                 <div class="main-logo" aria-label="Featured logo artwork">
                     <canvas id="particle-canvas"></canvas>
                 </div>
+
+                <aside class="project-meta" aria-live="polite" aria-atomic="true">
+                    <h1 class="project-title">Balanced Pathways Corporation</h1>
+                    <p class="project-tags">Logo, Corporate, Branding</p>
+                </aside>
 
                 <div class="logo-grid" role="list" aria-label="Logo portfolio">
                 </div>
@@ -176,6 +181,7 @@
             };
             const PHONE_PARTICLE_COUNT = 170000;
             const PHONE_PARTICLE_SIZE = 1.3;
+            const PHONE_PARTICLE_ZOOM = 1.0;
             const PHONE_PARTICLE_QUERY = '(max-width: 767px)';
 
             function isHexColor(value) {
@@ -247,11 +253,14 @@
                 if (window.matchMedia(PHONE_PARTICLE_QUERY).matches) {
                     CONFIG.particleCount = PHONE_PARTICLE_COUNT;
                     CONFIG.particleSize = PHONE_PARTICLE_SIZE;
+                    CONFIG.zoom = PHONE_PARTICLE_ZOOM;
                 }
             }
 
             // Paging constants
-            const LOGOS_PER_PAGE = 6;
+            const LOGOS_PER_PAGE = 9;
+            const RAIL_REPEAT_COPIES = 15;
+            const RAIL_MIDDLE_COPY = Math.floor(RAIL_REPEAT_COPIES / 2);
 
             // State — global index tracks position across ALL logos
             let globalIndex = CONFIG.initialActive;
@@ -412,6 +421,8 @@
             const canvas = document.getElementById('particle-canvas');
             const logoGrid = document.querySelector('.logo-grid');
             const pageAnnounce = document.getElementById('page-announce');
+            const projectTitle = document.querySelector('.project-title');
+            const projectTags = document.querySelector('.project-tags');
             let cells = [];
             let totalLogos = 0;
 
@@ -471,7 +482,7 @@
                 const activeIdx = logoManifest.findIndex(l => l.initialActive);
                 if (activeIdx !== -1) {
                     CONFIG.initialActive = activeIdx;
-                    globalIndex = activeIdx;
+                    globalIndex = activeIdx + RAIL_MIDDLE_COPY * logoManifest.length;
                 }
 
                 const fetches = logoManifest.map(logo =>
@@ -494,30 +505,31 @@
 
             /**
              * Build the logo grid for a specific page.
-             * Always renders LOGOS_PER_PAGE cells; wraps around the manifest for partial pages.
+             * Renders repeated copies so the bottom rail reads as an infinite strip.
              */
             function buildLogoGrid(page) {
                 currentPage = page;
                 logoGrid.innerHTML = '';
 
-                const activeCellIdx = cellOf(globalIndex);
-
-                for (let cell = 0; cell < LOGOS_PER_PAGE; cell++) {
-                    const gi = globalOf(page, cell);
-                    const wrappedIdx = gi % totalLogos;
+                for (let copy = 0; copy < RAIL_REPEAT_COPIES; copy++) {
+                    for (let cell = 0; cell < totalLogos; cell++) {
+                    const gi = copy * totalLogos + cell;
+                    const wrappedIdx = ((gi % totalLogos) + totalLogos) % totalLogos;
                     const logo = logoManifest[wrappedIdx];
-                    const isActive = (cell === activeCellIdx && pageOf(globalIndex) === page);
+                    const isActive = gi === globalIndex;
 
                     const btn = document.createElement('button');
                     btn.className = 'logo-cell' + (isActive ? ' logo-cell-active' : '');
                     btn.setAttribute('role', 'listitem');
                     btn.setAttribute('data-logo', logo.id);
+                    btn.setAttribute('data-logo-index', String(wrappedIdx));
+                    btn.setAttribute('data-rail-copy', String(copy));
                     btn.setAttribute('data-global-index', String(gi));
                     btn.setAttribute('aria-label', `View ${logo.name} logo`);
                     btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
                     btn.setAttribute('tabindex', '0');
 
-                    let thumbSvg = deduplicateSvgIds(svgStrings[wrappedIdx], `logo_${logo.id}_p${page}_c${cell}`);
+                    let thumbSvg = deduplicateSvgIds(svgStrings[wrappedIdx], `logo_${logo.id}_r${copy}_c${cell}`);
                     thumbSvg = thumbSvg.replace(/fill="#111111"/g, 'fill="currentColor"');
 
                     const wrapper = document.createElement('div');
@@ -532,6 +544,7 @@
 
                     btn.appendChild(wrapper);
                     logoGrid.appendChild(btn);
+                    }
                 }
 
                 cells = Array.from(logoGrid.querySelectorAll('.logo-cell'));
@@ -662,6 +675,7 @@
                 canvas.width = rect.width * factor * dpr;
                 canvas.height = rect.height * factor * dpr;
                 renderer.settings.zoom = CONFIG.zoom * canvasInnerScale;
+                updateRailPosition(cellOf(globalIndex));
             }
 
             // ── Animation loop ──────────────────────────
@@ -696,6 +710,7 @@
                             }
                             globalIndex = nextGlobalIndex;
                             isTransitioning = false;
+                            rebaseRailIfNeeded();
                         }
                     }
 
@@ -760,14 +775,50 @@
              * Set active logo by global index.
              * Highlights the correct cell on the current page.
              */
-            function setActiveLogo(gi, skipMorph = false) {
-                const cellIdx = cellOf(gi);
+            function updateRailPosition(gi) {
+                if (!logoGrid || !cells.length) return;
+                const activeCell = cells.find(cell => Number(cell.dataset.globalIndex) === gi);
+                if (!activeCell) return;
 
-                cells.forEach((cell, i) => {
-                    const isActive = (i === cellIdx);
+                const activeCenter = activeCell.offsetLeft + activeCell.offsetWidth / 2;
+                const viewportCenter = window.innerWidth / 2;
+                const shift = activeCenter - viewportCenter;
+                logoGrid.style.setProperty('--rail-shift', `${shift}px`);
+            }
+
+            function rebaseRailIfNeeded() {
+                if (!totalLogos || !logoGrid) return;
+
+                const lowerBound = totalLogos * 2;
+                const upperBound = totalLogos * (RAIL_REPEAT_COPIES - 3);
+                if (globalIndex > lowerBound && globalIndex < upperBound) return;
+
+                const logicalIndex = ((globalIndex % totalLogos) + totalLogos) % totalLogos;
+                const rebasedIndex = RAIL_MIDDLE_COPY * totalLogos + logicalIndex;
+                const previousTransition = logoGrid.style.transition;
+
+                logoGrid.style.transition = 'none';
+                setActiveLogo(rebasedIndex, true);
+
+                requestAnimationFrame(() => {
+                    logoGrid.style.transition = previousTransition;
+                });
+            }
+
+            function setActiveLogo(gi, skipMorph = false) {
+                const logo = logoManifest[((gi % totalLogos) + totalLogos) % totalLogos];
+
+                cells.forEach((cell) => {
+                    const isActive = Number(cell.dataset.globalIndex) === gi;
                     cell.classList.toggle('logo-cell-active', isActive);
                     cell.setAttribute('aria-pressed', isActive ? 'true' : 'false');
                 });
+                updateRailPosition(gi);
+
+                if (logo) {
+                    if (projectTitle) projectTitle.textContent = logo.displayName || logo.name;
+                    if (projectTags) projectTags.textContent = Array.isArray(logo.tags) ? logo.tags.join(', ') : '';
+                }
 
                 if (!skipMorph && gi !== globalIndex) {
                     morphToLogo(gi);
@@ -789,6 +840,11 @@
                 if (nextGi === null || nextGi === globalIndex) return;
 
                 const nextPage = pageOf(nextGi);
+
+                if (totalPages() <= 1) {
+                    setActiveLogo(nextGi);
+                    return;
+                }
 
                 if (nextPage !== currentPage) {
                     // We've cycled through all cells on this page — transition to next page

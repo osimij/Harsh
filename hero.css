@@ -417,7 +417,7 @@ a {
     width: calc(100% * var(--logo-mark-scale));
     height: calc(100% * var(--logo-mark-scale));
     min-height: 0;
-    opacity: 0.28;
+    opacity: 0.10;
     transition: opacity 0.35s ease;
 }
 
@@ -750,6 +750,70 @@ a {
     }
 }
 
+@keyframes blurScaleInCentered {
+    0% {
+        opacity: 0;
+        filter: blur(20px);
+        transform: translate(-50%, -50%) scale(0.92);
+    }
+    55% {
+        filter: blur(3px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes blurFadeUpRail {
+    0% {
+        opacity: 0;
+        filter: blur(14px);
+        transform: translateX(calc(var(--rail-shift) * -1)) translateY(20px);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateX(calc(var(--rail-shift) * -1)) translateY(0);
+    }
+}
+
+@keyframes blurFadeRightMeta {
+    0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform: translateY(-50%) translateX(28px);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+@keyframes blurFadeUpCenteredMeta {
+    0% {
+        opacity: 0;
+        filter: blur(14px);
+        transform: translateX(-50%) translateY(20px);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
 /* Initial load — pre-animation hidden state on every animated element */
 .hero:not(.instant) .site-nav-logo,
 .hero:not(.instant) .site-nav-links,
@@ -1023,5 +1087,333 @@ a {
 
     .logo-img {
         filter: none;
+    }
+}
+
+/* ============================================
+   HOMEPAGE ART-DIRECTED LAYOUT
+   Reference: black stage, centered particle mark, left socials,
+   right project label, bottom logo rail.
+   ============================================ */
+.hero {
+    --stage-pad-x: clamp(24px, 2.45vw, 50px);
+    --nav-bottom-y: clamp(62px, 7.5vh, 86px);
+    --rail-top-y: calc(100dvh - clamp(86px, 10.6vh, 116px));
+    --stage-center-y: calc((var(--nav-bottom-y) + var(--rail-top-y)) / 2);
+    --hero-logo-size: clamp(354px, 29.2vw, 598px);
+    --hero-logo-half: clamp(177px, 14.6vw, 299px);
+    --project-side-gap: clamp(58px, 5.2vw, 110px);
+    padding: 0 var(--stage-pad-x);
+}
+
+.main {
+    max-width: none;
+    position: relative;
+    display: block;
+    padding: 0;
+}
+
+.content {
+    display: contents;
+}
+
+.intro-section {
+    display: none;
+}
+
+.site-nav {
+    padding: 14px 40px 0 40px;
+}
+
+.site-nav-logo {
+    width: 28px;
+    height: 28px;
+}
+
+.site-nav-links {
+    gap: clamp(14px, 1.6vw, 24px);
+}
+
+.site-nav-text-links {
+    gap: clamp(9px, 1vw, 14px);
+}
+
+.site-nav-link {
+    font-size: 13px;
+    line-height: 19.5px;
+    font-weight: 500;
+}
+
+.logos-section {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    overflow: visible;
+}
+
+.main-logo {
+    position: absolute;
+    left: 50%;
+    top: var(--stage-center-y);
+    width: var(--hero-logo-size);
+    height: var(--hero-logo-size);
+    max-width: none;
+    transform: translate(-50%, -50%);
+    flex: none;
+    overflow: visible;
+    --canvas-bleed: 22%;
+}
+
+.project-meta {
+    position: absolute;
+    left: calc(50% + var(--hero-logo-half) + var(--project-side-gap));
+    top: var(--stage-center-y);
+    width: min(390px, 22vw);
+    color: #fff;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.project-title {
+    margin: 0 0 6px;
+    font-size: clamp(18px, 1.22vw, 25px);
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.project-tags {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: clamp(14px, 0.98vw, 20px);
+    line-height: 1.2;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.hero-socials {
+    display: none;
+}
+
+.hero-socials a {
+    width: 25px;
+    height: 25px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.hero-socials svg {
+    height: 22px;
+}
+
+.logo-grid {
+    --rail-cell: clamp(72px, 7.6vw, 124px);
+    --rail-gap: clamp(44px, 5vw, 96px);
+    --rail-shift: 0px;
+    position: fixed;
+    left: 0;
+    bottom: clamp(28px, 5.35vh, 58px);
+    width: max-content;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--rail-gap);
+    background: transparent;
+    border: 0;
+    transform: translateX(calc(var(--rail-shift) * -1));
+    transition: transform 850ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.crossfade-clone {
+    display: flex;
+    gap: var(--rail-gap);
+    padding: 0;
+    background: transparent;
+}
+
+.logo-cell {
+    flex: 0 0 var(--rail-cell);
+    width: var(--rail-cell);
+    height: clamp(38px, 3.9vw, 58px);
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.logo-cell-active {
+    box-shadow: none;
+}
+
+.logo-wrapper {
+    width: 100%;
+    height: 100%;
+    opacity: 0.10;
+    transform: scale(0.86);
+    transform-origin: center;
+    transition:
+        opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+}
+
+.logo-cell-active .logo-wrapper {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    color: #fff;
+}
+
+.hero:not(.instant) .project-meta {
+    opacity: 0;
+    will-change: opacity, transform, filter;
+}
+
+.hero.loaded:not(.instant) .project-meta {
+    opacity: 1;
+    filter: none;
+    animation-name: blurFadeRightMeta;
+    animation-duration: 1.1s;
+    animation-delay: 0.55s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: backwards;
+}
+
+.hero.loaded:not(.instant) .main-logo {
+    opacity: 1;
+    filter: none;
+    transform: translate(-50%, -50%);
+    animation-name: blurScaleInCentered;
+    animation-duration: 1.4s;
+    animation-delay: 0.3s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: backwards;
+}
+
+.hero.loaded:not(.instant) .logo-grid {
+    opacity: 1;
+    filter: none;
+    animation-name: blurFadeUpRail;
+    animation-duration: 1.1s;
+    animation-delay: 0.6s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-fill-mode: backwards;
+}
+
+.hero.instant .project-meta {
+    animation: none;
+    opacity: 1;
+    filter: none;
+}
+
+.hero.instant .main-logo {
+    transform: translate(-50%, -50%);
+}
+
+.hero.instant .logo-grid {
+    transform: translateX(calc(var(--rail-shift) * -1));
+}
+
+@media (max-width: 1180px) {
+    .hero {
+        --hero-logo-size: min(52.7vw, 490px);
+        --hero-logo-half: min(26.4vw, 245px);
+    }
+
+    .main-logo {
+        width: var(--hero-logo-size);
+        height: var(--hero-logo-size);
+    }
+
+    .project-meta {
+        left: 50%;
+        top: calc(var(--stage-center-y) + min(26.4vw, 196px));
+        width: min(520px, 78vw);
+        text-align: center;
+        transform: translateX(-50%);
+    }
+
+    .hero.loaded:not(.instant) .project-meta {
+        animation-name: blurFadeUpCenteredMeta;
+    }
+
+}
+
+@media (max-width: 900px) {
+    .site-nav-logo {
+        width: 28px;
+    }
+
+    .site-nav-links {
+        gap: 14px;
+    }
+
+    .logo-grid {
+        --rail-cell: clamp(54px, 13vw, 80px);
+        --rail-gap: clamp(28px, 7vw, 46px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+    }
+
+    .crossfade-clone {
+        gap: var(--rail-gap);
+    }
+
+    .logo-cell {
+        height: clamp(32px, 8vw, 46px);
+    }
+
+    .hero-socials {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero {
+        --stage-pad-x: 14px;
+        --hero-logo-size: min(69.7vw, 272px);
+        --hero-logo-half: min(34.9vw, 136px);
+    }
+
+    .site-nav {
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
+    }
+
+    .site-nav-link {
+        font-size: 12px;
+    }
+
+    .main-logo {
+        width: var(--hero-logo-size);
+        height: var(--hero-logo-size);
+    }
+
+    .project-meta {
+        top: calc(var(--stage-center-y) + min(34.9vw, 136px));
+        width: min(340px, 84vw);
+    }
+
+    .project-title {
+        font-size: 18px;
+    }
+
+    .project-tags {
+        font-size: 14px;
+    }
+
+    .logo-grid {
+        --rail-cell: clamp(54px, 16vw, 64px);
+        --rail-gap: clamp(24px, 8vw, 34px);
+    }
+
+    .crossfade-clone {
+        gap: var(--rail-gap);
     }
 }
