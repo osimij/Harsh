@@ -443,7 +443,6 @@ a {
         justify-content: center;
         width: 100%;
         flex: 1 1 0;
-        min-height: clamp(180px, 42dvh, 420px);
     }
 
     .logo-grid {
@@ -571,10 +570,6 @@ a {
 
     .logos-section {
         padding: 0 12px;
-    }
-
-    .main-logo {
-        min-height: clamp(150px, 38dvh, 320px);
     }
 }
 
@@ -1358,37 +1353,87 @@ a {
     }
 }
 
+/* Portrait phones — recenter the stage so the logo, meta, and rail share
+   the available height instead of clustering in the middle with dead space
+   above and below. */
 @media (max-width: 640px) {
     .hero {
         --stage-pad-x: 14px;
-        --hero-logo-size: min(69.7vw, 272px);
-        --hero-logo-half: min(34.9vw, 136px);
+        --nav-bottom-y: clamp(56px, 9vh, 84px);
+        --rail-top-y: calc(100dvh - clamp(96px, 14vh, 130px));
+        /* Square logo capped by both width and height so it grows on tall
+           phones (iPhone 13+) without overrunning short phones (SE). */
+        --hero-logo-size: min(82vw, 46vh, 360px);
+        --hero-logo-half: calc(var(--hero-logo-size) / 2);
+        /* Pull the visual center up a touch so the meta+gap below the logo
+           reads as part of one composition. */
+        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.42);
     }
 
     .main-logo {
         width: var(--hero-logo-size);
         height: var(--hero-logo-size);
+        --canvas-bleed: 18%;
     }
 
     .project-meta {
-        top: calc(var(--stage-center-y) + min(34.9vw, 136px));
-        width: min(340px, 84vw);
+        /* Sit the meta just under the logo with a small breathing gap rather
+           than tied to a viewport-width fraction. */
+        top: calc(var(--stage-center-y) + var(--hero-logo-half) + clamp(10px, 2.4vh, 22px));
+        width: min(340px, 88vw);
+        transform: translateX(-50%);
     }
 
     .project-title {
-        font-size: 18px;
+        font-size: clamp(16px, 4.4vw, 19px);
     }
 
     .project-tags {
-        font-size: 14px;
+        font-size: clamp(13px, 3.6vw, 15px);
     }
 
     .logo-grid {
         --rail-cell: clamp(54px, 16vw, 64px);
         --rail-gap: clamp(24px, 8vw, 34px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
     }
 
     .crossfade-clone {
         gap: var(--rail-gap);
+    }
+}
+
+/* Tiny phones (≤360px) — keep the logo readable without crowding the rail. */
+@media (max-width: 360px) {
+    .hero {
+        --hero-logo-size: min(78vw, 42vh, 280px);
+    }
+
+    .project-title {
+        font-size: 16px;
+    }
+
+    .project-tags {
+        font-size: 12px;
+    }
+}
+
+/* Short landscape phones — when there's almost no vertical room, scale the
+   logo by height so the rail and meta still fit without overlap. */
+@media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+    .hero {
+        --nav-bottom-y: clamp(44px, 10vh, 60px);
+        --rail-top-y: calc(100dvh - clamp(72px, 16vh, 96px));
+        --hero-logo-size: min(38vh, 38vw, 240px);
+        --hero-logo-half: calc(var(--hero-logo-size) / 2);
+    }
+
+    .project-meta {
+        top: calc(var(--stage-center-y) + var(--hero-logo-half) + 6px);
+        width: min(360px, 60vw);
+    }
+
+    .logo-grid {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
     }
 }
