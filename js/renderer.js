@@ -41,7 +41,13 @@ export class Renderer {
             spriteRotate: true,
             sprite: null,
             colorMode: 'original',
-            chromaticShift: 0.07
+            chromaticShift: 0.07,
+            screenOffsetX: 0,
+            screenOffsetY: 0,
+            ambientParticlesEnabled: false,
+            ambientParticleCount: 0,
+            ambientParticleOpacity: 0.12,
+            ambientParticleSize: 0.65
         };
 
         // On-canvas overlay (e.g., MagnetTool circle). Stored in clip space so it’s resolution independent.
@@ -459,6 +465,7 @@ export class Renderer {
             uniform vec2 u_aspect;
             uniform float u_depthScale;
             uniform float u_zoom;
+            uniform vec2 u_screenOffset;
             uniform float u_rotX;
             uniform float u_rotY;
 	            uniform float u_focusEnabled;
@@ -474,6 +481,8 @@ export class Renderer {
 	            uniform float u_sizeMax; // multiplier
 	            // Transition blend (0..1) for stable logo-space coords (used by gradient overlay)
 	            uniform float u_morphT;
+	            uniform float u_ambientPass;
+	            uniform float u_ambientSize;
 
             out vec4 v_rand;
             out vec3 v_vel;
@@ -482,6 +491,8 @@ export class Renderer {
             out vec2 v_logoXY;
             out vec3 v_color;
             out float v_colorA;
+            out float v_ambient;
+            out float v_ambientFade;
 
 	            float hash12(vec2 p) {
 	                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -499,6 +510,8 @@ export class Renderer {
                     v_logoXY = vec2(0.0);
                     v_color = vec3(1.0);
                     v_colorA = 1.0;
+                    v_ambient = 0.0;
+                    v_ambientFade = 0.0;
                     return;
                 }
 
@@ -509,6 +522,48 @@ export class Renderer {
                 vec4 pos4 = texelFetch(u_posTex, coord, 0);
                 vec4 vel4 = texelFetch(u_velTex, coord, 0);
                 vec4 rnd = texelFetch(u_randTex, coord, 0);
+                v_rand = rnd;
+                v_vel = vel4.xyz;
+                v_color = vec3(1.0);
+                v_colorA = 1.0;
+                v_edge = 0.0;
+                v_ambient = 0.0;
+                v_ambientFade = 1.0;
+
+                if (u_ambientPass > 0.5) {
+                    float fid = float(id);
+                    float h1 = hash12(vec2(fid * 0.071, rnd.x + 0.13));
+                    float h2 = hash12(vec2(fid * 0.113, rnd.y + 0.47));
+                    float h3 = hash12(vec2(fid * 0.173, rnd.z + 0.71));
+                    float h4 = hash12(vec2(fid * 0.227, rnd.w + 0.29));
+                    float h5 = hash12(vec2(fid * 0.311, rnd.x + rnd.y));
+                    float sx = max(u_aspect.x, 1e-4);
+                    float sy = max(u_aspect.y, 1e-4);
+                    vec2 screenRange = vec2(1.0 / sx, 1.0 / sy);
+                    float driftA = h3 * 6.28318530718 + u_time * (0.05 + h4 * 0.07);
+                    vec2 drift = vec2(cos(driftA), sin(driftA)) * (0.008 + h4 * 0.006);
+
+                    vec2 fieldPos = (vec2(h1, h2) * 2.0 - 1.0) * screenRange;
+                    vec2 cloud = vec2(h3, h4) * 2.0 - 1.0;
+                    float cloudFalloff = 0.55 + 0.45 * pow(max(abs(cloud.x), abs(cloud.y)), 0.7);
+                    vec2 haloPos = u_screenOffset + vec2(cloud.x / sx, cloud.y / sy) * (0.82 * cloudFalloff);
+                    float useHalo = 1.0 - step(0.72, h5);
+                    vec2 preClip = mix(fieldPos, haloPos, useHalo) + drift;
+
+                    vec2 logoDelta = (preClip - u_screenOffset) * u_aspect;
+                    float logoDist = length(logoDelta);
+                    float nearLogo = exp(-(logoDist * logoDist) / 0.36);
+                    float outerDust = mix(0.72, 1.0, nearLogo);
+
+                    v_logoXY = preClip - u_screenOffset;
+                    v_depth = (rnd.z * 2.0 - 1.0) * 0.25;
+                    v_ambient = 1.0;
+                    v_ambientFade = outerDust * mix(0.62, 1.0, useHalo) * (0.42 + 0.58 * h2);
+
+                    gl_Position = vec4(preClip * u_aspect, v_depth, 1.0);
+                    gl_PointSize = clamp(u_pointSize * u_ambientSize * (0.8 + h1 * 1.0), 0.0, 24.0);
+                    return;
+                }
 
                 // Stable logo-space coordinate (mix between from/to targets)
                 vec3 fromT = texelFetch(u_targetFrom, coord, 0).xyz;
@@ -576,7 +631,7 @@ export class Renderer {
                 float depthScaleClamped = clamp(depthScale, 0.0, 1.0);
                 float posNorm = 0.985 / (1.0 + depthScaleClamped * 0.3);
 
-                vec2 clipPos = zoomedPos * scale * posNorm;
+                vec2 clipPos = zoomedPos * scale * posNorm + u_screenOffset;
                 gl_Position = vec4(clipPos * u_aspect, depth, 1.0);
 
 	                // Particle size:
@@ -600,8 +655,6 @@ export class Renderer {
 	                float base = u_pointSize * sizeFinal * scale * u_zoom * posNorm * intensityMul;
 	                gl_PointSize = clamp(base, 0.0, 64.0);
 
-                v_rand = rnd;
-                v_vel = vel4.xyz;
                 v_depth = depth;
             }
         `;
@@ -617,6 +670,8 @@ export class Renderer {
             in vec2 v_logoXY;
             in vec3 v_color;
             in float v_colorA;
+            in float v_ambient;
+            in float v_ambientFade;
 
             uniform float u_glowIntensity;
             uniform vec3 u_lightDir;
@@ -649,6 +704,7 @@ export class Renderer {
             uniform float u_gradientDirection; // 0=ltr,1=ttb,2=diag,3=radial
             uniform vec3 u_gradientColorA;     // rgb 0..1
             uniform vec3 u_gradientColorB;     // rgb 0..1
+            uniform float u_ambientOpacity;
 
 	            float hash12(vec2 p) {
 	                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -747,6 +803,7 @@ export class Renderer {
 	                float depthFade = 1.0 - abs(v_depth) * 0.25;
                     float baseMask = core + halo;
 	                float alpha = baseMask * baseA * depthFade;
+                    alpha *= mix(1.0, u_ambientOpacity * v_ambientFade, v_ambient);
                     float edgeRough = clamp(v_edge, 0.0, 1.0);
                     if (edgeRough > 1e-4) {
                         float edgeCutAmount = 0.34 * edgeRough;
@@ -923,6 +980,7 @@ export class Renderer {
             aspect: gl.getUniformLocation(this.gpuProgram, 'u_aspect'),
             depthScale: gl.getUniformLocation(this.gpuProgram, 'u_depthScale'),
             zoom: gl.getUniformLocation(this.gpuProgram, 'u_zoom'),
+            screenOffset: gl.getUniformLocation(this.gpuProgram, 'u_screenOffset'),
             rotX: gl.getUniformLocation(this.gpuProgram, 'u_rotX'),
             rotY: gl.getUniformLocation(this.gpuProgram, 'u_rotY'),
             glowIntensity: gl.getUniformLocation(this.gpuProgram, 'u_glowIntensity'),
@@ -968,7 +1026,10 @@ export class Renderer {
             gradientStrength: gl.getUniformLocation(this.gpuProgram, 'u_gradientStrength'),
             gradientDirection: gl.getUniformLocation(this.gpuProgram, 'u_gradientDirection'),
             gradientColorA: gl.getUniformLocation(this.gpuProgram, 'u_gradientColorA'),
-            gradientColorB: gl.getUniformLocation(this.gpuProgram, 'u_gradientColorB')
+            gradientColorB: gl.getUniformLocation(this.gpuProgram, 'u_gradientColorB'),
+            ambientPass: gl.getUniformLocation(this.gpuProgram, 'u_ambientPass'),
+            ambientOpacity: gl.getUniformLocation(this.gpuProgram, 'u_ambientOpacity'),
+            ambientSize: gl.getUniformLocation(this.gpuProgram, 'u_ambientSize')
         };
 
         // Dummy VAO is required in WebGL2 even when using gl_VertexID-only draws.
@@ -2010,6 +2071,11 @@ export class Renderer {
         gl.uniform1f(this.gpuUniformLocations.focusSoftness, focusSoftness);
         gl.uniform1f(this.gpuUniformLocations.focusScatter, focusScatter);
         gl.uniform1f(this.gpuUniformLocations.zoom, this.settings.zoom || 1.0);
+        gl.uniform2f(
+            this.gpuUniformLocations.screenOffset,
+            Number(this.settings.screenOffsetX) || 0,
+            Number(this.settings.screenOffsetY) || 0
+        );
         gl.uniform1f(this.gpuUniformLocations.rotX, this.settings.rotationX || 0);
         gl.uniform1f(this.gpuUniformLocations.rotY, this.settings.rotationY || 0);
         gl.uniform1f(this.gpuUniformLocations.glowIntensity, this.settings.glowIntensity ?? 0.4);
@@ -2073,12 +2139,30 @@ export class Renderer {
         gl.uniform3f(this.gpuUniformLocations.gradientColorA, ga[0], ga[1], ga[2]);
         gl.uniform3f(this.gpuUniformLocations.gradientColorB, gb[0], gb[1], gb[2]);
 
+        const ambientCount = this.settings.ambientParticlesEnabled
+            ? Math.min(count, Math.max(0, Number(this.settings.ambientParticleCount) || 0) | 0)
+            : 0;
+        gl.uniform1f(
+            this.gpuUniformLocations.ambientOpacity,
+            Math.max(0, Math.min(1, Number(this.settings.ambientParticleOpacity ?? 0.12) || 0))
+        );
+        gl.uniform1f(
+            this.gpuUniformLocations.ambientSize,
+            Math.max(0.05, Number(this.settings.ambientParticleSize ?? 0.65) || 0.65)
+        );
+
         // Morph blend (for stable logo-space coords in shader)
         gl.uniform1f(this.gpuUniformLocations.morphT, Math.max(0, Math.min(1, Number(this.settings.morphT ?? 1))));
 
         gl.uniform1i(this.gpuUniformLocations.texWidth, source.texWidth | 0);
-        gl.uniform1i(this.gpuUniformLocations.count, count);
+        if (ambientCount > 0) {
+            gl.uniform1f(this.gpuUniformLocations.ambientPass, 1.0);
+            gl.uniform1i(this.gpuUniformLocations.count, ambientCount);
+            gl.drawArrays(gl.POINTS, 0, ambientCount);
+        }
 
+        gl.uniform1f(this.gpuUniformLocations.ambientPass, 0.0);
+        gl.uniform1i(this.gpuUniformLocations.count, count);
         gl.drawArrays(gl.POINTS, 0, count);
         gl.bindVertexArray(null);
 

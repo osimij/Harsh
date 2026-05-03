@@ -260,6 +260,26 @@
         return Array.from(new Set(roleItems)).slice(0, 4);
     }
 
+    /** Pick the most descriptive single tag for the card badge. */
+    function getBadgeTag(project) {
+        const tags = Array.isArray(project.tags) ? project.tags : [];
+        if (!tags.length) return 'Logo';
+
+        const priority = ['Identity', 'Corporate', 'Tech', 'Science', '3D', 'Personal', 'Streetwear', 'Branding', 'Logo'];
+        for (const candidate of priority) {
+            if (tags.includes(candidate)) return candidate;
+        }
+        return tags[0];
+    }
+
+    /** Map a tag to a CSS modifier for badge color. */
+    function getBadgeVariant(tag) {
+        return String(tag || '')
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+    }
+
     /** Deduplicate internal SVG IDs to prevent DOM collisions */
     function deduplicateSvgIds(svgString, prefix) {
         return svgString
@@ -420,50 +440,58 @@
                 showCasePreloader();
             });
 
-            // Deduplicate SVG IDs, then recolor if logoColor is set
+            // Brand tile: colored chip (using the project's signature
+            // thumbnailBg) holding the original logo silhouette tinted
+            // to its logoColor — restores the existing visual identity
+            // at small size on the white card.
             let svgStr = deduplicateSvgIds(svgs[i], `wk_${logo.id}`);
             if (logo.logoColor) {
                 svgStr = recolorSvg(svgStr, logo.logoColor);
             }
 
-            // Thumbnail with colored background
-            const thumbnail = document.createElement('div');
-            thumbnail.className = 'work-cell__thumbnail';
+            // Header row — brand tile (left) + category badge (right)
+            const head = document.createElement('div');
+            head.className = 'work-cell__head';
+
+            const brandTile = document.createElement('span');
+            brandTile.className = 'work-cell__brand-tile';
             if (logo.thumbnailBg) {
-                thumbnail.style.backgroundColor = logo.thumbnailBg;
+                brandTile.style.backgroundColor = logo.thumbnailBg;
+            }
+            brandTile.innerHTML = svgStr;
+
+            const svgEl = brandTile.querySelector('svg');
+            if (svgEl) {
+                svgEl.setAttribute('aria-hidden', 'true');
+                svgEl.removeAttribute('width');
+                svgEl.removeAttribute('height');
             }
 
-            const logoWrap = document.createElement('div');
-            logoWrap.className = 'work-cell__logo';
-            logoWrap.innerHTML = svgStr;
+            const badgeTag = getBadgeTag(logo);
+            const badge = document.createElement('span');
+            badge.className = `work-cell__badge work-cell__badge--${getBadgeVariant(badgeTag)}`;
+            badge.textContent = badgeTag;
 
-            const svgEl = logoWrap.querySelector('svg');
-            if (svgEl) svgEl.setAttribute('aria-hidden', 'true');
+            head.appendChild(brandTile);
+            head.appendChild(badge);
 
-            thumbnail.appendChild(logoWrap);
+            // Body — title + description
+            const body = document.createElement('div');
+            body.className = 'work-cell__body';
 
-            // Info block below thumbnail
-            const info = document.createElement('span');
-            info.className = 'work-cell__info';
-            if (logo.tags && logo.tags.length > 0) {
-                info.classList.add('hasSubtitle');
-            }
-
-            const titleEl = document.createElement('span');
+            const titleEl = document.createElement('h3');
             titleEl.className = 'work-cell__title';
             titleEl.textContent = getResponsiveCardTitle(logo);
 
-            info.appendChild(titleEl);
+            const descEl = document.createElement('p');
+            descEl.className = 'work-cell__desc';
+            descEl.textContent = logo.description || `${logo.displayName || logo.name} — identity work.`;
 
-            if (logo.tags && logo.tags.length > 0) {
-                const subtitleEl = document.createElement('span');
-                subtitleEl.className = 'work-cell__subtitle';
-                subtitleEl.textContent = logo.tags.join(', ');
-                info.appendChild(subtitleEl);
-            }
+            body.appendChild(titleEl);
+            body.appendChild(descEl);
 
-            cell.appendChild(thumbnail);
-            cell.appendChild(info);
+            cell.appendChild(head);
+            cell.appendChild(body);
             grid.appendChild(cell);
         });
 
@@ -1226,13 +1254,6 @@
         const nav = targetBtn.closest('.sidebar-nav');
         if (!nav) return;
 
-        // Hide on tablet/mobile (nav is row-wrapped)
-        const isDesktop = window.matchMedia('(min-width: 1101px)').matches;
-        if (!isDesktop) {
-            sidebarIndicator.style.opacity = '0';
-            return;
-        }
-
         const navRect = nav.getBoundingClientRect();
         const btnRect = targetBtn.getBoundingClientRect();
 
@@ -1241,45 +1262,24 @@
         const width = btnRect.width;
         const height = btnRect.height;
 
-        const prefersReducedMotion =
-            typeof window.matchMedia === 'function' &&
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        if (!animate || prefersReducedMotion) {
+        const apply = () => {
             sidebarIndicator.style.transform = `translate(${left}px, ${top}px)`;
             sidebarIndicator.style.width = `${width}px`;
             sidebarIndicator.style.height = `${height}px`;
-            sidebarIndicator.style.opacity = '0.04';
+            sidebarIndicator.style.opacity = '1';
+        };
+
+        if (!animate) {
+            const prevTransition = sidebarIndicator.style.transition;
+            sidebarIndicator.style.transition = 'none';
+            apply();
+            // Force layout, then restore transitions
+            sidebarIndicator.offsetWidth;
+            sidebarIndicator.style.transition = prevTransition || '';
             return;
         }
 
-        trackFilterAnimation(sidebarIndicator.animate(
-            [
-                {
-                    transform: sidebarIndicator.style.transform || `translate(${left}px, ${top}px)`,
-                    width: sidebarIndicator.style.width || `${width}px`,
-                    height: sidebarIndicator.style.height || `${height}px`,
-                    opacity: 0.04
-                },
-                {
-                    transform: `translate(${left}px, ${top}px)`,
-                    width: `${width}px`,
-                    height: `${height}px`,
-                    opacity: 0.04
-                }
-            ],
-            {
-                duration: 280,
-                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-                fill: 'forwards'
-            }
-        ));
-
-        // Commit final values
-        sidebarIndicator.style.transform = `translate(${left}px, ${top}px)`;
-        sidebarIndicator.style.width = `${width}px`;
-        sidebarIndicator.style.height = `${height}px`;
-        sidebarIndicator.style.opacity = '0.04';
+        apply();
     }
 
     function updateSidebarActiveState(filter) {

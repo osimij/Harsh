@@ -1093,6 +1093,8 @@ ul {
     height: 28px;
     flex-shrink: 0;
     border-radius: 1px;
+    filter: brightness(0) invert(1) !important;
+    mix-blend-mode: difference;
 }
 
 .site-nav-logo-link:focus-visible,

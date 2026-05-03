@@ -139,6 +139,8 @@ a {
     flex-shrink: 0;
     border-radius: 1px;
     object-fit: contain;
+    filter: brightness(0) invert(1) !important;
+    mix-blend-mode: difference;
 }
 
 .site-nav-logo-link:focus-visible,
@@ -149,7 +151,7 @@ a {
 
 @media (prefers-color-scheme: dark) {
     .site-nav-logo {
-        filter: brightness(0) invert(1);
+        filter: brightness(0) invert(1) !important;
     }
 }
 

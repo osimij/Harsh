@@ -285,6 +285,7 @@ a {
     flex-shrink: 0;
     border-radius: 1px;
     filter: brightness(0) invert(1) !important;
+    mix-blend-mode: difference;
 }
 
 .hero-socials {
@@ -308,8 +309,9 @@ a {
     transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
-.hero-socials a:hover,
-.hero-socials a:focus-visible {
+/* Email is left untouched on hover — same muted color, no lift. */
+.hero-socials a:not([aria-label="Email"]):hover,
+.hero-socials a:not([aria-label="Email"]):focus-visible {
     color: #ffffff;
     transform: translateY(-1px);
 }
@@ -323,6 +325,52 @@ a {
 .hero-socials a[aria-label="Email"] svg {
     fill: none;
     stroke: currentColor;
+}
+
+/* Stack the mono icon and the colored hover icon in the same spot,
+   same size, so swapping them on hover is purely a color change. */
+.hero-socials .social-icon-stack {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.hero-socials .social-icon-mono,
+.hero-socials .social-icon-color {
+    transition: opacity var(--transition-fast);
+}
+
+.hero-socials .social-icon-color {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    /* fill (not contain) so a 1:1 brand asset stretches to the mono's
+       24:23 box exactly — prevents a tiny size jump on hover. */
+    object-fit: fill;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Only fade the mono icon out when there is a colored overlay to swap in
+   (Instagram and LinkedIn). Otherwise the icon would just disappear. */
+.hero-socials a:has(.social-icon-color):hover .social-icon-mono,
+.hero-socials a:has(.social-icon-color):focus-visible .social-icon-mono {
+    opacity: 0;
+}
+
+.hero-socials a:hover .social-icon-color,
+.hero-socials a:focus-visible .social-icon-color {
+    opacity: 1;
+}
+
+/* The LinkedIn brand SVG has more aggressive rounded corners than the mono
+   silhouette, which makes it read slightly smaller at this size. Scale up
+   to match the mono's perceived footprint. */
+.hero-socials a[aria-label="LinkedIn"] .social-icon-color {
+    transform: scale(1.06);
 }
 
 /* ============================================
@@ -355,13 +403,22 @@ a {
     --canvas-bleed: 8%;
 }
 
+#ambient-particle-canvas,
 #particle-canvas {
-    position: absolute;
-    top: calc(var(--canvas-bleed, 0%) * -1);
-    left: calc(var(--canvas-bleed, 0%) * -1);
-    width: calc(100% + var(--canvas-bleed, 0%) * 2);
-    height: calc(100% + var(--canvas-bleed, 0%) * 2);
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     pointer-events: none;
+}
+
+#ambient-particle-canvas {
+    z-index: 1;
+}
+
+#particle-canvas {
+    z-index: 1;
 }
 
 /* ============================================
@@ -438,12 +495,16 @@ a {
     opacity: 1;
 }
 
-/* Hover effect on non-active cells - subtle brighten */
-.logo-cell:not(.logo-cell-active):hover .logo-wrapper {
-    opacity: 0.56;
+/* Hover effect — only on cells that are still readable in the spotlight band. */
+.logo-cell[data-rail-distance="1"]:hover .logo-wrapper,
+.logo-cell[data-rail-distance="2"]:hover .logo-wrapper,
+.logo-cell[data-rail-distance="3"]:hover .logo-wrapper {
+    opacity: 0.95;
 }
 
-.logo-cell:not(.logo-cell-active):hover .logo-img {
+.logo-cell[data-rail-distance="1"]:hover .logo-img,
+.logo-cell[data-rail-distance="2"]:hover .logo-img,
+.logo-cell[data-rail-distance="3"]:hover .logo-img {
     transform: scale(1.02);
 }
 
@@ -1102,7 +1163,7 @@ a {
     --stage-center-y: calc((var(--nav-bottom-y) + var(--rail-top-y)) / 2);
     --hero-logo-size: clamp(354px, 29.2vw, 598px);
     --hero-logo-half: clamp(177px, 14.6vw, 299px);
-    --project-side-gap: clamp(58px, 5.2vw, 110px);
+    --project-side-gap: clamp(96px, 9vw, 200px);
     padding: 0 var(--stage-pad-x);
 }
 
@@ -1174,6 +1235,9 @@ a {
     color: #fff;
     pointer-events: none;
     transform: translateY(-50%);
+    --meta-swap-duration: 800ms;
+    --meta-enter-duration: 720ms;
+    --meta-swap-blur: 2.5px;
 }
 
 .project-title {
@@ -1183,6 +1247,14 @@ a {
     font-weight: 500;
     letter-spacing: 0;
     text-transform: none;
+    transform: translateY(0);
+    filter: blur(0);
+    opacity: 1;
+    transition:
+        transform var(--meta-enter-duration) cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--meta-enter-duration) cubic-bezier(0.22, 1, 0.36, 1),
+        opacity var(--meta-enter-duration) cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, filter, opacity;
 }
 
 .project-tags {
@@ -1192,10 +1264,73 @@ a {
     line-height: 1.2;
     font-weight: 400;
     letter-spacing: 0;
+    transform: translateY(0);
+    filter: blur(0);
+    opacity: 1;
+    transition:
+        transform var(--meta-enter-duration) cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--meta-enter-duration) cubic-bezier(0.22, 1, 0.36, 1),
+        opacity var(--meta-enter-duration) cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, filter, opacity;
+}
+
+.project-meta > .project-title,
+.project-meta > .project-tags {
+    position: relative;
+    z-index: 1;
+}
+
+.project-meta-ghost {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: inherit;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.project-meta-ghost .project-title,
+.project-meta-ghost .project-tags {
+    transition:
+        transform var(--meta-swap-duration) cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--meta-swap-duration) cubic-bezier(0.22, 1, 0.36, 1),
+        opacity var(--meta-swap-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Outgoing: text blurs UP and fades out. */
+.project-meta.is-leaving .project-title,
+.project-meta.is-leaving .project-tags,
+.project-meta-ghost.is-leaving .project-title,
+.project-meta-ghost.is-leaving .project-tags {
+    transform: translateY(-50%);
+    filter: blur(var(--meta-swap-blur));
+    opacity: 0;
+}
+
+/* Incoming start: text snaps BELOW + blurred + invisible (no transition so it doesn't
+   slide from the leaving position). When `is-entering` is removed, the normal transitions
+   resume and the text resolves up into its natural state. */
+.project-meta.is-entering .project-title,
+.project-meta.is-entering .project-tags {
+    transform: translateY(50%);
+    filter: blur(var(--meta-swap-blur));
+    opacity: 0;
+    transition: none !important;
 }
 
 .hero-socials {
-    display: none;
+    position: fixed;
+    left: var(--stage-pad-x);
+    top: var(--stage-center-y);
+    right: auto;
+    bottom: auto;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(14px, 1.7vh, 22px);
 }
 
 .hero-socials a {
@@ -1252,17 +1387,41 @@ a {
 .logo-wrapper {
     width: 100%;
     height: 100%;
-    opacity: 0.10;
+    opacity: 0;
     transform: scale(0.86);
     transform-origin: center;
     transition:
-        opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
         transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: opacity, transform;
 }
 
-.logo-cell-active .logo-wrapper {
-    opacity: 1;
+/* Rail spotlight: center fully lit, two cells either side fade out — the first
+   neighbour reads clearly, the second is half-eaten by the dark. */
+.logo-cell[data-rail-distance="1"] .logo-wrapper {
+    opacity: 0.30;
+    transform: scale(0.92);
+}
+.logo-cell[data-rail-distance="2"] .logo-wrapper {
+    opacity: 0.10;
+    transform: scale(0.86);
+}
+.logo-cell[data-rail-distance="3"] .logo-wrapper,
+.logo-cell[data-rail-distance="4"] .logo-wrapper,
+.logo-cell[data-rail-distance="5"] .logo-wrapper,
+.logo-cell[data-rail-distance="99"] .logo-wrapper {
+    opacity: 0;
+}
+.logo-cell[data-rail-distance="3"],
+.logo-cell[data-rail-distance="4"],
+.logo-cell[data-rail-distance="5"],
+.logo-cell[data-rail-distance="99"] {
+    pointer-events: none;
+}
+
+.logo-cell-active .logo-wrapper,
+.logo-cell[data-rail-distance="0"] .logo-wrapper {
+    opacity: 1 !important;
     transform: scale(1.1);
 }
 
