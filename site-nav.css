@@ -1,0 +1,131 @@
+/* Shared primary navigation — single source of truth.
+   Markup is injected by js/site-nav.js as a <site-nav> custom element.
+   Per-page appearance is driven by the CSS variables set on :root.
+
+   The main page (hero) is the canonical look (white on dark) and pins
+   --site-nav-color: #ffffff regardless of OS color scheme. Other pages
+   inherit defaults below and may override with their own text color. */
+
+:root {
+    /* CTA shimmer — single-family indigo-violet sweep painted onto the
+       text via background-clip: text. Stays inside one hue family (no
+       rainbow); tonal value (lightness) does the heavy lifting; one
+       saturation peak in the middle; the climax carries a subtle
+       indigo whisper instead of pure system white. Echoes the
+       WebGL particles in the hero — cool, refined, spacy without
+       being a generic "cool gradient." */
+
+    /* Light mode: dark text catches a deep indigo entry, lifts through
+       a saturated mid, falls to a frosted near-white peak. */
+    --site-nav-cta-sheen-soft:   #3d44a6;
+    --site-nav-cta-sheen-mid:    #7281e0;
+    --site-nav-cta-sheen-strong: #b8c2f0;
+    --site-nav-cta-sheen-peak:   #ebeefd;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark mode: light text catches a brighter, more electric
+           indigo band that climaxes near-white. Same family, lifted
+           luminosity to read against an already-bright base. */
+        --site-nav-cta-sheen-soft:   #6168d4;
+        --site-nav-cta-sheen-mid:    #95a3ee;
+        --site-nav-cta-sheen-strong: #cfd6f8;
+        --site-nav-cta-sheen-peak:   #f4f6ff;
+    }
+}
+
+/* Custom element wrapper is layout-transparent — the inner <nav> is fixed. */
+site-nav {
+    display: contents;
+}
+
+.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--site-nav-z, 30);
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 14px 40px 0 40px;
+    color: var(--site-nav-color, #ffffff);
+    pointer-events: none;
+}
+
+.site-nav-logo-link,
+.site-nav-link {
+    pointer-events: auto;
+}
+
+.site-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: clamp(14px, 1.6vw, 24px);
+}
+
+.site-nav-text-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(9px, 1vw, 14px);
+}
+
+.site-nav-link {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 19.5px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: inherit;
+}
+
+.site-nav-logo {
+    display: block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 1px;
+    object-fit: contain;
+    filter: var(--site-nav-logo-filter, brightness(0) invert(1)) !important;
+    mix-blend-mode: var(--site-nav-logo-blend, difference);
+}
+
+.site-nav-logo-link:focus-visible,
+.site-nav-link:focus-visible {
+    outline: 2px solid var(--site-nav-focus-color, currentColor);
+    outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+    .site-nav {
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
+    }
+
+    .site-nav-links {
+        gap: 14px;
+    }
+
+    .site-nav-link {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 479px) {
+    .site-nav {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .site-nav-links {
+        gap: 12px;
+    }
+
+    .site-nav-text-links {
+        gap: 10px;
+    }
+}

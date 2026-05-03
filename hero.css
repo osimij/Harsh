@@ -19,6 +19,8 @@
     --color-primary: #ffffff;
     --color-bg: #000000;
     --color-text: #ffffff;
+    --site-nav-color: #ffffff;
+    --site-nav-focus-color: #ffffff;
     --color-text-muted: rgba(255, 255, 255, 0.7);
     --color-border: rgba(255, 255, 255, 0.2);
     --color-border-light: rgba(255, 255, 255, 0.1);
@@ -185,109 +187,6 @@ a {
 /* ============================================
    NAVIGATION
    ============================================ */
-.nav {
-    position: fixed;
-    top: 20px;
-    left: 40px;
-    z-index: 30;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 0;
-    order: 1;
-    width: fit-content;
-    padding: 0;
-    flex-shrink: 0;
-}
-
-.nav-left {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-}
-
-.nav-item {
-    display: inline-block;
-    padding: 0;
-    font-size: 12px;
-    font-weight: 400;
-    line-height: normal;
-    letter-spacing: -0.3px;
-    text-transform: uppercase;
-    color: #ffffff;
-    border: 0;
-    opacity: 1;
-    cursor: pointer;
-}
-
-.nav-active {
-    opacity: 1;
-    white-space: nowrap;
-}
-
-.nav-logo {
-    display: block;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-    border-radius: 1px;
-    margin-right: 4px;
-    filter: brightness(0) invert(1);
-}
-
-.site-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 30;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100vw;
-    padding: 14px var(--spacing-page) 0 var(--spacing-page);
-    color: #ffffff;
-    pointer-events: none;
-}
-
-.site-nav-logo-link,
-.site-nav-link {
-    pointer-events: auto;
-}
-
-.site-nav-links {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: clamp(14px, 1.6vw, 24px);
-}
-
-.site-nav-text-links {
-    display: flex;
-    align-items: center;
-    gap: clamp(9px, 1vw, 14px);
-}
-
-.site-nav-link {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 19.5px;
-    letter-spacing: 0;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.site-nav-logo {
-    display: block;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-    border-radius: 1px;
-    filter: brightness(0) invert(1) !important;
-    mix-blend-mode: difference;
-}
-
 .hero-socials {
     position: fixed;
     right: var(--spacing-page);
@@ -529,24 +428,6 @@ a {
         display: none;
     }
 
-    .nav {
-        position: static;
-        align-self: flex-start;
-        margin: 0 20px 12px;
-    }
-
-    .site-nav {
-        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
-    }
-
-    .site-nav-links {
-        gap: 14px;
-    }
-
-    .site-nav-text-links {
-        gap: 12px;
-    }
-
     /* Keep particle area centered, grid fixed to bottom */
     .logos-section {
         flex: 1 1 auto;
@@ -624,18 +505,6 @@ a {
         gap: 7.5px;
     }
 
-    .nav {
-        order: unset;
-        width: fit-content;
-        justify-content: flex-start;
-        padding-top: 0;
-        gap: 0;
-    }
-
-    .nav-left {
-        display: flex;
-    }
-
     .logos-section {
         justify-content: center;
         width: 100%;
@@ -698,23 +567,6 @@ a {
 
     .main {
         padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
-    }
-
-    .nav {
-        margin: 0 12px 10px;
-    }
-
-    .site-nav {
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-
-    .site-nav-links {
-        gap: 12px;
-    }
-
-    .site-nav-text-links {
-        gap: 10px;
     }
 
     .logos-section {
@@ -1116,18 +968,6 @@ a {
     filter: blur(4px);
 }
 
-/* Focus states for keyboard navigation */
-.nav-item:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-}
-
-.site-nav-logo-link:focus-visible,
-.site-nav-link:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-}
-
 .hero-socials a:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
@@ -1180,29 +1020,6 @@ a {
 
 .intro-section {
     display: none;
-}
-
-.site-nav {
-    padding: 14px 40px 0 40px;
-}
-
-.site-nav-logo {
-    width: 28px;
-    height: 28px;
-}
-
-.site-nav-links {
-    gap: clamp(14px, 1.6vw, 24px);
-}
-
-.site-nav-text-links {
-    gap: clamp(9px, 1vw, 14px);
-}
-
-.site-nav-link {
-    font-size: 13px;
-    line-height: 19.5px;
-    font-weight: 500;
 }
 
 .logos-section {
@@ -1467,6 +1284,21 @@ a {
     animation-fill-mode: backwards;
 }
 
+/* Page-wide intro blur — the whole stage starts softly blurred and resolves
+   into focus right after the splash fades out. Pairs with the per-element
+   blur reveals to give the page a layered "coming into focus" entrance.
+   Kept moderate (8px) because .main-logo adds another 20px during the same
+   window, so the composited blur is plenty without tanking the GPU. */
+.hero:not(.instant) {
+    transition: filter 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+    filter: blur(8px);
+    will-change: filter;
+}
+
+.hero.loaded:not(.instant) {
+    filter: blur(0);
+}
+
 .hero.instant .project-meta {
     animation: none;
     opacity: 1;
@@ -1507,14 +1339,6 @@ a {
 }
 
 @media (max-width: 900px) {
-    .site-nav-logo {
-        width: 28px;
-    }
-
-    .site-nav-links {
-        gap: 14px;
-    }
-
     .logo-grid {
         --rail-cell: clamp(54px, 13vw, 80px);
         --rail-gap: clamp(28px, 7vw, 46px);
@@ -1539,14 +1363,6 @@ a {
         --stage-pad-x: 14px;
         --hero-logo-size: min(69.7vw, 272px);
         --hero-logo-half: min(34.9vw, 136px);
-    }
-
-    .site-nav {
-        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
-    }
-
-    .site-nav-link {
-        font-size: 12px;
     }
 
     .main-logo {

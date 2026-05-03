@@ -1,12 +1,18 @@
 # Old project copy
 LogoPortfolio-main 2/
 
-# Dev notes
-cleanup.md
+# Claude Code internal state (worktrees, agent runs)
+.claude/
+
+# Test artifacts
+test-results/
+
+# Dependencies (defensive)
+node_modules/
 
 # Server runtime files
-.server.log
-.server.pid
+*.log
+*.pid
 
 # OS files
 .DS_Store

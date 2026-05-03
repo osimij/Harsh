@@ -35,7 +35,6 @@
     --work-side-inset: 56px;
     --work-page-px: var(--work-side-inset);
     --work-col-gap: clamp(16px, 1.6vw, 28px);
-    --work-header-height: 48px;
     --work-layout-max: 1820px;
     --work-main-max: 1220px;
     --work-card-width: clamp(260px, 24vw, 390px);
@@ -45,6 +44,8 @@
     --work-filter-top: clamp(88px, 9vw, 132px);
     --work-nav-top: clamp(22px, 2.8vw, 38px);
     --work-nav-left: 40px;
+    --site-nav-color: var(--work-text);
+    --site-nav-focus-color: var(--work-text);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -117,90 +118,6 @@ a {
     text-decoration: none;
 }
 
-.corner-links {
-    position: fixed;
-    top: 20px;
-    left: 40px;
-    z-index: 30;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-}
-
-.corner-links::before {
-    content: none;
-}
-
-.corner-link {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: -0.3px;
-    text-transform: uppercase;
-    color: var(--work-text);
-    opacity: 1;
-    line-height: 1;
-    transition: color 0.25s ease;
-}
-
-.site-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 30;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100vw;
-    padding: 14px 40px 0 40px;
-    color: var(--work-text);
-    pointer-events: none;
-}
-
-.site-nav-logo-link,
-.site-nav-link {
-    pointer-events: auto;
-}
-
-.site-nav-links {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: clamp(14px, 1.6vw, 24px);
-}
-
-.site-nav-text-links {
-    display: flex;
-    align-items: center;
-    gap: clamp(9px, 1vw, 14px);
-}
-
-.site-nav-link {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 19.5px;
-    letter-spacing: 0;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.site-nav-logo {
-    display: block;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-    border-radius: 1px;
-    filter: brightness(0) invert(1) !important;
-    mix-blend-mode: difference;
-}
-
-@media (prefers-color-scheme: dark) {
-    .site-nav-logo {
-        filter: brightness(0) invert(1) !important;
-    }
-}
-
 [hidden] {
     display: none !important;
 }
@@ -209,114 +126,64 @@ html.work-route-detail #gallery-view {
     display: none !important;
 }
 
+/* Case-study state — tokens shared by html.work-route-detail (router) and
+   body.work-detail-view (mounted view). Light surface by default; dark
+   variant follows the OS color scheme. */
+html.work-route-detail,
+body.work-detail-view {
+    --site-nav-color: #000000;
+    --site-nav-focus-color: #000000;
+    --site-nav-z: 80;
+    /* Logo: solid black on the light card. mix-blend-mode: difference is
+       unreliable across stacking contexts (the fixed nav has its own),
+       so we drive the color directly via the filter and disable the blend. */
+    --site-nav-logo-filter: brightness(0);
+    --site-nav-logo-blend: normal;
+
+    --case-page-bg: #ffffff;
+    --case-card-bg: #ffffff;
+    --case-card-text: #000000;
+    --case-card-text-muted: rgba(0, 0, 0, 0.6);
+    --case-thumb-shade-color: #000000;
+    --case-thumb-marker-color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+    html.work-route-detail,
+    body.work-detail-view {
+        --site-nav-color: #fafafa;
+        --site-nav-focus-color: #fafafa;
+        --site-nav-logo-filter: brightness(0) invert(1);
+
+        --case-page-bg: #0a0a0a;
+        --case-card-bg: #0a0a0a;
+        --case-card-text: #fafafa;
+        --case-card-text-muted: rgba(250, 250, 250, 0.6);
+        --case-thumb-shade-color: #000000;
+        --case-thumb-marker-color: rgba(255, 255, 255, 0.75);
+    }
+}
+
 html.work-route-detail #detail-view {
     display: block !important;
 }
 
-/* ============================================
-   HEADER
-   ============================================ */
-.work-header {
-    position: relative;
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: clamp(24px, 3.6vw, 56px) var(--work-side-inset) 0;
-    background: var(--work-bg);
+/* Hide scrollbar in case-study pages while keeping scroll functional. */
+html.work-route-detail,
+html.work-route-detail body,
+body.work-detail-view,
+body.work-detail-view html {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* legacy IE/Edge */
 }
 
-/* Social icons — left */
-.header-social,
-.sidebar-social {
-    display: flex;
-    align-items: center;
-    gap: clamp(10px, 1.1vw, 16px);
-    min-width: clamp(98px, 10vw, 140px);
+html.work-route-detail::-webkit-scrollbar,
+html.work-route-detail body::-webkit-scrollbar,
+body.work-detail-view::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;                /* WebKit (Chrome, Safari, modern Edge) */
 }
-
-.header-social a,
-.sidebar-social a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.5;
-    transition: opacity 0.2s ease;
-}
-
-.header-social a:hover,
-.sidebar-social a:hover {
-    opacity: 1;
-}
-
-.header-social svg {
-    width: clamp(18px, 1.5vw, 24px);
-    height: clamp(18px, 1.5vw, 24px);
-    fill: var(--work-text);
-}
-
-.sidebar-social svg {
-    width: auto;
-    height: 18px;
-    fill: var(--work-text);
-    opacity: 0.72;
-}
-
-.header-social a[aria-label="Email"] svg,
-.sidebar-social a[aria-label="Email"] svg {
-    fill: none;
-    stroke: var(--work-text);
-    width: auto;
-}
-
-/* Center wordmark */
-.header-wordmark {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: clamp(14.4px, 1.6vw, 22.4px);
-    font-weight: 500;
-    letter-spacing: clamp(-0.28px, -0.02vw, -0.16px);
-    text-transform: none;
-    color: var(--work-text);
-    white-space: nowrap;
-}
-
-/* Right — inquiry button */
-.header-inquiry {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    min-width: clamp(98px, 10vw, 140px);
-}
-
-.inquiry-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: clamp(8px, 0.8vw, 10px) clamp(12px, 1.2vw, 16px);
-    font-family: var(--work-font);
-    font-size: clamp(11px, 0.85vw, 14px);
-    font-weight: 400;
-    letter-spacing: clamp(-0.14px, -0.01vw, -0.08px);
-    text-transform: none;
-    color: var(--work-text);
-    background: var(--work-inquiry-bg);
-    border: 1px solid var(--work-inquiry-border);
-    border-radius: 100px;
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    white-space: nowrap;
-}
-
-.inquiry-btn:hover {
-    background: var(--work-text);
-    color: var(--work-bg);
-    border-color: var(--work-text);
-}
-
-/* Green dot removed per Figma */
 
 /* ============================================
    PAGE WRAPPER
@@ -540,9 +407,10 @@ html.work-route-detail #detail-view {
 }
 
 .work-cell__brand-tile img {
-    width: 64%;
-    height: 64%;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .work-cell__badge {
@@ -784,8 +652,8 @@ html.work-route-detail #detail-view {
    DETAIL VIEW — PREWORK-STYLE CASE STUDY
    ============================================ */
 body.work-detail-view {
-    background: #000;
-    color: #000;
+    background: var(--case-page-bg);
+    color: var(--case-card-text);
     overflow-x: hidden;
 }
 
@@ -793,22 +661,19 @@ body.case-transition-lock {
     overflow: hidden;
 }
 
-body.work-detail-view .corner-links {
-    display: none;
-}
-
 body.work-detail-view .site-nav {
-    display: none;
+    display: flex;
+    z-index: 80;
 }
 
 body.work-detail-view #detail-view.detail-page {
     width: 100vw;
     margin: 0 0.555556vw;
     padding: 0;
-    background: #000;
+    background: var(--case-page-bg);
     font-size: 11px;
     line-height: 110%;
-    color: #000;
+    color: var(--case-card-text);
     animation: none;
 }
 
@@ -835,82 +700,10 @@ body.work-detail-view #detail-view.detail-page {
     margin-right: -0.555556vw;
 }
 
-.case-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    z-index: 52;
-    pointer-events: none;
-}
-
-.case-header.case-padding-1 {
-    padding-top: 14px;
-}
-
-.case-header a,
-.case-header li,
-.case-header h1 {
-    pointer-events: auto;
-}
-
-.case-header-row {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #000;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-.case-logo {
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 16.5px;
-    text-transform: none;
-}
-
-.case-header-nav {
-    display: flex;
-    justify-content: flex-end;
-    gap: clamp(24px, 3vw, 48px);
-    width: auto;
-    list-style: none;
-}
-
-.case-nav-item a {
-    display: block;
-    text-align: end;
-    text-transform: uppercase;
-}
-
-.case-nav-item {
-    width: auto !important;
-}
-
-.case-work-link {
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.555556vw;
-}
-
-.case-nav-sep {
-    width: 16px;
-    height: auto;
-    flex-shrink: 0;
-}
-
-.case-mobile-work-link {
-    display: none;
-    text-transform: uppercase;
-}
-
 .case-white-card {
     min-height: 100vh;
-    background: #fff;
+    background: var(--case-card-bg);
+    color: var(--case-card-text);
     position: relative;
     overflow: hidden;
 }
@@ -923,7 +716,7 @@ body.work-detail-view #detail-view.detail-page {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    color: #000;
+    color: var(--case-card-text);
     font-size: 11px;
     line-height: 110%;
 }
@@ -972,6 +765,19 @@ body.work-detail-view #detail-view.detail-page {
     height: auto;
     overflow: hidden;
     position: relative;
+}
+
+/* Clean media block — raw image or video, full width, native aspect.
+   Used for actual case study photography/screenshots. */
+.case-g-media {
+    line-height: 0;
+}
+
+.case-g-media img,
+.case-g-media video {
+    display: block;
+    width: 100%;
+    height: auto;
 }
 
 .case-g-image .case-study-frame {
@@ -1049,7 +855,6 @@ body.work-detail-view #detail-view.detail-page {
     height: auto;
     position: relative;
     z-index: 2;
-    filter: grayscale(1) contrast(1.16);
     pointer-events: none;
 }
 
@@ -1057,10 +862,6 @@ body.work-detail-view #detail-view.detail-page {
     width: 34%;
 }
 
-.case-study-logo-light,
-.case-thumb-dark img {
-    filter: invert(1) grayscale(1) contrast(1.12) brightness(1.3);
-}
 
 .case-study-frame-portrait .case-study-logo {
     width: 50%;
@@ -1131,29 +932,44 @@ body.work-detail-view #detail-view.detail-page {
 .case-reel-row img {
     width: 100%;
     height: auto;
-    filter: grayscale(1) contrast(1.1);
 }
 
 .case-thumb-nav {
+    --case-thumb-shade: 0;
     position: fixed;
-    right: 0;
+    right: max(0px, env(safe-area-inset-right));
     top: 50%;
-    z-index: 40;
-    transform: translateY(-50%);
+    z-index: 90;
+    transform: translate3d(0, -50%, 0);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    max-height: calc(100dvh - 32px);
+    pointer-events: none;
+}
+
+.case-thumb-nav::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: #000;
+    opacity: var(--case-thumb-shade);
+    pointer-events: none;
+    transition: opacity 120ms linear;
+    will-change: opacity;
 }
 
 .case-thumb-list {
-    width: 100%;
-    height: 100%;
-    transform: scale(0.6);
-    transform-origin: center;
+    width: 60%;
+    height: auto;
     display: flex;
     flex-direction: column;
+    gap: calc(0.555556vw * 0.6);
     position: relative;
+    z-index: 1;
+    pointer-events: auto;
 }
 
 .case-thumb {
@@ -1175,9 +991,9 @@ body.work-detail-view #detail-view.detail-page {
 }
 
 .case-thumb img {
-    width: 35%;
+    width: 100%;
     height: auto;
-    filter: grayscale(1) contrast(1.2);
+    object-fit: cover;
 }
 
 .case-thumb-dark {
@@ -1205,7 +1021,7 @@ body.work-detail-view #detail-view.detail-page {
     left: 0;
     width: 100%;
     height: auto;
-    border: 1px solid #000;
+    border: 1px solid var(--case-thumb-marker-color, #000);
     transform: scale(1.1);
     transform-origin: center;
     pointer-events: none;
@@ -1257,10 +1073,12 @@ body.work-detail-view #detail-view.detail-page {
 }
 
 .case-scroll-prompt-top p {
+    --case-prompt-fg: rgb(0,0,0);
+    --case-prompt-bg: rgb(130,130,130);
     display: inline-block;
     transform: translate(0, 50%);
     filter: blur(2px);
-    background-image: linear-gradient(to right, rgb(0,0,0) 0%, rgb(0,0,0) 0%, rgb(130,130,130) 0%, rgb(130,130,130) 100%);
+    background-image: linear-gradient(to right, var(--case-prompt-fg) 0%, var(--case-prompt-fg) 0%, var(--case-prompt-bg) 0%, var(--case-prompt-bg) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1296,6 +1114,26 @@ body.work-detail-view #detail-view.detail-page {
     transform-origin: left center;
     transition: transform 120ms linear;
     will-change: transform;
+}
+
+@media (prefers-color-scheme: dark) {
+    body.work-detail-view .case-scroll-prompt-top p,
+    body.work-detail-view .case-scroll-prompt-bottom p {
+        color: #fafafa;
+    }
+
+    body.work-detail-view .case-scroll-prompt-top p {
+        --case-prompt-fg: rgb(250,250,250);
+        --case-prompt-bg: rgb(120,120,120);
+    }
+
+    body.work-detail-view .case-scroll-rule {
+        background: rgba(250, 250, 250, 0.2);
+    }
+
+    body.work-detail-view .case-scroll-rule-fill {
+        background: #fafafa;
+    }
 }
 
 .case-transition-shade {
@@ -1418,6 +1256,51 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
     text-decoration: underline;
 }
 
+/* Bottom-left back link — mirrors the nav logo's top-left position
+   (bottom: 14px / left: 40px = top: 14px / left: 40px). Typography
+   matches .site-nav-link so it reads as the nav's bottom counterpart.
+   Lives at body root so project-transition transforms on #detail-view
+   can't pull it off-screen — stays sticky throughout the case study. */
+.case-go-back {
+    display: none;
+}
+
+body.work-detail-view .case-go-back {
+    display: inline-block;
+    position: fixed;
+    bottom: 14px;
+    left: 40px;
+    z-index: 90;
+    font-family: var(--work-font);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 19.5px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--case-card-text);
+    text-decoration: none;
+    pointer-events: auto;
+    transition: opacity 0.2s ease;
+}
+
+.case-go-back:hover {
+    opacity: 0.65;
+}
+
+.case-go-back:focus-visible {
+    outline: 2px solid var(--site-nav-focus-color, currentColor);
+    outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+    .case-go-back {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        left: 12px;
+        font-size: 12px;
+    }
+}
+
 @media (max-width: 1023px) {
     .case-padding-1 { padding: 1.04167vw; }
     .case-gutter-gap-1 { gap: 1.04167vw; }
@@ -1440,11 +1323,13 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
         margin-right: -1.04167vw;
     }
 
-    .case-header-nav,
-    .case-work-link,
     .case-g-double,
     .case-gallery {
         gap: 1.04167vw;
+    }
+
+    .case-thumb-list {
+        gap: calc(1.04167vw * 0.6);
     }
 
     .case-study-frame-portrait {
@@ -1519,37 +1404,6 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
 
     .case-thumb-nav {
         display: none;
-    }
-
-    .case-nav-hide-mobile,
-    .case-nav-mobile-wide {
-        display: none;
-    }
-
-    .case-header-nav {
-        width: auto;
-        justify-content: flex-end;
-        gap: 2.13333vw;
-    }
-
-    .case-header-row nav {
-        display: none;
-    }
-
-    .case-mobile-work-link {
-        position: fixed !important;
-        top: 2.13333vw !important;
-        right: 2.13333vw !important;
-        z-index: 999;
-        display: flex !important;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 6px;
-        color: #000;
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 16.5px;
-        text-transform: uppercase;
     }
 
     .case-study-meta {
@@ -1755,23 +1609,6 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
         --work-nav-left: 12px;
     }
 
-    .work-header {
-        padding: 24px var(--work-side-inset) 0;
-    }
-
-    .header-social {
-        display: none;
-    }
-
-    .header-wordmark {
-        font-size: 12.8px;
-        letter-spacing: -0.16px;
-    }
-
-    .header-inquiry {
-        min-width: auto;
-    }
-
     .work-page {
         padding: calc(env(safe-area-inset-top, 0px) + 72px) var(--work-nav-left) 56px;
     }
@@ -1811,32 +1648,6 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
         font-size: 13px;
         height: 36px;
         padding: 0 14px;
-    }
-
-    .corner-links {
-        top: 0;
-        left: 0;
-        width: 100%;
-        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 12px;
-    }
-
-    .corner-links::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: var(--work-corner-overlay);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        pointer-events: none;
-        z-index: -1;
-    }
-
-    .site-nav {
-        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
-    }
-
-    .site-nav-links {
-        gap: 20px;
     }
 
     .work-grid {
@@ -1907,12 +1718,7 @@ body.work-detail-view #detail-view.detail-page.case-page-incoming.is-visible {
     z-index: 1;
 }
 
-.detail-back:focus-visible,
-.inquiry-btn:focus-visible,
-.header-wordmark:focus-visible,
-.corner-link:focus-visible,
-.site-nav-logo-link:focus-visible,
-.site-nav-link:focus-visible {
+.detail-back:focus-visible {
     outline: 2px solid var(--work-text);
     outline-offset: 2px;
 }

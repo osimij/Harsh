@@ -1,6 +1,35 @@
 {
   "logos": [
     {
+      "id": "caviar-cocktails",
+      "imageFile": "assets/CandC-icon.png",
+      "name": "Caviar & Cocktails",
+      "displayName": "Caviar & Cocktails",
+      "tags": ["Branding", "Identity", "Logo"],
+      "description": "Identity system for Caviar & Cocktails — illustrated mark, menus, and applied identity for an evening dining experience.",
+      "year": "2024",
+      "thumbnailBg": "#ee4426",
+      "logoColor": "#f6ead0",
+      "caseStudy": [
+        { "type": "image", "tone": "light", "title": "Intro",        "label": "Opening",     "src": "assets/case-studies/caviar-cocktails/frame-151-1.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Brand badge", "label": "Lockup",         "src": "assets/case-studies/caviar-cocktails/frame-218.png", "caption": "Primary mark with credits." },
+        { "type": "image", "tone": "light", "title": "Logo lockups", "label": "Mark study",   "src": "assets/case-studies/caviar-cocktails/lockups.png",   "caption": "Illustrated fish mark — the brand's visual anchor." },
+        { "type": "image", "tone": "light", "title": "Menu system",  "label": "Mocktails",   "src": "assets/case-studies/caviar-cocktails/frame-119.png", "caption": "Mocktails menu layout." },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 140",   "src": "assets/case-studies/caviar-cocktails/frame-140.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 141",   "src": "assets/case-studies/caviar-cocktails/frame-141.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 155",   "src": "assets/case-studies/caviar-cocktails/frame-155.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 168",   "src": "assets/case-studies/caviar-cocktails/frame-168.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 170",   "src": "assets/case-studies/caviar-cocktails/frame-170.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 180",   "src": "assets/case-studies/caviar-cocktails/frame-180.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 182",   "src": "assets/case-studies/caviar-cocktails/frame-182.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 183",   "src": "assets/case-studies/caviar-cocktails/frame-183.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 188",   "src": "assets/case-studies/caviar-cocktails/frame-188.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 189",   "src": "assets/case-studies/caviar-cocktails/frame-189.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 198",   "src": "assets/case-studies/caviar-cocktails/frame-198.png", "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 204",   "src": "assets/case-studies/caviar-cocktails/frame-204.png", "caption": "" }
+      ]
+    },
+    {
       "id": "artikuchi",
       "file": "Artikuchi.svg",
       "name": "Artikuchi",

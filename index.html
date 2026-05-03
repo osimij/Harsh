@@ -12,8 +12,10 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css?v=meta-blur-swap4-20260503b">
+    <link rel="stylesheet" href="hero.css?v=intro-blur-chroma-20260504a">
+    <link rel="stylesheet" href="site-nav.css?v=cta-indigo-20260504">
     <link rel="stylesheet" href="lets-work-together.css?v=lwt-figma-20260428e">
+    <script src="js/site-nav.js?v=20260504"></script>
 </head>
 <body>
     <!-- Splash Screen Overlay -->
@@ -39,18 +41,7 @@
         <div class="main">
             <!-- Left Column: Introduction & Navigation -->
             <div class="content">
-                <nav class="site-nav" aria-label="Primary navigation">
-                    <a href="index.html" class="site-nav-logo-link" aria-label="Home">
-                        <img src="Harsh-Logo.svg" alt="Harsh" class="site-nav-logo" width="28" height="28">
-                    </a>
-                    <div class="site-nav-links">
-                        <div class="site-nav-text-links">
-                            <a href="work.html" class="site-nav-link">[WORK]</a>
-                            <a href="contact.html" class="site-nav-link">[CONTACT]</a>
-                        </div>
-                        <button type="button" class="site-nav-cta" data-lwt-open>Let's Work Together</button>
-                    </div>
-                </nav>
+                <site-nav></site-nav>
 
                 <header class="intro-section">
                     <figure class="profile-image">
@@ -135,7 +126,7 @@
          */
         import { GPUParticleSim } from './js/gpu-particle-sim.js';
         import { RasterPointSampler } from './js/raster-point-sampler.js';
-        import { Renderer } from './js/renderer.js?v=particles-20260503';
+        import { Renderer } from './js/renderer.js?v=chroma-logo-anchored-20260504d';
 
         (async function() {
             'use strict';
@@ -362,6 +353,7 @@
                     renderer.settings.zoom = CONFIG.zoom * canvasInnerScale;
                     renderer.settings.screenOffsetX = canvasRenderOffsetX;
                     renderer.settings.screenOffsetY = canvasRenderOffsetY;
+                    renderer.settings.canvasInnerScale = canvasInnerScale;
                 }
 
                 return metrics;
@@ -878,7 +870,9 @@
                 const manifestRes = await fetch('assets/logos/logos.json');
                 if (!manifestRes.ok) throw new Error(`Failed to load logo manifest (${manifestRes.status})`);
                 const manifest = await manifestRes.json();
-                logoManifest = manifest.logos;
+                // The hero particle system needs vector path data — skip
+                // raster-only entries (logos with imageFile and no SVG file).
+                logoManifest = manifest.logos.filter(l => l.file);
 
                 const activeIdx = logoManifest.findIndex(l => l.initialActive);
                 if (activeIdx !== -1) {
@@ -985,6 +979,7 @@
                 renderer.settings.zoom = CONFIG.zoom * canvasInnerScale;
                 renderer.settings.screenOffsetX = canvasRenderOffsetX;
                 renderer.settings.screenOffsetY = canvasRenderOffsetY;
+                renderer.settings.canvasInnerScale = canvasInnerScale;
                 renderer.settings.userSize = CONFIG.particleSize;
                 renderer.settings.useColorOverride = true;
                 const hexToRgb = (hex) => {

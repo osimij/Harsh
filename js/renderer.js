@@ -735,10 +735,13 @@ export class Renderer {
                 vec2 chromaOffsetG = vec2(0.0);
                 vec2 chromaOffsetB = vec2(0.0);
                 if (chroma) {
-                    vec2 ndc = (gl_FragCoord.xy / u_resolution) * 2.0 - 1.0;
-                    float ndcLen = length(ndc);
-                    vec2 dir = (ndcLen > 1e-4) ? (ndc / ndcLen) : vec2(1.0, 0.0);
-                    float chromaRadius = clamp(ndcLen, 0.0, 1.0);
+                    // Logo-space chromatic: direction radial from the LOGO
+                    // center, so the visible aberration matches the legacy
+                    // small-canvas look even when the canvas is stretched
+                    // across the whole viewport.
+                    float logoLen = length(v_logoXY);
+                    vec2 dir = (logoLen > 1e-4) ? (v_logoXY / logoLen) : vec2(1.0, 0.0);
+                    float chromaRadius = clamp(logoLen, 0.0, 1.0);
                     float chromaScale = 0.7 + 0.3 * chromaRadius;
                     float amt = u_chromaticShift * 0.95 * chromaScale;
                     vec2 dir120 = vec2(
@@ -908,27 +911,29 @@ export class Renderer {
                     } else {
                         base = tintBase;
                     }
+                }
 
-                    // Logo-wide gradient tint (in logo space, not screen space)
-                    if (u_gradientEnabled > 0.5 && u_gradientStrength > 1e-4) {
-                        float t;
-                        if (u_gradientDirection < 0.5) {
-                            // Left -> Right
-                            t = clamp(v_logoXY.x * 0.5 + 0.5, 0.0, 1.0);
-                        } else if (u_gradientDirection < 1.5) {
-                            // Top -> Bottom
-                            t = clamp(0.5 - v_logoXY.y * 0.5, 0.0, 1.0);
-                        } else if (u_gradientDirection < 2.5) {
-                            // Diagonal (top-left -> bottom-right)
-                            t = clamp((v_logoXY.x - v_logoXY.y + 2.0) * 0.25, 0.0, 1.0);
-                        } else {
-                            // Radial (center -> edge)
-                            t = clamp(length(v_logoXY) / 1.41421356237, 0.0, 1.0);
-                        }
-                        vec3 gcol = mix(u_gradientColorA, u_gradientColorB, t);
-                        float s = clamp(u_gradientStrength, 0.0, 1.0);
-                        base = mix(base, base * gcol, s);
+                // Logo-wide gradient tint (applied to both chromatic and standard
+                // paths so the cyan→purple wash overlays the prismatic fringe and
+                // gives the particles a unified blue-ish cast).
+                if (u_gradientEnabled > 0.5 && u_gradientStrength > 1e-4) {
+                    float t;
+                    if (u_gradientDirection < 0.5) {
+                        // Left -> Right
+                        t = clamp(v_logoXY.x * 0.5 + 0.5, 0.0, 1.0);
+                    } else if (u_gradientDirection < 1.5) {
+                        // Top -> Bottom
+                        t = clamp(0.5 - v_logoXY.y * 0.5, 0.0, 1.0);
+                    } else if (u_gradientDirection < 2.5) {
+                        // Diagonal (top-left -> bottom-right)
+                        t = clamp((v_logoXY.x - v_logoXY.y + 2.0) * 0.25, 0.0, 1.0);
+                    } else {
+                        // Radial (center -> edge)
+                        t = clamp(length(v_logoXY) / 1.41421356237, 0.0, 1.0);
                     }
+                    vec3 gcol = mix(u_gradientColorA, u_gradientColorB, t);
+                    float s = clamp(u_gradientStrength, 0.0, 1.0);
+                    base = mix(base, base * gcol, s);
                 }
 
                 // Pseudo normal: random + a bit of velocity direction so sparkles react to motion
@@ -1138,20 +1143,28 @@ export class Renderer {
             uniform sampler2D u_bloom;
             uniform float u_bloomIntensity;
             uniform float u_caStrength;
+            uniform vec2 u_caCenter;   // UV-space center of the logo (default 0.5, 0.5)
+            uniform float u_caRadius;  // UV-space half-extent of the logo (default 0.5)
             out vec4 fragColor;
             void main() {
                 vec3 col;
                 float aOut;
                 if (u_caStrength > 1e-4) {
                     // Prismatic chromatic aberration: 6 wavelength taps along
-                    // the radial axis (red→orange→yellow→green→cyan→blue).
-                    // Strength is zero at center and ramps up sharply toward
-                    // the corners, so the logo core stays crisp.
-                    vec2 dir = v_uv - vec2(0.5);
+                    // the radial axis. Direction and falloff are anchored to
+                    // the LOGO (passed in via u_caCenter / u_caRadius) so the
+                    // visible aberration is identical whether the canvas is
+                    // sized to the logo (legacy) or stretched across the
+                    // entire viewport (homepage stage). The offset magnitude
+                    // is scaled by the logo's size so the per-pixel shift
+                    // matches the legacy "logo fills canvas" look.
+                    float rNorm = max(u_caRadius, 1e-4);
+                    vec2 logoUV = (v_uv - u_caCenter) / (rNorm * 2.0) + 0.5;
+                    vec2 dir = logoUV - vec2(0.5);
                     float rad = length(dir) * 1.41421356;
                     float falloff = smoothstep(0.28, 0.95, rad);
                     falloff = falloff * falloff;
-                    vec2 ofs = dir * (u_caStrength * falloff * 3.5);
+                    vec2 ofs = dir * (u_caStrength * falloff * 3.5) * (rNorm * 2.0);
                     vec4 s0 = texture(u_scene, v_uv + ofs);          // red
                     vec4 s1 = texture(u_scene, v_uv + ofs * 0.6);    // orange
                     vec4 s2 = texture(u_scene, v_uv + ofs * 0.25);   // yellow
@@ -1207,7 +1220,9 @@ export class Renderer {
             uComp_scene: gl.getUniformLocation(progComposite, 'u_scene'),
             uComp_bloom: gl.getUniformLocation(progComposite, 'u_bloom'),
             uComp_intensity: gl.getUniformLocation(progComposite, 'u_bloomIntensity'),
-            uComp_ca: gl.getUniformLocation(progComposite, 'u_caStrength')
+            uComp_ca: gl.getUniformLocation(progComposite, 'u_caStrength'),
+            uComp_caCenter: gl.getUniformLocation(progComposite, 'u_caCenter'),
+            uComp_caRadius: gl.getUniformLocation(progComposite, 'u_caRadius')
         };
     }
 
@@ -2234,6 +2249,20 @@ export class Renderer {
         const caOn = String(this.settings.colorMode || '') === 'chromatic';
         const caShift = Number(this.settings.chromaticShift ?? 0.07) || 0;
         gl.uniform1f(post.uComp_ca, caOn ? caShift * 0.18 : 0);
+        // Logo's UV-space center and half-extent in the canvas, so the
+        // chromatic aberration is anchored to the LOGO instead of the
+        // canvas center. Defaults map to the legacy "logo fills canvas"
+        // behavior (center 0.5, radius 0.5) when no offset is set.
+        // Both NDC clip-space and the FBO's UV space are y-up here, so
+        // the conversion is uv = ndc * 0.5 + 0.5 for both axes.
+        const offX = Number(this.settings.screenOffsetX) || 0;
+        const offY = Number(this.settings.screenOffsetY) || 0;
+        const innerScale = Math.max(0.05, Math.min(1, Number(this.settings.canvasInnerScale ?? 1) || 1));
+        const caCenterX = 0.5 + offX * 0.5;
+        const caCenterY = 0.5 + offY * 0.5;
+        const caRadius = innerScale * 0.5;
+        gl.uniform2f(post.uComp_caCenter, caCenterX, caCenterY);
+        gl.uniform1f(post.uComp_caRadius, caRadius);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         gl.bindVertexArray(null);

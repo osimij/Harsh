@@ -223,7 +223,9 @@
     }
 
     function getLogoSrc(project) {
-        return LOGOS_DIR + project.file;
+        // imageFile (raster) takes precedence over file (SVG) — used by
+        // projects whose mark ships as PNG/JPG instead of SVG.
+        return project.imageFile || (LOGOS_DIR + project.file);
     }
 
     function getProjectNeighbors(project) {
@@ -312,6 +314,7 @@
     let activeFilter = 'all';
     let allTags = [];
     let detailCleanup = null;
+    let detachedCaseThumbNav = null;
 
     // --- Timing constants ---
     const FILTER_FADE_OUT_MS  = 180;
@@ -363,8 +366,9 @@
         manifest = data.logos;
     }
 
-    /** Fetch a single SVG and cache it */
+    /** Fetch a single SVG and cache it. Returns null for image-based logos. */
     async function fetchSvg(logo) {
+        if (logo.imageFile) return null;
         if (svgCache[logo.id]) return svgCache[logo.id];
         const res = await fetch(LOGOS_DIR + logo.file);
         if (!res.ok) throw new Error(`Failed to load ${logo.file}`);
@@ -409,6 +413,38 @@
             detailCleanup();
             detailCleanup = null;
         }
+        removeDetachedCaseThumbNav();
+    }
+
+    function removeDetachedCaseThumbNav() {
+        if (detachedCaseThumbNav) {
+            detachedCaseThumbNav.remove();
+            detachedCaseThumbNav = null;
+        }
+
+        document.querySelectorAll('body > .case-thumb-nav').forEach(nav => nav.remove());
+    }
+
+    function setCaseThumbShade(value) {
+        const nav = detachedCaseThumbNav || document.querySelector('body > .case-thumb-nav');
+        if (!nav) return;
+        nav.style.setProperty('--case-thumb-shade', String(Math.min(clamp01(value), PROJECT_TRANSITION_DIM)));
+    }
+
+    function clearCaseThumbShade() {
+        setCaseThumbShade(0);
+    }
+
+    function hideDetachedCaseThumbNav() {
+        const nav = detachedCaseThumbNav || document.querySelector('body > .case-thumb-nav');
+        if (!nav) return;
+        nav.style.visibility = 'hidden';
+    }
+
+    function showDetachedCaseThumbNav() {
+        const nav = detachedCaseThumbNav || document.querySelector('body > .case-thumb-nav');
+        if (!nav) return;
+        nav.style.visibility = '';
     }
 
     // ---- Gallery ------------------------------------------------
@@ -440,15 +476,6 @@
                 showCasePreloader();
             });
 
-            // Brand tile: colored chip (using the project's signature
-            // thumbnailBg) holding the original logo silhouette tinted
-            // to its logoColor — restores the existing visual identity
-            // at small size on the white card.
-            let svgStr = deduplicateSvgIds(svgs[i], `wk_${logo.id}`);
-            if (logo.logoColor) {
-                svgStr = recolorSvg(svgStr, logo.logoColor);
-            }
-
             // Header row — brand tile (left) + category badge (right)
             const head = document.createElement('div');
             head.className = 'work-cell__head';
@@ -458,13 +485,29 @@
             if (logo.thumbnailBg) {
                 brandTile.style.backgroundColor = logo.thumbnailBg;
             }
-            brandTile.innerHTML = svgStr;
 
-            const svgEl = brandTile.querySelector('svg');
-            if (svgEl) {
-                svgEl.setAttribute('aria-hidden', 'true');
-                svgEl.removeAttribute('width');
-                svgEl.removeAttribute('height');
+            if (logo.imageFile) {
+                // Raster mark (PNG/JPG) — cannot recolor, so we trust the
+                // source image. thumbnailBg still tints the chip behind it.
+                const img = document.createElement('img');
+                img.src = logo.imageFile;
+                img.alt = '';
+                img.setAttribute('aria-hidden', 'true');
+                img.className = 'work-cell__brand-img';
+                brandTile.appendChild(img);
+            } else {
+                // Vector mark (SVG) — dedupe IDs, recolor to logoColor.
+                let svgStr = deduplicateSvgIds(svgs[i], `wk_${logo.id}`);
+                if (logo.logoColor) {
+                    svgStr = recolorSvg(svgStr, logo.logoColor);
+                }
+                brandTile.innerHTML = svgStr;
+                const svgEl = brandTile.querySelector('svg');
+                if (svgEl) {
+                    svgEl.setAttribute('aria-hidden', 'true');
+                    svgEl.removeAttribute('width');
+                    svgEl.removeAttribute('height');
+                }
             }
 
             const badgeTag = getBadgeTag(logo);
@@ -527,120 +570,18 @@
 
     function renderCaseStudyDetail(project) {
         const projectName = project.displayName || project.name;
-        const projectSrc = getLogoSrc(project);
-        const neighbors = getProjectNeighbors(project);
         const adjacent = getAdjacentProjects(project);
         const roleItems = getProjectRoleItems(project);
-        const tags = Array.isArray(project.tags) ? project.tags.join(', ') : 'Logo, Branding';
 
-        const galleryItems = [
-            {
-                type: 'image',
-                tone: 'dark',
-                title: projectName,
-                label: 'Primary mark',
-                src: projectSrc,
-                caption: project.description || `${projectName} identity system.`
-            },
-            {
-                type: 'video',
-                tone: 'light',
-                title: 'Motion Pass',
-                label: 'Scale test',
-                src: projectSrc,
-                caption: 'Reduced-size read, rhythm, and contrast check.'
-            },
-            {
-                type: 'image',
-                tone: 'light',
-                title: 'Clear Space',
-                label: 'Construction',
-                src: projectSrc,
-                caption: 'Spacing and visual weight checked against a quiet grid.'
-            },
-            {
-                type: 'video',
-                tone: 'dark',
-                title: 'Lockup Study',
-                label: project.year || '2024',
-                src: projectSrc,
-                caption: `${tags} direction.`
-            },
-            {
-                type: 'image',
-                tone: 'light',
-                title: 'Small Use',
-                label: 'Application',
-                src: projectSrc,
-                caption: 'Small-size legibility before final presentation polish.'
-            },
-            {
-                type: 'double',
-                tone: 'mixed',
-                title: 'Pairing',
-                label: 'Alternate read',
-                src: projectSrc,
-                secondSrc: getLogoSrc(neighbors[0]),
-                secondTitle: neighbors[0].displayName || neighbors[0].name,
-                caption: 'Comparison frame against neighboring identity systems.'
-            },
-            {
-                type: 'image',
-                tone: 'light',
-                title: 'Specimen',
-                label: 'Type feel',
-                src: projectSrc,
-                caption: 'Name, category, and mark held together in one restrained sheet.'
-            },
-            {
-                type: 'image',
-                tone: 'dark',
-                title: 'Crop Check',
-                label: 'Edge test',
-                src: projectSrc,
-                caption: 'Cropped composition for sharp recognition.'
-            },
-            {
-                type: 'video',
-                tone: 'light',
-                title: 'Logo Reel',
-                label: 'Set view',
-                src: projectSrc,
-                reel: [project, neighbors[1], neighbors[2]],
-                caption: 'Placed beside other marks to check distinctiveness.'
-            },
-            {
-                type: 'video',
-                tone: 'dark',
-                title: 'Final Hold',
-                label: 'Closing frame',
-                src: projectSrc,
-                caption: 'Final contrast, balance, and memory read.'
-            }
-        ];
+        // Per-project case study content. Set `caseStudy: [...]` on a
+        // project record (see logos.json/project data) to populate the
+        // gallery + thumb nav. Empty by default — project pages render
+        // with just the lead block (title, description, roles) until
+        // real content is prepared.
+        const galleryItems = Array.isArray(project.caseStudy) ? project.caseStudy : [];
+        const hasGallery = galleryItems.length > 0;
 
         detailView.innerHTML = `
-            <header class="case-header case-padding-1">
-                <div class="case-header-row">
-                    <a href="index.html" aria-label="Back to home" class="case-logo-link case-span-w-2">
-                        <img src="Harsh-Logo.svg" alt="Harsh" class="case-logo-mark" width="28" height="28">
-                    </a>
-                    <nav aria-label="Primary navigation">
-                        <ul class="case-header-nav">
-                            <li class="case-nav-item case-span-w-1">
-                                <a href="${escapeHtml(getGalleryHref())}">Work</a>
-                            </li>
-                            <li class="case-nav-item case-span-w-1 case-nav-mobile-wide">
-                                <a href="contact.html">Contact</a>
-                            </li>
-                        </ul>
-                    </nav>
-                    <a href="${escapeHtml(getGalleryHref())}" class="case-mobile-work-link" aria-label="Back to work">
-                        <span>Work</span>
-                    </a>
-                </div>
-            </header>
-
             <section class="case-white-card case-span-w-screen">
                 <div class="case-content-wrap case-span-w-7 case-span-ml-2-wide">
                     <div class="case-lead-block case-gutter-gap-1">
@@ -657,19 +598,21 @@
                         <div class="case-lead-col-spacer case-span-w-1"></div>
                     </div>
 
+                    ${hasGallery ? `
                     <div class="case-gallery">
                         ${galleryItems.map((item, index) => renderCaseGalleryItem(item, index)).join('')}
-                    </div>
+                    </div>` : ''}
                 </div>
 
             </section>
 
+            ${hasGallery ? `
             <aside class="case-thumb-nav case-margin-x-1 case-span-mr-1-wide case-span-w-1" aria-label="Project thumbnails">
                 <div class="case-thumb-list case-gutter-gap-1">
                     <div class="case-thumb-marker" id="case-thumb-marker"></div>
                     ${galleryItems.map((item, index) => renderCaseThumb(item, index)).join('')}
                 </div>
-            </aside>
+            </aside>` : ''}
 
             <div class="case-scroll-prompts" aria-hidden="true">
                 <div class="case-scroll-prompt-top" data-prev-wrap>
@@ -693,6 +636,18 @@
 
         detailView.dataset.previousProject = adjacent.previous ? adjacent.previous.id : '';
         detailView.dataset.nextProject = adjacent.next ? adjacent.next.id : '';
+
+        detachCaseThumbNav();
+    }
+
+    function detachCaseThumbNav() {
+        removeDetachedCaseThumbNav();
+
+        detachedCaseThumbNav = detailView.querySelector('.case-thumb-nav');
+        if (!detachedCaseThumbNav) return;
+
+        document.body.appendChild(detachedCaseThumbNav);
+        clearCaseThumbShade();
     }
 
     function renderCaseGalleryItem(item, index) {
@@ -730,21 +685,22 @@
             `;
         }
 
-        const typeClass = item.type === 'video' ? 'case-g-video' : 'case-g-image';
-        const inner = item.type === 'video'
-            ? `<div class="case-poster-sequence" aria-hidden="true"><span></span><span></span><span></span><span></span></div>`
-            : `<div class="case-study-grid-lines" aria-hidden="true"></div>`;
+        // Default: clean media — full-width raw image or video, no frame,
+        // no meta overlay, no grid lines, no caption. Used for real case
+        // study photography/screenshots. (The framed/decorated layout used
+        // for showcasing tiny logos is reserved for type 'double' or
+        // future opt-in via item.framed.)
+        if (item.type === 'video') {
+            return `
+                <div class="case-g-item case-g-media" data-thumb-key="${index}">
+                    <video src="${escapeHtml(item.src)}" autoplay muted loop playsinline preload="metadata"></video>
+                </div>
+            `;
+        }
 
         return `
-            <div class="case-g-item ${typeClass}" data-thumb-key="${index}">
-                ${item.type === 'video' ? '<div class="case-cover-wrap">' : ''}
-                    <article class="case-study-frame ${toneClass} ${item.type === 'video' ? 'case-study-frame-video' : 'case-study-frame-hero'}">
-                        <div class="case-study-meta"><span>${number}</span><span>${escapeHtml(item.title)}</span></div>
-                        ${inner}
-                        <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.title)} mark" class="case-study-logo ${logoLightClass} ${index === 0 ? 'case-study-logo-xl' : ''}">
-                        <p class="case-study-caption">${escapeHtml(item.caption || item.label || '')}</p>
-                    </article>
-                ${item.type === 'video' ? '</div>' : ''}
+            <div class="case-g-item case-g-media" data-thumb-key="${index}">
+                <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.title || '')}" loading="lazy">
             </div>
         `;
     }
@@ -769,8 +725,9 @@
 
     function initCaseStudyInteractions() {
         const galleryItems = Array.from(detailView.querySelectorAll('.case-g-item'));
-        const thumbs = Array.from(detailView.querySelectorAll('.case-thumb'));
-        const thumbMarker = detailView.querySelector('#case-thumb-marker');
+        const thumbNav = detachedCaseThumbNav || document.querySelector('body > .case-thumb-nav') || detailView.querySelector('.case-thumb-nav');
+        const thumbs = Array.from(thumbNav ? thumbNav.querySelectorAll('.case-thumb') : []);
+        const thumbMarker = thumbNav ? thumbNav.querySelector('#case-thumb-marker') : null;
         const scrollPct = detailView.querySelector('#case-scroll-pct');
         const transitionCleanup = initProjectTransition();
         let activeFrame = null;
@@ -889,7 +846,7 @@
             prevWrap.style.opacity = value > 0 ? '1' : '0';
             prevText.style.transform = value > 0 ? 'translate(0, 0%)' : 'translate(0, 50%)';
             prevText.style.filter = value > 0 ? 'blur(0px)' : 'blur(2px)';
-            prevText.style.backgroundImage = `linear-gradient(to right, rgb(0,0,0) 0%, rgb(0,0,0) ${pct}%, rgb(130,130,130) ${pct}%, rgb(130,130,130) 100%)`;
+            prevText.style.backgroundImage = `linear-gradient(to right, var(--case-prompt-fg, rgb(0,0,0)) 0%, var(--case-prompt-fg, rgb(0,0,0)) ${pct}%, var(--case-prompt-bg, rgb(130,130,130)) ${pct}%, var(--case-prompt-bg, rgb(130,130,130)) 100%)`;
         }
 
         function setNextVisual(value) {
@@ -910,14 +867,18 @@
         }
 
         function setTransitionShade(value) {
-            if (!transitionShade) return;
-            transitionShade.style.opacity = String(Math.min(value * PROJECT_TRANSITION_DIM, PROJECT_TRANSITION_DIM));
+            const opacity = Math.min(value * PROJECT_TRANSITION_DIM, PROJECT_TRANSITION_DIM);
+            if (transitionShade) {
+                transitionShade.style.opacity = String(opacity);
+            }
+            setCaseThumbShade(opacity);
         }
 
         function clearCurrentPagePreview() {
             detailView.classList.remove('case-transition-preview');
             detailView.style.removeProperty('--case-preview-scale');
             detailView.style.removeProperty('--case-page-origin-y');
+            clearCaseThumbShade();
         }
 
         function reset() {
@@ -1098,6 +1059,7 @@
 
         isProjectTransitioning = true;
         pauseLenis();
+        hideDetachedCaseThumbNav();
         const outgoingLayer = createOutgoingPageLayer(initialScale);
         detailView.classList.remove('case-transition-preview');
         detailView.style.removeProperty('--case-preview-scale');
@@ -1131,6 +1093,8 @@
                 detailView.classList.remove('case-page-incoming', 'case-page-incoming--preparing', 'case-page-incoming--previous', 'is-visible');
                 outgoingLayer.remove();
                 isProjectTransitioning = false;
+                clearCaseThumbShade();
+                showDetachedCaseThumbNav();
                 resumeLenis();
             }
 
@@ -1150,6 +1114,7 @@
                 if (typeof renderIncomingProject === 'function') {
                     await renderIncomingProject();
                 }
+                hideDetachedCaseThumbNav();
 
                 await waitForDetailImages();
                 scrollToPageTopInstantly();
