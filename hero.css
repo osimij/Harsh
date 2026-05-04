@@ -1039,6 +1039,25 @@ a {
     --canvas-bleed: 22%;
 }
 
+.particle-fallback {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 0;
+    width: min(68%, 360px);
+    height: min(68%, 360px);
+    object-fit: contain;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -50%);
+    filter: brightness(0) invert(1);
+}
+
+.hero-particles-failed .particle-fallback {
+    opacity: 0.92;
+    visibility: visible;
+}
+
 .project-meta {
     position: absolute;
     left: calc(50% + var(--hero-logo-half) + var(--project-side-gap));
@@ -1361,13 +1380,13 @@ a {
         --stage-pad-x: 14px;
         --nav-bottom-y: clamp(56px, 9vh, 84px);
         --rail-top-y: calc(100dvh - clamp(96px, 14vh, 130px));
-        /* Square logo capped by both width and height so it grows on tall
-           phones (iPhone 13+) without overrunning short phones (SE). */
-        --hero-logo-size: min(82vw, 46vh, 360px);
+        /* Keep the particle mark inside the usable phone viewport. The
+           canvas still bleeds, so the stage itself needs a conservative cap. */
+        --hero-logo-size: min(72vw, 38vh, 300px);
         --hero-logo-half: calc(var(--hero-logo-size) / 2);
         /* Pull the visual center up a touch so the meta+gap below the logo
            reads as part of one composition. */
-        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.42);
+        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.38);
     }
 
     .main-logo {
@@ -1379,22 +1398,28 @@ a {
     .project-meta {
         /* Sit the meta just under the logo with a small breathing gap rather
            than tied to a viewport-width fraction. */
-        top: calc(var(--stage-center-y) + var(--hero-logo-half) + clamp(10px, 2.4vh, 22px));
-        width: min(340px, 88vw);
+        top: calc(var(--stage-center-y) + var(--hero-logo-half) + clamp(12px, 2.8vh, 24px));
+        width: min(340px, calc(100vw - 28px));
+        max-width: calc(100vw - 28px);
         transform: translateX(-50%);
+        text-align: center;
     }
 
     .project-title {
         font-size: clamp(16px, 4.4vw, 19px);
+        line-height: 1.12;
+        text-wrap: balance;
+        overflow-wrap: anywhere;
     }
 
     .project-tags {
         font-size: clamp(13px, 3.6vw, 15px);
+        text-wrap: balance;
     }
 
     .logo-grid {
-        --rail-cell: clamp(54px, 16vw, 64px);
-        --rail-gap: clamp(24px, 8vw, 34px);
+        --rail-cell: clamp(48px, 14vw, 62px);
+        --rail-gap: clamp(20px, 6.6vw, 30px);
         bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
     }
 
@@ -1406,7 +1431,7 @@ a {
 /* Tiny phones (≤360px) — keep the logo readable without crowding the rail. */
 @media (max-width: 360px) {
     .hero {
-        --hero-logo-size: min(78vw, 42vh, 280px);
+        --hero-logo-size: min(68vw, 34vh, 240px);
     }
 
     .project-title {

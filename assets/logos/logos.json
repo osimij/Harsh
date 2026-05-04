@@ -3,6 +3,7 @@
     {
       "id": "automaison",
       "file": "Automaison.svg",
+      "symbolFile": "Automaison.svg",
       "name": "Automaison",
       "displayName": "Automaison",
       "initialActive": true,
@@ -15,6 +16,7 @@
     {
       "id": "dream-culture",
       "file": "Dream Culture.svg",
+      "symbolFile": "Dream Culture.svg",
       "name": "Dream Culture",
       "displayName": "Dream Culture",
       "tags": ["Logo", "Branding", "Identity"],
@@ -26,6 +28,7 @@
     {
       "id": "hype-proxies",
       "file": "HypeProxies.svg",
+      "symbolFile": "HypeProxies.svg",
       "name": "HypeProxies",
       "displayName": "HypeProxies",
       "tags": ["Logo", "Tech", "Branding"],
@@ -37,6 +40,7 @@
     {
       "id": "influence-pro",
       "file": "InfluencePro.svg",
+      "symbolFile": "InfluencePro.svg",
       "name": "InfluencePro",
       "displayName": "InfluencePro",
       "tags": ["Logo", "Branding", "Identity"],
@@ -48,6 +52,7 @@
     {
       "id": "north-systems",
       "file": "NorthSystems.svg",
+      "symbolFile": "NorthSystems.svg",
       "name": "NorthSystems",
       "displayName": "NorthSystems",
       "tags": ["Logo", "Corporate", "Tech"],
@@ -59,6 +64,7 @@
     {
       "id": "phanmotion",
       "file": "Phanmotion.svg",
+      "symbolFile": "Phanmotion.svg",
       "name": "Phanmotion",
       "displayName": "Phanmotion",
       "tags": ["Logo", "Branding", "Motion"],
@@ -81,6 +87,7 @@
     {
       "id": "rivet",
       "file": "Rivet.svg",
+      "symbolFile": "Rivet.svg",
       "name": "Rivet",
       "displayName": "Rivet",
       "tags": ["Logo", "Branding", "Industrial"],
@@ -90,36 +97,15 @@
       "logoColor": "#FFFFFF"
     },
     {
-      "id": "sorcerer",
-      "file": "Sorcerer.svg",
-      "name": "Sorcerer",
-      "displayName": "Sorcerer",
-      "tags": ["Logo", "Branding", "Identity"],
-      "description": "Identity for Sorcerer — a mysterious wordmark with arcane character, designed to feel otherworldly while remaining unmistakably modern.",
-      "year": "2025",
-      "thumbnailBg": "#2A0E5C",
-      "logoColor": "#FFFFFF"
-    },
-    {
       "id": "urbanscapes",
       "file": "URBANSCAPES.svg",
+      "symbolFile": "URBANSCAPES.svg",
       "name": "URBANSCAPES",
       "displayName": "URBANSCAPES",
       "tags": ["Logo", "Branding", "Architecture"],
       "description": "Identity for URBANSCAPES — a structured, architectural wordmark inspired by city skylines and urban geometry.",
       "year": "2025",
       "thumbnailBg": "#3F3F3F",
-      "logoColor": "#FFFFFF"
-    },
-    {
-      "id": "wellio",
-      "file": "Wellio.svg",
-      "name": "Wellio",
-      "displayName": "Wellio",
-      "tags": ["Logo", "Branding", "Wellness"],
-      "description": "Brand identity for Wellio — a warm, approachable mark for a wellness platform, balancing care with quiet confidence.",
-      "year": "2025",
-      "thumbnailBg": "#1F6B4F",
       "logoColor": "#FFFFFF"
     },
     {
@@ -133,22 +119,22 @@
       "thumbnailBg": "#ee4426",
       "logoColor": "#f6ead0",
       "caseStudy": [
-        { "type": "image", "tone": "light", "title": "Intro",        "label": "Opening",     "src": "assets/case-studies/caviar-cocktails/frame-151-1.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Brand badge", "label": "Lockup",         "src": "assets/case-studies/caviar-cocktails/frame-218.png", "caption": "Primary mark with credits." },
-        { "type": "image", "tone": "light", "title": "Logo lockups", "label": "Mark study",   "src": "assets/case-studies/caviar-cocktails/lockups.png",   "caption": "Illustrated fish mark — the brand's visual anchor." },
-        { "type": "image", "tone": "light", "title": "Menu system",  "label": "Mocktails",   "src": "assets/case-studies/caviar-cocktails/frame-119.png", "caption": "Mocktails menu layout." },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 140",   "src": "assets/case-studies/caviar-cocktails/frame-140.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 141",   "src": "assets/case-studies/caviar-cocktails/frame-141.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 155",   "src": "assets/case-studies/caviar-cocktails/frame-155.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 168",   "src": "assets/case-studies/caviar-cocktails/frame-168.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 170",   "src": "assets/case-studies/caviar-cocktails/frame-170.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 180",   "src": "assets/case-studies/caviar-cocktails/frame-180.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 182",   "src": "assets/case-studies/caviar-cocktails/frame-182.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 183",   "src": "assets/case-studies/caviar-cocktails/frame-183.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 188",   "src": "assets/case-studies/caviar-cocktails/frame-188.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 189",   "src": "assets/case-studies/caviar-cocktails/frame-189.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 198",   "src": "assets/case-studies/caviar-cocktails/frame-198.png", "caption": "" },
-        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 204",   "src": "assets/case-studies/caviar-cocktails/frame-204.png", "caption": "" }
+        { "type": "image", "tone": "light", "title": "Intro",        "label": "Opening",     "src": "assets/case-studies/caviar-cocktails/frame-151-1.png", "width": 1631, "height": 1088, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Brand badge", "label": "Lockup",         "src": "assets/case-studies/caviar-cocktails/frame-218.png", "width": 1631, "height": 631, "caption": "Primary mark with credits." },
+        { "type": "image", "tone": "light", "title": "Logo lockups", "label": "Mark study",   "src": "assets/case-studies/caviar-cocktails/lockups.png", "width": 1631, "height": 854, "caption": "Illustrated fish mark — the brand's visual anchor." },
+        { "type": "image", "tone": "light", "title": "Menu system",  "label": "Mocktails",   "src": "assets/case-studies/caviar-cocktails/frame-119.png", "width": 1632, "height": 1195, "caption": "Mocktails menu layout." },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 140",   "src": "assets/case-studies/caviar-cocktails/frame-140.png", "width": 1631, "height": 977, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 141",   "src": "assets/case-studies/caviar-cocktails/frame-141.png", "width": 1631, "height": 999, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 155",   "src": "assets/case-studies/caviar-cocktails/frame-155.png", "width": 1631, "height": 873, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 168",   "src": "assets/case-studies/caviar-cocktails/frame-168.png", "width": 1631, "height": 1110, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 170",   "src": "assets/case-studies/caviar-cocktails/frame-170.png", "width": 1631, "height": 873, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 180",   "src": "assets/case-studies/caviar-cocktails/frame-180.png", "width": 1630, "height": 1087, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 182",   "src": "assets/case-studies/caviar-cocktails/frame-182.png", "width": 1632, "height": 1195, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 183",   "src": "assets/case-studies/caviar-cocktails/frame-183.png", "width": 1631, "height": 1083, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 188",   "src": "assets/case-studies/caviar-cocktails/frame-188.png", "width": 1631, "height": 892, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 189",   "src": "assets/case-studies/caviar-cocktails/frame-189.png", "width": 1631, "height": 928, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 198",   "src": "assets/case-studies/caviar-cocktails/frame-198.png", "width": 1631, "height": 1577, "caption": "" },
+        { "type": "image", "tone": "light", "title": "Applications", "label": "Frame 204",   "src": "assets/case-studies/caviar-cocktails/frame-204.png", "width": 1631, "height": 1083, "caption": "" }
       ]
     },
     {

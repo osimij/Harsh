@@ -45,12 +45,19 @@ site-nav {
     top: 0;
     left: 0;
     z-index: var(--site-nav-z, 30);
+    box-sizing: border-box;
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
-    width: 100vw;
-    padding: 14px 40px 0 40px;
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+    padding:
+        calc(env(safe-area-inset-top, 0px) + 14px)
+        max(40px, env(safe-area-inset-right, 0px))
+        0
+        max(40px, env(safe-area-inset-left, 0px));
     color: var(--site-nav-color, #ffffff);
     pointer-events: none;
 }
@@ -60,17 +67,25 @@ site-nav {
     pointer-events: auto;
 }
 
+.site-nav-logo-link {
+    flex: 0 0 auto;
+}
+
 .site-nav-links {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: clamp(14px, 1.6vw, 24px);
+    min-width: 0;
+    max-width: calc(100vw - 96px);
 }
 
 .site-nav-text-links {
     display: flex;
     align-items: center;
     gap: clamp(9px, 1vw, 14px);
+    min-width: 0;
+    flex: 0 1 auto;
 }
 
 .site-nav-link {
@@ -103,15 +118,21 @@ site-nav {
 
 @media (max-width: 760px) {
     .site-nav {
-        padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 0 12px;
+        padding:
+            calc(env(safe-area-inset-top, 0px) + 12px)
+            max(16px, env(safe-area-inset-right, 0px))
+            0
+            max(12px, env(safe-area-inset-left, 0px));
     }
 
     .site-nav-links {
-        gap: 14px;
+        gap: 12px;
+        max-width: calc(100vw - 58px);
     }
 
     .site-nav-link {
         font-size: 12px;
+        line-height: 1.35;
     }
 }
 
@@ -122,10 +143,25 @@ site-nav {
     }
 
     .site-nav-links {
-        gap: 12px;
+        gap: 10px;
     }
 
     .site-nav-text-links {
-        gap: 10px;
+        gap: 9px;
+    }
+}
+
+@media (max-width: 360px) {
+    .site-nav {
+        padding-left: max(10px, env(safe-area-inset-left, 0px));
+        padding-right: max(10px, env(safe-area-inset-right, 0px));
+    }
+
+    .site-nav-link {
+        font-size: 11px;
+    }
+
+    .site-nav-text-links {
+        gap: 7px;
     }
 }

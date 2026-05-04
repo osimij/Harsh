@@ -24,6 +24,11 @@
     --site-nav-color: #000000;
     --site-nav-focus-color: #000000;
     --site-nav-z: 130;
+    /* Logo: solid black on the white card. mix-blend-mode: difference is
+       unreliable across stacking contexts (the fixed nav has its own),
+       so drive the color via the filter and disable the blend. */
+    --site-nav-logo-filter: brightness(0);
+    --site-nav-logo-blend: normal;
 }
 
 /* ---------- Reset ---------- */

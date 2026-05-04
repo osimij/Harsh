@@ -30,9 +30,9 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css?v=mobile-fit-20260504b">
-    <link rel="stylesheet" href="site-nav.css?v=cta-indigo-20260504">
-    <link rel="stylesheet" href="lets-work-together.css?v=lwt-figma-20260428e">
+    <link rel="stylesheet" href="hero.css?v=responsive-fit-20260504">
+    <link rel="stylesheet" href="site-nav.css?v=responsive-fit-20260504">
+    <link rel="stylesheet" href="lets-work-together.css?v=responsive-fit-20260504">
     <script src="js/site-nav.js?v=20260504"></script>
 </head>
 <body>
@@ -91,6 +91,14 @@
             <!-- Right Column: Logo Showcase -->
             <div class="logos-section">
                 <div class="main-logo" aria-label="Featured logo artwork">
+                    <img
+                        class="particle-fallback"
+                        src="assets/logos/symbol/Automaison.svg"
+                        alt=""
+                        aria-hidden="true"
+                        width="512"
+                        height="512"
+                    >
                     <canvas id="particle-canvas"></canvas>
                 </div>
 
@@ -144,7 +152,7 @@
          */
         import { GPUParticleSim } from './js/gpu-particle-sim.js';
         import { RasterPointSampler } from './js/raster-point-sampler.js';
-        import { Renderer } from './js/renderer.js?v=chroma-isotropic-20260504a';
+        import { Renderer } from './js/renderer.js?v=responsive-fit-20260504';
 
         (async function() {
             'use strict';
@@ -200,7 +208,7 @@
             };
             const PHONE_PARTICLE_COUNT = 170000;
             const PHONE_PARTICLE_SIZE = 1.3;
-            const PHONE_PARTICLE_ZOOM = 1.0;
+            const PHONE_PARTICLE_ZOOM = 0.76;
             const PHONE_PARTICLE_QUERY = '(max-width: 767px)';
 
             function isHexColor(value) {
@@ -290,6 +298,23 @@
             let isPaused = false;
             let isTransitioning = false;
             let transitionStartTime = 0;
+
+            // Rail scrubbing — trackpad horizontal scroll or touch swipe lets the
+            // user manually scrub through logos. Particle simulation freezes for
+            // the duration of the scrub; on release we snap to the nearest cell
+            // and the morph kicks in.
+            const SCRUB_END_DELAY_MS = 180;
+            const SCRUB_DRAG_THRESHOLD_PX = 8;
+            let isScrubbing = false;
+            let scrubShiftPx = 0;
+            let scrubBaseShift = 0;
+            let scrubEndTimer = null;
+            let scrubActiveGi = null;
+            let scrubDragPointerId = null;
+            let scrubDragStartX = 0;
+            let scrubDragLastX = 0;
+            let scrubDragHasMoved = false;
+            let scrubSuppressClick = false;
 
             // GPU Particle system components
             let gpuSim = null;
@@ -501,6 +526,12 @@
             let metaSwapFrame = null;
             let metaSwapCleanupTimer = null;
 
+            function markParticleFallback() {
+                if (!hero) return;
+                hero.classList.remove('hero-particles-ready');
+                hero.classList.add('hero-particles-failed');
+            }
+
             if (hero && canvas) {
                 Object.assign(canvas.style, {
                     position: 'fixed',
@@ -583,11 +614,12 @@
                 // Particle canvas prefers symbol-only variants from assets/logos/symbol/.
                 // If a logo has no symbol variant, fall back to the wordmark so every
                 // logo still morphs.
-                const canvasFetches = logoManifest.map((logo, idx) =>
-                    fetch(`assets/logos/symbol/${logo.file}`)
+                const canvasFetches = logoManifest.map((logo, idx) => {
+                    if (!logo.symbolFile) return Promise.resolve(svgStrings[idx]);
+                    return fetch(`assets/logos/symbol/${logo.symbolFile}`)
                         .then(r => (r.ok ? r.text() : svgStrings[idx]))
-                        .catch(() => svgStrings[idx])
-                );
+                        .catch(() => svgStrings[idx]);
+                });
                 canvasSvgStrings = await Promise.all(canvasFetches);
 
                 totalLogos = logoManifest.length;
@@ -692,7 +724,8 @@
 
                 renderer = new Renderer(canvas);
                 if (!renderer.gl) {
-                    console.error('WebGL2 not supported');
+                    console.warn('WebGL2 not supported; showing static logo fallback');
+                    markParticleFallback();
                     return;
                 }
 
@@ -735,7 +768,8 @@
                 try {
                     gpuSim = new GPUParticleSim(gl, { count: CONFIG.particleCount, seed: 42 });
                 } catch (e) {
-                    console.error('GPU particle sim not supported:', e);
+                    console.warn('GPU particle sim not supported; showing static logo fallback:', e);
+                    markParticleFallback();
                     return;
                 }
 
@@ -762,6 +796,10 @@
                     const initialTex = targetTextures[initialGi % totalLogos];
                     gpuSim.setTargets({ fromTex: initialTex, toTex: initialTex });
                     setActiveLogo(globalIndex, true);
+                    hero.classList.remove('hero-particles-failed');
+                    hero.classList.add('hero-particles-ready');
+                } else {
+                    markParticleFallback();
                 }
 
                 window.addEventListener('resize', handleResize);
@@ -793,6 +831,75 @@
                     hoverActive = false;
                 });
 
+                // Trackpad horizontal scroll → scrub the rail. Non-passive so we can
+                // preventDefault and stop the browser's "swipe to navigate" gesture
+                // from firing on horizontal trackpad swipes.
+                window.addEventListener('wheel', (e) => {
+                    if (Math.abs(e.deltaX) < 1) return;
+                    e.preventDefault();
+                    if (!isScrubbing) beginScrub();
+                    scrubShiftPx = clampScrub(scrubShiftPx + e.deltaX);
+                    updateRailDuringScrub();
+                    scheduleScrubEnd();
+                }, { passive: false });
+
+                // Touch / pen drag → scrub the rail. Wait for movement past the
+                // threshold so a tap stays a tap and triggers the existing
+                // tap-to-repel + click flow.
+                document.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType === 'mouse') return;
+                    if (scrubDragPointerId !== null) return;
+                    scrubDragPointerId = e.pointerId;
+                    scrubDragStartX = e.clientX;
+                    scrubDragLastX = e.clientX;
+                    scrubDragHasMoved = false;
+                }, { passive: true });
+
+                document.addEventListener('pointermove', (e) => {
+                    if (e.pointerId !== scrubDragPointerId) return;
+                    const dx = e.clientX - scrubDragLastX;
+                    scrubDragLastX = e.clientX;
+
+                    if (!scrubDragHasMoved && Math.abs(e.clientX - scrubDragStartX) > SCRUB_DRAG_THRESHOLD_PX) {
+                        scrubDragHasMoved = true;
+                        beginScrub();
+                    }
+
+                    if (scrubDragHasMoved) {
+                        // Finger right (dx > 0) drags content right → rail shifts
+                        // less to the left → scrubShiftPx decreases.
+                        scrubShiftPx = clampScrub(scrubShiftPx - dx);
+                        updateRailDuringScrub();
+                    }
+                }, { passive: true });
+
+                const finishScrubDrag = (e) => {
+                    if (e.pointerId !== scrubDragPointerId) return;
+                    scrubDragPointerId = null;
+                    if (scrubDragHasMoved) {
+                        // Suppress the trailing click that fires on the cell where
+                        // the drag started, so a swipe doesn't accidentally select.
+                        scrubSuppressClick = true;
+                        setTimeout(() => { scrubSuppressClick = false; }, 100);
+                        endScrub();
+                    }
+                    scrubDragHasMoved = false;
+                };
+                document.addEventListener('pointerup', finishScrubDrag, { passive: true });
+                document.addEventListener('pointercancel', finishScrubDrag, { passive: true });
+
+                // Capture phase so the suppression runs before each cell's bubble-phase
+                // click handler — otherwise the cell would still fire setActiveLogo.
+                if (logoGrid) {
+                    logoGrid.addEventListener('click', (e) => {
+                        if (scrubSuppressClick) {
+                            scrubSuppressClick = false;
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }
+                    }, true);
+                }
+
                 startAnimationLoop();
             }
 
@@ -815,38 +922,44 @@
 
                     let morphT = 1, scatterT = 0, chaosT = 0, attractT = 1, settleT = 1;
 
-                    if (isTransitioning) {
-                        const elapsed = currentTime - transitionStartTime;
-                        const progress = Math.min(elapsed / CONFIG.morphDuration, 1);
-                        const easedProgress = easeInOutCubic(progress);
+                    // Scrubbing pauses the simulation entirely — no morph progress,
+                    // no physics step. Particles stay on the current frame so the
+                    // user can focus on the rail. Rendering still runs so the canvas
+                    // shows the frozen field instead of a blank.
+                    if (!isScrubbing) {
+                        if (isTransitioning) {
+                            const elapsed = currentTime - transitionStartTime;
+                            const progress = Math.min(elapsed / CONFIG.morphDuration, 1);
+                            const easedProgress = easeInOutCubic(progress);
 
-                        morphT = easedProgress;
-                        scatterT = Math.sin(progress * Math.PI) * 0.4;
-                        chaosT = Math.sin(progress * Math.PI) * 0.6;
-                        attractT = easedProgress;
-                        settleT = progress * progress;
+                            morphT = easedProgress;
+                            scatterT = Math.sin(progress * Math.PI) * 0.4;
+                            chaosT = Math.sin(progress * Math.PI) * 0.6;
+                            attractT = easedProgress;
+                            settleT = progress * progress;
 
-                        if (progress >= 1) {
-                            const texIdx = nextGlobalIndex % totalLogos;
-                            const toTex = targetTextures[texIdx];
-                            if (toTex) {
-                                gpuSim.setTargets({ fromTex: toTex, toTex: toTex });
+                            if (progress >= 1) {
+                                const texIdx = nextGlobalIndex % totalLogos;
+                                const toTex = targetTextures[texIdx];
+                                if (toTex) {
+                                    gpuSim.setTargets({ fromTex: toTex, toTex: toTex });
+                                }
+                                globalIndex = nextGlobalIndex;
+                                isTransitioning = false;
+                                rebaseRailIfNeeded();
                             }
-                            globalIndex = nextGlobalIndex;
-                            isTransitioning = false;
-                            rebaseRailIfNeeded();
                         }
-                    }
 
-                    gpuSim.step(deltaTime, {
-                        morphT, scatterT, chaosT, attractT, settleT,
-                        noiseScale: 3.5, noiseStrength: 0.9, noiseSpeed: 0.2,
-                        vortexStrength: 1.5, vortexRadius: 0.7,
-                        vortex1: [0.0, 0.0], vortex2: [-0.25, 0.2], vortex3: [0.3, -0.15],
-                        repulseStrength: 1.2, attractStrength: 2.8,
-                        drag: 1.2, maxSpeed: 2.5,
-                        magnet: getHoverMagnetParams(settleT)
-                    });
+                        gpuSim.step(deltaTime, {
+                            morphT, scatterT, chaosT, attractT, settleT,
+                            noiseScale: 3.5, noiseStrength: 0.9, noiseSpeed: 0.2,
+                            vortexStrength: 1.5, vortexRadius: 0.7,
+                            vortex1: [0.0, 0.0], vortex2: [-0.25, 0.2], vortex3: [0.3, -0.15],
+                            repulseStrength: 1.2, attractStrength: 2.8,
+                            drag: 1.2, maxSpeed: 2.5,
+                            magnet: getHoverMagnetParams(settleT)
+                        });
+                    }
 
                     const curTexIdx = globalIndex % totalLogos;
                     const nextTexIdx = nextGlobalIndex !== null ? (nextGlobalIndex % totalLogos) : curTexIdx;
@@ -933,6 +1046,135 @@
                 requestAnimationFrame(() => {
                     logoGrid.style.transition = previousTransition;
                 });
+            }
+
+            // ── Rail scrubbing ──────────────────────────
+
+            function readCurrentRailShift() {
+                if (!logoGrid) return 0;
+                const v = logoGrid.style.getPropertyValue('--rail-shift') || '0';
+                const n = parseFloat(v);
+                return Number.isFinite(n) ? n : 0;
+            }
+
+            function clampScrub(value) {
+                if (!cells.length) return value;
+                const center = window.innerWidth / 2;
+                const first = cells[0];
+                const last = cells[cells.length - 1];
+                const minShift = first.offsetLeft + first.offsetWidth / 2 - center;
+                const maxShift = last.offsetLeft + last.offsetWidth / 2 - center;
+                const totalShift = scrubBaseShift + value;
+                if (totalShift < minShift) return minShift - scrubBaseShift;
+                if (totalShift > maxShift) return maxShift - scrubBaseShift;
+                return value;
+            }
+
+            function findCellNearestCenter(currentShift) {
+                if (!cells.length) return null;
+                const target = window.innerWidth / 2 + currentShift;
+                let bestCell = null;
+                let bestDist = Infinity;
+                for (const cell of cells) {
+                    const cellCenter = cell.offsetLeft + cell.offsetWidth / 2;
+                    const dist = Math.abs(cellCenter - target);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestCell = cell;
+                    }
+                }
+                return bestCell;
+            }
+
+            // Visual-only highlight update — mirrors setActiveLogo's cell loop but skips
+            // the morph trigger and meta swap so the title doesn't churn on every frame.
+            function applyScrubHighlight(gi) {
+                if (gi === scrubActiveGi) return;
+                scrubActiveGi = gi;
+                cells.forEach((cell) => {
+                    const cellGi = Number(cell.dataset.globalIndex);
+                    const isActive = cellGi === gi;
+                    const dist = Math.abs(cellGi - gi);
+                    const isVisibleRailCell = dist <= RAIL_VISIBLE_DISTANCE;
+
+                    cell.classList.toggle('logo-cell-active', isActive);
+                    cell.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    if (isVisibleRailCell) {
+                        cell.removeAttribute('aria-hidden');
+                    } else {
+                        cell.setAttribute('aria-hidden', 'true');
+                    }
+                    cell.tabIndex = isVisibleRailCell ? 0 : -1;
+                    cell.dataset.railDistance = dist > 5 ? '99' : String(dist);
+                });
+            }
+
+            function updateRailDuringScrub() {
+                if (!logoGrid) return;
+                const totalShift = scrubBaseShift + scrubShiftPx;
+                logoGrid.style.setProperty('--rail-shift', `${totalShift}px`);
+                const cell = findCellNearestCenter(totalShift);
+                if (cell) applyScrubHighlight(Number(cell.dataset.globalIndex));
+            }
+
+            function beginScrub() {
+                if (isScrubbing) return;
+
+                // Snap any in-progress morph to its destination so scrub starts from
+                // a stable particle state — otherwise releasing onto a different cell
+                // would morph from a stale source and cause a visible jump.
+                if (isTransitioning && nextGlobalIndex !== null && gpuSim) {
+                    const texIdx = ((nextGlobalIndex % totalLogos) + totalLogos) % totalLogos;
+                    const toTex = targetTextures[texIdx];
+                    if (toTex) gpuSim.setTargets({ fromTex: toTex, toTex: toTex });
+                    globalIndex = nextGlobalIndex;
+                    nextGlobalIndex = null;
+                    isTransitioning = false;
+                }
+
+                isScrubbing = true;
+                scrubShiftPx = 0;
+                scrubBaseShift = readCurrentRailShift();
+                scrubActiveGi = globalIndex;
+
+                if (logoGrid) logoGrid.style.transition = 'none';
+                stopCycling();
+            }
+
+            function scheduleScrubEnd() {
+                if (scrubEndTimer) clearTimeout(scrubEndTimer);
+                scrubEndTimer = setTimeout(endScrub, SCRUB_END_DELAY_MS);
+            }
+
+            function endScrub() {
+                if (scrubEndTimer) {
+                    clearTimeout(scrubEndTimer);
+                    scrubEndTimer = null;
+                }
+                if (!isScrubbing) return;
+
+                const totalShift = scrubBaseShift + scrubShiftPx;
+                const cell = findCellNearestCenter(totalShift);
+
+                isScrubbing = false;
+                scrubShiftPx = 0;
+                scrubBaseShift = 0;
+                scrubActiveGi = null;
+
+                if (logoGrid) logoGrid.style.transition = '';
+
+                if (cell) {
+                    const gi = Number(cell.dataset.globalIndex);
+                    if (gi !== globalIndex) {
+                        setActiveLogo(gi);
+                    } else {
+                        updateRailPosition(globalIndex);
+                    }
+                } else {
+                    updateRailPosition(globalIndex);
+                }
+
+                pauseCycling();
             }
 
             function clearProjectMetaSwap() {
@@ -1049,7 +1291,7 @@
              * Cycle to the next logo in the continuous rail.
              */
             function cycleToNext() {
-                if (isPaused || isTransitioning) return;
+                if (isPaused || isTransitioning || isScrubbing) return;
 
                 const nextGi = findNextRenderableGlobalIndex(globalIndex + 1);
                 if (nextGi === null || nextGi === globalIndex) return;
@@ -1086,6 +1328,8 @@
             // ── Event handlers ──────────────────────────
 
             function handleCellClick(event) {
+                if (isScrubbing) return;
+
                 const cell = event.currentTarget;
                 const gi = parseInt(cell.getAttribute('data-global-index'), 10);
 
@@ -1104,7 +1348,7 @@
                     case 'Enter':
                     case ' ': {
                         event.preventDefault();
-                        if (!isNaN(gi) && gi !== globalIndex && !isTransitioning) {
+                        if (!isNaN(gi) && gi !== globalIndex && !isTransitioning && !isScrubbing) {
                             setActiveLogo(gi);
                             pauseCycling();
                         }
@@ -1113,7 +1357,7 @@
                     case 'ArrowRight':
                     case 'ArrowDown': {
                         event.preventDefault();
-                        if (isTransitioning) break;
+                        if (isTransitioning || isScrubbing) break;
                         const nextGi = findNextRenderableGlobalIndex(globalIndex + 1);
                         if (nextGi !== null && nextGi !== globalIndex) {
                             setActiveLogo(nextGi);
@@ -1125,7 +1369,7 @@
                     case 'ArrowLeft':
                     case 'ArrowUp': {
                         event.preventDefault();
-                        if (isTransitioning) break;
+                        if (isTransitioning || isScrubbing) break;
                         const previousGi = findPreviousRenderableGlobalIndex(globalIndex - 1);
                         if (previousGi !== null && previousGi !== globalIndex) {
                             setActiveLogo(previousGi);
@@ -1163,7 +1407,7 @@
             if (splashAlreadyShown) {
                 splash.style.display = 'none';
                 hero.classList.add('instant');
-                try { await initParticleSystem(); } catch (e) { console.error('Particle init failed:', e); }
+                try { await initParticleSystem(); } catch (e) { console.error('Particle init failed:', e); markParticleFallback(); }
                 requestAnimationFrame(() => { hero.classList.add('loaded'); });
             } else {
                 try {
@@ -1171,7 +1415,7 @@
                         runSplashSequence(),
                         initParticleSystem()
                     ]);
-                } catch (e) { console.error('Init error:', e); }
+                } catch (e) { console.error('Init error:', e); markParticleFallback(); }
                 try { sessionStorage.setItem('splashShown', '1'); } catch (_) {}
                 requestAnimationFrame(() => { hero.classList.add('loaded'); });
             }

@@ -96,6 +96,8 @@
         modalRoot.setAttribute('role', 'dialog');
         modalRoot.setAttribute('aria-labelledby', 'lwt-title');
         modalRoot.setAttribute('aria-hidden', 'true');
+        modalRoot.inert = true;
+        modalRoot.hidden = true;
         modalRoot.innerHTML = buildModalMarkup();
         document.body.appendChild(modalRoot);
 
@@ -141,7 +143,9 @@
         lastFocused = document.activeElement;
 
         const rect = trigger.getBoundingClientRect();
+        root.hidden = false;
         applyRect(root, rect);
+        root.inert = false;
         root.dataset.open = 'true';
         root.setAttribute('aria-hidden', 'false');
 
@@ -192,6 +196,8 @@
             root.dataset.open = 'false';
             delete root.dataset.closing;
             root.setAttribute('aria-hidden', 'true');
+            root.inert = true;
+            root.hidden = true;
 
             // Clean up inline overrides on the next frame, after the snap
             // has rendered, so the panel never flashes back into view.

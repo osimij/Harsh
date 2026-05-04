@@ -93,7 +93,7 @@ export class Renderer {
         });
 
         if (!this.gl) {
-            console.error('WebGL2 not supported, falling back to Canvas2D');
+            console.warn('WebGL2 not supported, falling back to Canvas2D');
             this.fallbackToCanvas2D = true;
             return;
         }

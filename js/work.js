@@ -375,11 +375,10 @@
     async function fetchSvg(logo) {
         if (logo.imageFile) return null;
         if (svgCache[logo.id]) return svgCache[logo.id];
-        let res = await fetch(SYMBOLS_DIR + logo.file);
-        if (!res.ok) {
-            res = await fetch(LOGOS_DIR + logo.file);
-            if (!res.ok) throw new Error(`Failed to load ${logo.file}`);
-        }
+        const preferredSrc = logo.symbolFile ? SYMBOLS_DIR + logo.symbolFile : LOGOS_DIR + logo.file;
+        let res = await fetch(preferredSrc);
+        if (!res.ok && logo.symbolFile) res = await fetch(LOGOS_DIR + logo.file);
+        if (!res.ok) throw new Error(`Failed to load ${logo.file}`);
         const text = await res.text();
         svgCache[logo.id] = text;
         return text;
@@ -662,6 +661,7 @@
         const number = String(index + 1).padStart(2, '0');
         const toneClass = item.tone === 'dark' ? 'case-study-frame-dark' : 'case-study-frame-light';
         const logoLightClass = item.tone === 'dark' ? 'case-study-logo-light' : '';
+        const mediaAttrs = getMediaSizeAttrs(item);
 
         if (item.type === 'double') {
             return `
@@ -708,9 +708,16 @@
 
         return `
             <div class="case-g-item case-g-media" data-thumb-key="${index}">
-                <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.title || '')}" loading="lazy">
+                <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.title || '')}" loading="lazy" decoding="async"${mediaAttrs}>
             </div>
         `;
+    }
+
+    function getMediaSizeAttrs(item) {
+        const width = Number(item.width);
+        const height = Number(item.height);
+        if (!(width > 0) || !(height > 0)) return '';
+        return ` width="${Math.round(width)}" height="${Math.round(height)}"`;
     }
 
     function renderCaseThumb(item, index) {
@@ -1474,7 +1481,6 @@
             await renderDetail(projectId);
         } else {
             await renderGallery();
-            buildSidebar();
             initResizeHandler();
         }
 
