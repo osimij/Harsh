@@ -1379,20 +1379,20 @@ a {
     .hero {
         --stage-pad-x: 14px;
         --nav-bottom-y: clamp(56px, 9vh, 84px);
-        --rail-top-y: calc(100dvh - clamp(96px, 14vh, 130px));
+        --rail-top-y: calc(100dvh - clamp(130px, 18vh, 170px));
         /* Keep the particle mark inside the usable phone viewport. The
            canvas still bleeds, so the stage itself needs a conservative cap. */
-        --hero-logo-size: min(72vw, 38vh, 300px);
+        --hero-logo-size: min(88vw, 46vh, 390px);
         --hero-logo-half: calc(var(--hero-logo-size) / 2);
         /* Keep the visual center slightly above the mathematical middle so
            the logo, meta, and rail read as one composition on tall phones. */
-        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.44);
+        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.40);
     }
 
     .main-logo {
         width: var(--hero-logo-size);
         height: var(--hero-logo-size);
-        --canvas-bleed: 18%;
+        --canvas-bleed: 28%;
     }
 
     .project-meta {
@@ -1431,7 +1431,7 @@ a {
 /* Tiny phones (≤360px) — keep the logo readable without crowding the rail. */
 @media (max-width: 360px) {
     .hero {
-        --hero-logo-size: min(68vw, 34vh, 240px);
+        --hero-logo-size: min(86vw, 44vh, 280px);
     }
 
     .project-title {

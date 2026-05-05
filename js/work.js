@@ -283,6 +283,29 @@
             .replace(/[^a-z0-9-]/g, '');
     }
 
+    // Hand-curated layout for the bento grid. Featured cards are derived from
+    // logos that have a `caseStudy` array. Spotlight cards are picked for
+    // visual rhythm — strong brand colors spread across the page.
+    const SPOTLIGHT_IDS = new Set([
+        'automaison',
+        'balanced-pathways',
+        'primos-car-wash',
+        'phanmotion'
+    ]);
+
+    function getCardSize(logo) {
+        if (Array.isArray(logo.caseStudy) && logo.caseStudy.length > 0) return 'featured';
+        if (SPOTLIGHT_IDS.has(logo.id)) return 'spotlight';
+        return 'standard';
+    }
+
+    /** Build the ordered list of logos for the gallery — featured(s) first. */
+    function getOrderedLogos() {
+        const featured = manifest.filter(logo => getCardSize(logo) === 'featured');
+        const others = manifest.filter(logo => getCardSize(logo) !== 'featured');
+        return [...featured, ...others];
+    }
+
     /** Deduplicate internal SVG IDs to prevent DOM collisions */
     function deduplicateSvgIds(svgString, prefix) {
         return svgString
@@ -459,93 +482,219 @@
     async function renderGallery() {
         showGallery();
 
-        // Fetch all SVGs in parallel
-        const svgPromises = manifest.map(logo => fetchSvg(logo));
-        const svgs = await Promise.all(svgPromises);
+        const ordered = getOrderedLogos();
+
+        // Fetch all SVGs in parallel (in display order)
+        const svgs = await Promise.all(ordered.map(logo => fetchSvg(logo)));
 
         const grid = galleryView.querySelector('.work-grid');
 
-        manifest.forEach((logo, i) => {
-            const cell = document.createElement('a');
-            cell.className = 'work-cell';
-            cell.href = getProjectHref(logo.id);
-            cell.setAttribute('role', 'listitem');
-            cell.setAttribute('aria-label', logo.displayName || logo.name);
-            cell.setAttribute('data-logo-id', logo.id);
-            cell.setAttribute('data-tags', (logo.tags || []).join(','));
-
-            // Show preloader synchronously on plain left-click so it's visible
-            // during the navigation handoff (before the new page loads).
-            cell.addEventListener('click', (event) => {
-                if (event.defaultPrevented) return;
-                if (event.button !== 0) return;
-                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                showCasePreloader();
-            });
-
-            // Header row — brand tile (left) + category badge (right)
-            const head = document.createElement('div');
-            head.className = 'work-cell__head';
-
-            const brandTile = document.createElement('span');
-            brandTile.className = 'work-cell__brand-tile';
-            if (logo.thumbnailBg) {
-                brandTile.style.backgroundColor = logo.thumbnailBg;
-            }
-
-            if (logo.imageFile) {
-                // Raster mark (PNG/JPG) — cannot recolor, so we trust the
-                // source image. thumbnailBg still tints the chip behind it.
-                const img = document.createElement('img');
-                img.src = logo.imageFile;
-                img.alt = '';
-                img.setAttribute('aria-hidden', 'true');
-                img.className = 'work-cell__brand-img';
-                brandTile.appendChild(img);
-            } else {
-                // Vector mark (SVG) — dedupe IDs, recolor to logoColor.
-                let svgStr = deduplicateSvgIds(svgs[i], `wk_${logo.id}`);
-                if (logo.logoColor) {
-                    svgStr = recolorSvg(svgStr, logo.logoColor);
-                }
-                brandTile.innerHTML = svgStr;
-                const svgEl = brandTile.querySelector('svg');
-                if (svgEl) {
-                    svgEl.setAttribute('aria-hidden', 'true');
-                    svgEl.removeAttribute('width');
-                    svgEl.removeAttribute('height');
-                }
-            }
-
-            const badgeTag = getBadgeTag(logo);
-            const badge = document.createElement('span');
-            badge.className = `work-cell__badge work-cell__badge--${getBadgeVariant(badgeTag)}`;
-            badge.textContent = badgeTag;
-
-            head.appendChild(brandTile);
-            head.appendChild(badge);
-
-            // Body — title + description
-            const body = document.createElement('div');
-            body.className = 'work-cell__body';
-
-            const titleEl = document.createElement('h3');
-            titleEl.className = 'work-cell__title';
-            titleEl.textContent = getResponsiveCardTitle(logo);
-
-            const descEl = document.createElement('p');
-            descEl.className = 'work-cell__desc';
-            descEl.textContent = logo.description || `${logo.displayName || logo.name} — identity work.`;
-
-            body.appendChild(titleEl);
-            body.appendChild(descEl);
-
-            cell.appendChild(head);
-            cell.appendChild(body);
+        ordered.forEach((logo, displayIndex) => {
+            const size = getCardSize(logo);
+            const cell = buildWorkCell(logo, svgs[displayIndex], displayIndex, size);
             grid.appendChild(cell);
         });
 
         refreshResponsiveCardTitles();
+    }
+
+    function buildWorkCell(logo, svgString, displayIndex, size) {
+        const cell = document.createElement('a');
+        cell.className = `work-cell work-cell--${size}`;
+        cell.href = getProjectHref(logo.id);
+        cell.setAttribute('role', 'listitem');
+        cell.setAttribute('aria-label', logo.displayName || logo.name);
+        cell.setAttribute('data-logo-id', logo.id);
+        cell.setAttribute('data-tags', (logo.tags || []).join(','));
+        cell.setAttribute('data-index', String(displayIndex + 1).padStart(2, '0'));
+
+        cell.addEventListener('click', (event) => {
+            if (event.defaultPrevented) return;
+            if (event.button !== 0) return;
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            showCasePreloader();
+        });
+
+        if (size === 'featured') {
+            renderFeaturedCard(cell, logo, svgString, displayIndex);
+        } else if (size === 'spotlight') {
+            renderSpotlightCard(cell, logo, svgString, displayIndex);
+        } else {
+            renderStandardCard(cell, logo, svgString, displayIndex);
+        }
+
+        return cell;
+    }
+
+    /** Build the inline mark element — SVG (recolored) or raster image. */
+    function buildLogoMark(logo, svgString, recolorTo) {
+        const wrap = document.createElement('span');
+        wrap.className = 'work-cell__mark';
+
+        if (logo.imageFile) {
+            const img = document.createElement('img');
+            img.src = logo.imageFile;
+            img.alt = '';
+            img.setAttribute('aria-hidden', 'true');
+            img.className = 'work-cell__mark-img';
+            wrap.appendChild(img);
+            return wrap;
+        }
+
+        let svgStr = deduplicateSvgIds(svgString, `wk_${logo.id}`);
+        const targetColor = recolorTo || logo.logoColor;
+        if (targetColor) svgStr = recolorSvg(svgStr, targetColor);
+        wrap.innerHTML = svgStr;
+        const svgEl = wrap.querySelector('svg');
+        if (svgEl) {
+            svgEl.setAttribute('aria-hidden', 'true');
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
+        }
+        return wrap;
+    }
+
+    function renderStandardCard(cell, logo, svgString, displayIndex) {
+        const numeral = String(displayIndex + 1).padStart(2, '0');
+        const tile = document.createElement('span');
+        tile.className = 'work-cell__brand-tile';
+        if (logo.thumbnailBg) tile.style.backgroundColor = logo.thumbnailBg;
+        tile.appendChild(buildLogoMark(logo, svgString));
+
+        const badgeTag = getBadgeTag(logo);
+        const badge = document.createElement('span');
+        badge.className = `work-cell__badge work-cell__badge--${getBadgeVariant(badgeTag)}`;
+        badge.textContent = badgeTag;
+
+        const head = document.createElement('div');
+        head.className = 'work-cell__head';
+        head.appendChild(tile);
+        head.appendChild(badge);
+
+        const indexEl = document.createElement('span');
+        indexEl.className = 'work-cell__numeral';
+        indexEl.textContent = numeral;
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'work-cell__title';
+        titleEl.textContent = getResponsiveCardTitle(logo);
+
+        const descEl = document.createElement('p');
+        descEl.className = 'work-cell__desc';
+        descEl.textContent = logo.description || `${logo.displayName || logo.name} — identity work.`;
+
+        const meta = document.createElement('div');
+        meta.className = 'work-cell__meta';
+        const year = document.createElement('span');
+        year.className = 'work-cell__year';
+        year.textContent = logo.year || '';
+        const arrow = document.createElement('span');
+        arrow.className = 'work-cell__arrow';
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.textContent = '↗';
+        meta.appendChild(year);
+        meta.appendChild(arrow);
+
+        const body = document.createElement('div');
+        body.className = 'work-cell__body';
+        body.appendChild(indexEl);
+        body.appendChild(titleEl);
+        body.appendChild(descEl);
+        body.appendChild(meta);
+
+        cell.appendChild(head);
+        cell.appendChild(body);
+    }
+
+    function renderSpotlightCard(cell, logo, svgString, displayIndex) {
+        const numeral = String(displayIndex + 1).padStart(2, '0');
+        if (logo.thumbnailBg) cell.style.backgroundColor = logo.thumbnailBg;
+        if (logo.logoColor) cell.style.color = logo.logoColor;
+
+        const top = document.createElement('div');
+        top.className = 'work-cell__top';
+        const numEl = document.createElement('span');
+        numEl.className = 'work-cell__numeral';
+        numEl.textContent = numeral;
+        const badgeTag = getBadgeTag(logo);
+        const badge = document.createElement('span');
+        badge.className = 'work-cell__chip';
+        badge.textContent = badgeTag;
+        top.appendChild(numEl);
+        top.appendChild(badge);
+
+        const stage = document.createElement('div');
+        stage.className = 'work-cell__stage';
+        stage.appendChild(buildLogoMark(logo, svgString, logo.logoColor));
+
+        const footer = document.createElement('div');
+        footer.className = 'work-cell__footer';
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'work-cell__title';
+        titleEl.textContent = getResponsiveCardTitle(logo);
+        const yearEl = document.createElement('span');
+        yearEl.className = 'work-cell__year';
+        yearEl.textContent = logo.year || '';
+        footer.appendChild(titleEl);
+        footer.appendChild(yearEl);
+
+        cell.appendChild(top);
+        cell.appendChild(stage);
+        cell.appendChild(footer);
+    }
+
+    function renderFeaturedCard(cell, logo, svgString, displayIndex) {
+        const numeral = String(displayIndex + 1).padStart(2, '0');
+
+        const cover = document.createElement('div');
+        cover.className = 'work-cell__cover';
+        if (logo.thumbnailBg) cover.style.backgroundColor = logo.thumbnailBg;
+        if (logo.logoColor) cover.style.color = logo.logoColor;
+        cover.appendChild(buildLogoMark(logo, svgString, logo.logoColor));
+
+        const meta = document.createElement('div');
+        meta.className = 'work-cell__meta-pane';
+
+        const top = document.createElement('div');
+        top.className = 'work-cell__top';
+        const pill = document.createElement('span');
+        pill.className = 'work-cell__pill';
+        pill.textContent = 'Case study';
+        const numEl = document.createElement('span');
+        numEl.className = 'work-cell__numeral';
+        numEl.textContent = `${numeral} · ${logo.year || ''}`.trim();
+        top.appendChild(pill);
+        top.appendChild(numEl);
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'work-cell__title';
+        titleEl.textContent = getResponsiveCardTitle(logo);
+
+        const descEl = document.createElement('p');
+        descEl.className = 'work-cell__desc';
+        descEl.textContent = logo.description || `${logo.displayName || logo.name} — identity work.`;
+
+        const cta = document.createElement('span');
+        cta.className = 'work-cell__cta';
+        cta.innerHTML = `Read case study <span class="work-cell__cta-arrow" aria-hidden="true">→</span>`;
+
+        const tags = document.createElement('div');
+        tags.className = 'work-cell__tag-row';
+        (logo.tags || []).slice(0, 3).forEach(tag => {
+            const t = document.createElement('span');
+            t.className = 'work-cell__tag';
+            t.textContent = tag;
+            tags.appendChild(t);
+        });
+
+        meta.appendChild(top);
+        meta.appendChild(titleEl);
+        meta.appendChild(descEl);
+        meta.appendChild(tags);
+        meta.appendChild(cta);
+
+        cell.appendChild(cover);
+        cell.appendChild(meta);
     }
 
     // ---- Detail -------------------------------------------------
