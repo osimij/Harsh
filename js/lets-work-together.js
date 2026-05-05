@@ -1,8 +1,8 @@
 /**
  * Let's Work Together — anchored panel.
  *
- * The trigger button morphs into a 25vw × 65vh panel that contains the form.
- * On Cancel/close it shrinks back to the button rect and the button reappears.
+ * The trigger button expands into a full-viewport sheet, so typing never
+ * happens in a half-open floating box.
  */
 (function () {
     'use strict';
@@ -16,32 +16,25 @@
         'Something else',
     ];
 
-    function clamp(min, val, max) {
-        return Math.max(min, Math.min(max, val));
+    function isMobilePanel() {
+        return window.innerWidth <= 760;
     }
 
-    function panelSize(anchorRect) {
-        const margin = window.innerWidth < 900 ? 14 : 20;
-        if (window.innerWidth <= 760) {
-            const availableHeight = Math.max(420, window.innerHeight - margin * 2);
-            const preferredHeight = clamp(540, window.innerHeight * 0.78, 680);
-            return {
-                w: Math.max(280, window.innerWidth - margin * 2),
-                h: Math.min(preferredHeight, availableHeight),
-            };
-        }
-
-        const availableWidth = Math.max(280, window.innerWidth - margin * 2);
-        const availableHeight = Math.max(280, window.innerHeight - anchorRect.top - margin);
-        const anchoredMaxWidth = Math.max(280, anchorRect.right - margin);
-
-        const preferredWidth = clamp(340, window.innerWidth * 0.32, 440);
-        const preferredMinHeight = window.innerHeight < 520 ? 420 : 600;
-        const preferredHeight = clamp(preferredMinHeight, window.innerHeight * 0.68, 615);
-
+    function getViewportBox() {
+        const vv = window.visualViewport;
         return {
-            w: Math.min(preferredWidth, availableWidth, anchoredMaxWidth),
-            h: Math.min(preferredHeight, availableHeight),
+            top: vv ? vv.offsetTop : 0,
+            left: vv ? vv.offsetLeft : 0,
+            width: vv ? vv.width : window.innerWidth,
+            height: vv ? vv.height : window.innerHeight,
+        };
+    }
+
+    function panelSize() {
+        const viewport = getViewportBox();
+        return {
+            w: Math.max(280, viewport.width),
+            h: Math.max(420, viewport.height),
         };
     }
 
@@ -49,6 +42,7 @@
     let activeTrigger = null;
     let lastFocused = null;
     let isAnimating = false;
+    let lockedScrollY = 0;
 
     function buildChips() {
         return ENQUIRY_OPTIONS.map((opt, i) => `
@@ -112,6 +106,7 @@
         modalRoot.className = 'lwt-modal';
         modalRoot.id = 'lwt-modal';
         modalRoot.setAttribute('role', 'dialog');
+        modalRoot.setAttribute('aria-modal', 'true');
         modalRoot.setAttribute('aria-labelledby', 'lwt-title');
         modalRoot.setAttribute('aria-hidden', 'true');
         modalRoot.inert = true;
@@ -142,20 +137,52 @@
         el.style.height = rect.height + 'px';
     }
 
-    function applyTarget(el, anchorRect) {
-        // Keep the same top/right anchor as the trigger button so the panel
-        // grows downward and leftward from the button's corner.
-        const size = panelSize(anchorRect);
-        const margin = window.innerWidth < 900 ? 14 : 20;
-        if (window.innerWidth <= 760) {
-            el.style.top = Math.max(margin, window.innerHeight - size.h - margin) + 'px';
-            el.style.right = margin + 'px';
-        } else {
-            el.style.top = anchorRect.top + 'px';
-            el.style.right = (window.innerWidth - anchorRect.right) + 'px';
-        }
+    function applyTarget(el) {
+        // Full-viewport target. The animation still starts from the trigger
+        // rect, but the resting state is a stable sheet that fills the screen.
+        const size = panelSize();
+        const viewport = getViewportBox();
+        el.style.top = viewport.top + 'px';
+        el.style.right = Math.max(0, window.innerWidth - viewport.left - viewport.width) + 'px';
         el.style.width = size.w + 'px';
         el.style.height = size.h + 'px';
+    }
+
+    function syncOpenViewport() {
+        const root = modalRoot;
+        if (!root || root.dataset.open !== 'true' || root.dataset.closing === 'true') return;
+
+        root.style.transition = 'none';
+        applyTarget(root);
+        void root.offsetHeight;
+        requestAnimationFrame(() => {
+            if (root.dataset.open === 'true' && root.dataset.closing !== 'true') {
+                root.style.transition = '';
+            }
+        });
+    }
+
+    function lockPageScroll() {
+        if (document.body.classList.contains('lwt-lock')) return;
+        lockedScrollY = window.scrollY || window.pageYOffset || 0;
+        document.body.classList.add('lwt-lock');
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${lockedScrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+    }
+
+    function unlockPageScroll() {
+        if (!document.body.classList.contains('lwt-lock')) return;
+        document.body.classList.remove('lwt-lock');
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        window.scrollTo(0, lockedScrollY);
+        lockedScrollY = 0;
     }
 
     function open(trigger) {
@@ -175,6 +202,7 @@
         root.inert = false;
         root.dataset.open = 'true';
         root.setAttribute('aria-hidden', 'false');
+        lockPageScroll();
 
         // Force reflow so the starting rect commits before we transition.
         void root.offsetHeight;
@@ -182,16 +210,26 @@
         trigger.style.visibility = 'hidden';
 
         isAnimating = true;
-        applyTarget(root, rect);
+        applyTarget(root);
 
-        const onEnd = (e) => {
-            if (e.target !== root || e.propertyName !== 'width') return;
+        let openFallback = null;
+        const finishOpen = () => {
+            if (openFallback) {
+                window.clearTimeout(openFallback);
+                openFallback = null;
+            }
             root.removeEventListener('transitionend', onEnd);
             isAnimating = false;
             const firstField = root.querySelector('input:not([type="radio"]):not([type="checkbox"]), textarea');
             if (firstField) firstField.focus({ preventScroll: true });
         };
+
+        const onEnd = (e) => {
+            if (e.target !== root || e.propertyName !== 'width') return;
+            finishOpen();
+        };
         root.addEventListener('transitionend', onEnd);
+        openFallback = window.setTimeout(finishOpen, isMobilePanel() ? 520 : 700);
     }
 
     function close() {
@@ -226,6 +264,7 @@
             root.setAttribute('aria-hidden', 'true');
             root.inert = true;
             root.hidden = true;
+            unlockPageScroll();
 
             // Clean up inline overrides on the next frame, after the snap
             // has rendered, so the panel never flashes back into view.
@@ -316,6 +355,11 @@
         ensureModal();
         bindTriggers();
         document.addEventListener('keydown', onKey);
+        window.addEventListener('resize', syncOpenViewport);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', syncOpenViewport);
+            window.visualViewport.addEventListener('scroll', syncOpenViewport);
+        }
         const observer = new MutationObserver(bindTriggers);
         observer.observe(document.body, { childList: true, subtree: true });
     }

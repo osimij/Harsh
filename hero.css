@@ -1382,23 +1382,23 @@ a {
         --rail-top-y: calc(100dvh - clamp(130px, 18vh, 170px));
         /* Keep the particle mark inside the usable phone viewport. The
            canvas still bleeds, so the stage itself needs a conservative cap. */
-        --hero-logo-size: min(88vw, 46vh, 390px);
+        --hero-logo-size: min(78vw, 36vh, 320px);
         --hero-logo-half: calc(var(--hero-logo-size) / 2);
         /* Keep the visual center slightly above the mathematical middle so
            the logo, meta, and rail read as one composition on tall phones. */
-        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.40);
+        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.38);
     }
 
     .main-logo {
         width: var(--hero-logo-size);
         height: var(--hero-logo-size);
-        --canvas-bleed: 28%;
+        --canvas-bleed: 24%;
     }
 
     .project-meta {
         /* Sit the meta just under the logo with a small breathing gap rather
            than tied to a viewport-width fraction. */
-        top: calc(var(--stage-center-y) + var(--hero-logo-half) + clamp(12px, 2.8vh, 24px));
+        top: calc(var(--stage-center-y) + var(--hero-logo-half) + clamp(14px, 2.8vh, 22px));
         width: min(340px, calc(100vw - 28px));
         max-width: calc(100vw - 28px);
         transform: translateX(-50%);
@@ -1406,14 +1406,14 @@ a {
     }
 
     .project-title {
-        font-size: clamp(16px, 4.4vw, 19px);
+        font-size: clamp(16px, 4.1vw, 18px);
         line-height: 1.12;
         text-wrap: balance;
         overflow-wrap: anywhere;
     }
 
     .project-tags {
-        font-size: clamp(13px, 3.6vw, 15px);
+        font-size: clamp(13px, 3.3vw, 15px);
         text-wrap: balance;
     }
 
@@ -1431,7 +1431,7 @@ a {
 /* Tiny phones (≤360px) — keep the logo readable without crowding the rail. */
 @media (max-width: 360px) {
     .hero {
-        --hero-logo-size: min(86vw, 44vh, 280px);
+        --hero-logo-size: min(82vw, 34vh, 270px);
     }
 
     .project-title {

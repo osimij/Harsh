@@ -2266,13 +2266,15 @@ export class Renderer {
         // chromatic aberration is anchored to the LOGO instead of the
         // canvas center. Defaults map to the legacy "logo fills canvas"
         // behavior (center 0.5, radius 0.5) when no offset is set.
-        // Both NDC clip-space and the FBO's UV space are y-up here, so
-        // the conversion is uv = ndc * 0.5 + 0.5 for both axes.
+        // WebGL clip space is aspect-scaled before it lands in the FBO, so
+        // the stored screen offset must be scaled the same way before UV
+        // conversion. Without that, phone layouts anchor the effect too high.
         const offX = Number(this.settings.screenOffsetX) || 0;
         const offY = Number(this.settings.screenOffsetY) || 0;
         const innerScale = Math.max(0.05, Math.min(1, Number(this.settings.canvasInnerScale ?? 1) || 1));
-        const caCenterX = 0.5 + offX * 0.5;
-        const caCenterY = 0.5 + offY * 0.5;
+        const caAspect = this._getAspectScale();
+        const caCenterX = 0.5 + offX * caAspect.x * 0.5;
+        const caCenterY = 0.5 + offY * caAspect.y * 0.5;
         const caRadius = innerScale * 0.5;
         gl.uniform2f(post.uComp_caCenter, caCenterX, caCenterY);
         gl.uniform1f(post.uComp_caRadius, caRadius);
@@ -2288,12 +2290,11 @@ export class Renderer {
             const z = Number(this.settings.zoom) || (1.25 * innerScale);
             const depthScale = Math.max(0, Math.min(1, Number(this.settings.depthVariance ?? 0.5)));
             const posNorm = 0.985 / (1.0 + depthScale * 0.3);
-            const aspect = this._getAspectScale();
             const logoAspect = Math.max(1e-4, logoAspectRaw);
             const pExtX = logoAspect >= 1 ? 1 : logoAspect;
             const pExtY = logoAspect >= 1 ? (1 / logoAspect) : 1;
-            caHalfExtentX = pExtX * z * posNorm * aspect.x * 0.5;
-            caHalfExtentY = pExtY * z * posNorm * aspect.y * 0.5;
+            caHalfExtentX = pExtX * z * posNorm * caAspect.x * 0.5;
+            caHalfExtentY = pExtY * z * posNorm * caAspect.y * 0.5;
         }
         gl.uniform2f(post.uComp_caHalfExtent, caHalfExtentX, caHalfExtentY);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
