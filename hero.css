@@ -1354,8 +1354,8 @@ a {
 
 @media (max-width: 900px) {
     .logo-grid {
-        --rail-cell: clamp(54px, 13vw, 80px);
-        --rail-gap: clamp(28px, 7vw, 46px);
+        --rail-cell: clamp(62px, 14.5vw, 92px);
+        --rail-gap: clamp(24px, 6.2vw, 44px);
         bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
     }
 
@@ -1364,7 +1364,7 @@ a {
     }
 
     .logo-cell {
-        height: clamp(32px, 8vw, 46px);
+        height: clamp(38px, 9.6vw, 54px);
     }
 
     .hero-socials {
@@ -1384,9 +1384,9 @@ a {
            canvas still bleeds, so the stage itself needs a conservative cap. */
         --hero-logo-size: min(72vw, 38vh, 300px);
         --hero-logo-half: calc(var(--hero-logo-size) / 2);
-        /* Pull the visual center up a touch so the meta+gap below the logo
-           reads as part of one composition. */
-        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.38);
+        /* Keep the visual center slightly above the mathematical middle so
+           the logo, meta, and rail read as one composition on tall phones. */
+        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.44);
     }
 
     .main-logo {
@@ -1418,8 +1418,8 @@ a {
     }
 
     .logo-grid {
-        --rail-cell: clamp(48px, 14vw, 62px);
-        --rail-gap: clamp(20px, 6.6vw, 30px);
+        --rail-cell: clamp(60px, 17vw, 76px);
+        --rail-gap: clamp(34px, 10vw, 46px);
         bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
     }
 

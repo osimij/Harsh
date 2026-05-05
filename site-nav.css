@@ -134,6 +134,10 @@ site-nav {
         font-size: 12px;
         line-height: 1.35;
     }
+
+    .site-nav-cta {
+        display: none;
+    }
 }
 
 @media (max-width: 479px) {

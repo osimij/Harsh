@@ -30,10 +30,10 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css?v=responsive-fit-20260504">
-    <link rel="stylesheet" href="site-nav.css?v=responsive-fit-20260504">
-    <link rel="stylesheet" href="lets-work-together.css?v=responsive-fit-20260504">
-    <script src="js/site-nav.js?v=20260504"></script>
+    <link rel="stylesheet" href="hero.css?v=ticker-gap-20260505">
+    <link rel="stylesheet" href="site-nav.css?v=cta-fit-20260505">
+    <link rel="stylesheet" href="lets-work-together.css?v=cta-fit-20260505">
+    <script src="js/site-nav.js?v=cta-fit-20260505"></script>
 </head>
 <body>
     <!-- Splash Screen Overlay -->
@@ -210,6 +210,8 @@
             const PHONE_PARTICLE_SIZE = 1.3;
             const PHONE_PARTICLE_ZOOM = 0.76;
             const PHONE_PARTICLE_QUERY = '(max-width: 767px)';
+            const COMPACT_PARTICLE_COUNT = 240000;
+            const COMPACT_PARTICLE_QUERY = '(max-width: 1180px)';
 
             function isHexColor(value) {
                 return typeof value === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value.trim());
@@ -281,13 +283,16 @@
                     CONFIG.particleCount = PHONE_PARTICLE_COUNT;
                     CONFIG.particleSize = PHONE_PARTICLE_SIZE;
                     CONFIG.zoom = PHONE_PARTICLE_ZOOM;
+                } else if (window.matchMedia(COMPACT_PARTICLE_QUERY).matches) {
+                    CONFIG.particleCount = COMPACT_PARTICLE_COUNT;
                 }
             }
 
             // Rail constants
-            const RAIL_REPEAT_COPIES = 15;
+            const RAIL_REPEAT_COPIES = 7;
             const RAIL_MIDDLE_COPY = Math.floor(RAIL_REPEAT_COPIES / 2);
             const RAIL_VISIBLE_DISTANCE = 2;
+            const PHONE_RAIL_VISIBLE_DISTANCE = 1;
 
             // State — global index tracks position across ALL logos
             let globalIndex = CONFIG.initialActive;
@@ -585,6 +590,12 @@
                 if (targetCell && !targetCell.hasAttribute('aria-hidden')) {
                     targetCell.focus({ preventScroll: true });
                 }
+            }
+
+            function getRailVisibleDistance() {
+                return window.matchMedia(PHONE_PARTICLE_QUERY).matches
+                    ? PHONE_RAIL_VISIBLE_DISTANCE
+                    : RAIL_VISIBLE_DISTANCE;
             }
 
             // ── Logo loading ────────────────────────────
@@ -1091,11 +1102,12 @@
             function applyScrubHighlight(gi) {
                 if (gi === scrubActiveGi) return;
                 scrubActiveGi = gi;
+                const visibleDistance = getRailVisibleDistance();
                 cells.forEach((cell) => {
                     const cellGi = Number(cell.dataset.globalIndex);
                     const isActive = cellGi === gi;
                     const dist = Math.abs(cellGi - gi);
-                    const isVisibleRailCell = dist <= RAIL_VISIBLE_DISTANCE;
+                    const isVisibleRailCell = dist <= visibleDistance;
 
                     cell.classList.toggle('logo-cell-active', isActive);
                     cell.setAttribute('aria-pressed', isActive ? 'true' : 'false');
@@ -1105,7 +1117,7 @@
                         cell.setAttribute('aria-hidden', 'true');
                     }
                     cell.tabIndex = isVisibleRailCell ? 0 : -1;
-                    cell.dataset.railDistance = dist > 5 ? '99' : String(dist);
+                    cell.dataset.railDistance = isVisibleRailCell ? String(dist) : '99';
                 });
             }
 
@@ -1246,12 +1258,13 @@
 
             function setActiveLogo(gi, skipMorph = false) {
                 const logo = logoManifest[((gi % totalLogos) + totalLogos) % totalLogos];
+                const visibleDistance = getRailVisibleDistance();
 
                 cells.forEach((cell) => {
                     const cellGi = Number(cell.dataset.globalIndex);
                     const isActive = cellGi === gi;
                     const dist = Math.abs(cellGi - gi);
-                    const isVisibleRailCell = dist <= RAIL_VISIBLE_DISTANCE;
+                    const isVisibleRailCell = dist <= visibleDistance;
 
                     cell.classList.toggle('logo-cell-active', isActive);
                     cell.setAttribute('aria-pressed', isActive ? 'true' : 'false');
@@ -1262,8 +1275,7 @@
                     }
                     cell.tabIndex = isVisibleRailCell ? 0 : -1;
 
-                    // Distance-based fade: 0..2 = clearly visible, 3..5 = progressive fade, 6+ = hidden.
-                    cell.dataset.railDistance = dist > 5 ? '99' : String(dist);
+                    cell.dataset.railDistance = isVisibleRailCell ? String(dist) : '99';
                 });
                 updateRailPosition(gi);
 
@@ -1447,6 +1459,6 @@
             });
         })();
     </script>
-    <script src="js/lets-work-together.js?v=lwt-figma-20260428e"></script>
+    <script src="js/lets-work-together.js?v=cta-fit-20260505"></script>
 </body>
 </html>

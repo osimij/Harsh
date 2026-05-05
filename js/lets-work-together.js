@@ -20,10 +20,28 @@
         return Math.max(min, Math.min(max, val));
     }
 
-    function panelSize() {
+    function panelSize(anchorRect) {
+        const margin = window.innerWidth < 900 ? 14 : 20;
+        if (window.innerWidth <= 760) {
+            const availableHeight = Math.max(420, window.innerHeight - margin * 2);
+            const preferredHeight = clamp(540, window.innerHeight * 0.78, 680);
+            return {
+                w: Math.max(280, window.innerWidth - margin * 2),
+                h: Math.min(preferredHeight, availableHeight),
+            };
+        }
+
+        const availableWidth = Math.max(280, window.innerWidth - margin * 2);
+        const availableHeight = Math.max(280, window.innerHeight - anchorRect.top - margin);
+        const anchoredMaxWidth = Math.max(280, anchorRect.right - margin);
+
+        const preferredWidth = clamp(340, window.innerWidth * 0.32, 440);
+        const preferredMinHeight = window.innerHeight < 520 ? 420 : 600;
+        const preferredHeight = clamp(preferredMinHeight, window.innerHeight * 0.68, 615);
+
         return {
-            w: clamp(360, window.innerWidth * 0.32, 440),
-            h: clamp(540, window.innerHeight * 0.68, 615),
+            w: Math.min(preferredWidth, availableWidth, anchoredMaxWidth),
+            h: Math.min(preferredHeight, availableHeight),
         };
     }
 
@@ -127,9 +145,15 @@
     function applyTarget(el, anchorRect) {
         // Keep the same top/right anchor as the trigger button so the panel
         // grows downward and leftward from the button's corner.
-        const size = panelSize();
-        el.style.top = anchorRect.top + 'px';
-        el.style.right = (window.innerWidth - anchorRect.right) + 'px';
+        const size = panelSize(anchorRect);
+        const margin = window.innerWidth < 900 ? 14 : 20;
+        if (window.innerWidth <= 760) {
+            el.style.top = Math.max(margin, window.innerHeight - size.h - margin) + 'px';
+            el.style.right = margin + 'px';
+        } else {
+            el.style.top = anchorRect.top + 'px';
+            el.style.right = (window.innerWidth - anchorRect.right) + 'px';
+        }
         el.style.width = size.w + 'px';
         el.style.height = size.h + 'px';
     }
@@ -143,6 +167,9 @@
         lastFocused = document.activeElement;
 
         const rect = trigger.getBoundingClientRect();
+        root.dataset.mobileTrigger = trigger.classList.contains('site-nav-mobile-cta') ? 'true' : 'false';
+        const morphLabel = root.querySelector('.lwt-morph-label');
+        if (morphLabel) morphLabel.textContent = trigger.textContent.trim() || 'Let\'s Work Together';
         root.hidden = false;
         applyRect(root, rect);
         root.inert = false;
@@ -195,6 +222,7 @@
 
             root.dataset.open = 'false';
             delete root.dataset.closing;
+            delete root.dataset.mobileTrigger;
             root.setAttribute('aria-hidden', 'true');
             root.inert = true;
             root.hidden = true;

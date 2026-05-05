@@ -24,6 +24,7 @@
         </div>
         <button type="button" class="site-nav-cta" data-lwt-open>Let's Work Together</button>
     </div>
+    <button type="button" class="site-nav-mobile-cta" data-lwt-open aria-label="Let's Work Together">Start a Project</button>
 </nav>`.trim();
 
     class SiteNav extends HTMLElement {
