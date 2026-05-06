@@ -462,7 +462,14 @@ a {
         animation: none;
         opacity: 1;
         filter: none;
-        transform: none;
+    }
+
+    .hero:not(.instant) .main-logo {
+        transform: translate(-50%, -50%);
+    }
+
+    .hero:not(.instant) .logo-grid {
+        transform: translateX(calc(var(--rail-shift) * -1));
     }
 }
 
@@ -1354,9 +1361,10 @@ a {
 
 @media (max-width: 900px) {
     .logo-grid {
-        --rail-cell: clamp(62px, 14.5vw, 92px);
-        --rail-gap: clamp(24px, 6.2vw, 44px);
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+        --mobile-rail-side: clamp(24px, 6.8vw, 30px);
+        --rail-cell: clamp(58px, 17vw, 76px);
+        --rail-gap: max(44px, calc((100vw - (2 * var(--mobile-rail-side)) - (3 * var(--rail-cell))) / 2));
+        bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(20px, 5.2vh, 50px));
     }
 
     .crossfade-clone {
@@ -1378,11 +1386,11 @@ a {
 @media (max-width: 640px) {
     .hero {
         --stage-pad-x: 14px;
-        --nav-bottom-y: clamp(56px, 9vh, 84px);
-        --rail-top-y: calc(100dvh - clamp(130px, 18vh, 170px));
+        --nav-bottom-y: clamp(76px, 10vh, 96px);
+        --rail-top-y: calc(100dvh - clamp(142px, 19vh, 184px));
         /* Keep the particle mark inside the usable phone viewport. The
            canvas still bleeds, so the stage itself needs a conservative cap. */
-        --hero-logo-size: min(78vw, 36vh, 320px);
+        --hero-logo-size: min(92vw, 43vh, 420px);
         --hero-logo-half: calc(var(--hero-logo-size) / 2);
         /* Keep the visual center slightly above the mathematical middle so
            the logo, meta, and rail read as one composition on tall phones. */
@@ -1418,9 +1426,10 @@ a {
     }
 
     .logo-grid {
-        --rail-cell: clamp(60px, 17vw, 76px);
-        --rail-gap: clamp(34px, 10vw, 46px);
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+        --mobile-rail-side: clamp(24px, 6.8vw, 30px);
+        --rail-cell: clamp(58px, 17vw, 76px);
+        --rail-gap: max(44px, calc((100vw - (2 * var(--mobile-rail-side)) - (3 * var(--rail-cell))) / 2));
+        bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(20px, 5.2vh, 50px));
     }
 
     .crossfade-clone {
@@ -1431,7 +1440,7 @@ a {
 /* Tiny phones (≤360px) — keep the logo readable without crowding the rail. */
 @media (max-width: 360px) {
     .hero {
-        --hero-logo-size: min(82vw, 34vh, 270px);
+        --hero-logo-size: min(90vw, 42vh, 340px);
     }
 
     .project-title {
@@ -1460,5 +1469,18 @@ a {
 
     .logo-grid {
         bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    }
+}
+
+@media (max-width: 640px) and (max-height: 620px) {
+    .hero {
+        --nav-bottom-y: clamp(62px, 10vh, 76px);
+        --rail-top-y: calc(100dvh - clamp(96px, 18vh, 116px));
+        --hero-logo-size: min(88vw, 40vh, 320px);
+        --stage-center-y: calc(var(--nav-bottom-y) + (var(--rail-top-y) - var(--nav-bottom-y)) * 0.36);
+    }
+
+    .project-meta {
+        top: calc(var(--stage-center-y) + var(--hero-logo-half) + clamp(10px, 2vh, 16px));
     }
 }

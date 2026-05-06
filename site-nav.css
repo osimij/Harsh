@@ -110,6 +110,13 @@ site-nav {
     mix-blend-mode: var(--site-nav-logo-blend, difference);
 }
 
+@media (max-width: 760px) {
+    .site-nav-logo {
+        width: 40px;
+        height: 28px;
+    }
+}
+
 .site-nav-logo-link:focus-visible,
 .site-nav-link:focus-visible {
     outline: 2px solid var(--site-nav-focus-color, currentColor);
@@ -119,15 +126,15 @@ site-nav {
 @media (max-width: 760px) {
     .site-nav {
         padding:
-            calc(env(safe-area-inset-top, 0px) + 12px)
-            max(16px, env(safe-area-inset-right, 0px))
+            calc(env(safe-area-inset-top, 0px) + 20px)
+            max(20px, env(safe-area-inset-right, 0px))
             0
-            max(12px, env(safe-area-inset-left, 0px));
+            max(20px, env(safe-area-inset-left, 0px));
     }
 
     .site-nav-links {
         gap: 12px;
-        max-width: calc(100vw - 58px);
+        max-width: calc(100vw - 84px);
     }
 
     .site-nav-link {
@@ -142,8 +149,8 @@ site-nav {
 
 @media (max-width: 479px) {
     .site-nav {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: max(20px, env(safe-area-inset-left, 0px));
+        padding-right: max(20px, env(safe-area-inset-right, 0px));
     }
 
     .site-nav-links {
@@ -157,8 +164,8 @@ site-nav {
 
 @media (max-width: 360px) {
     .site-nav {
-        padding-left: max(10px, env(safe-area-inset-left, 0px));
-        padding-right: max(10px, env(safe-area-inset-right, 0px));
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
     }
 
     .site-nav-link {

@@ -30,10 +30,10 @@
     <link rel="preload" href="assets/hero/profile.jpg" as="image">
 
     <title>Harsh - Logo & Brand Designer</title>
-    <link rel="stylesheet" href="hero.css?v=main-responsive-20260505">
-    <link rel="stylesheet" href="site-nav.css?v=cta-fit-20260505">
-    <link rel="stylesheet" href="lets-work-together.css?v=viewport-sheet-20260505">
-    <script src="js/site-nav.js?v=cta-fit-20260505"></script>
+    <link rel="stylesheet" href="hero.css?v=cta-wide-20260506">
+    <link rel="stylesheet" href="site-nav.css?v=cta-wide-20260506">
+    <link rel="stylesheet" href="lets-work-together.css?v=cta-wide-20260506">
+    <script src="js/site-nav.js?v=cta-wide-20260506"></script>
 </head>
 <body>
     <!-- Splash Screen Overlay -->
@@ -199,7 +199,7 @@
                 squaresEnabled: true,
                 squareRatio: 0.25,
                 colorMode: 'chromatic',
-                chromaticShift: 0.05,
+                chromaticShift: 0.025,
                 gradientOverlayEnabled: false,
                 gradientColorA: '#00d4ff',
                 gradientColorB: '#a855f7',
@@ -606,7 +606,7 @@
                 const manifest = await manifestRes.json();
                 // The hero particle system needs vector path data — skip
                 // raster-only entries (logos with imageFile and no SVG file).
-                logoManifest = manifest.logos.filter(l => l.file);
+                logoManifest = manifest.logos.filter(l => l.file && !l.excludeFromHero);
 
                 const activeIdx = logoManifest.findIndex(l => l.initialActive);
                 if (activeIdx !== -1) {
@@ -1040,6 +1040,13 @@
                 logoGrid.style.setProperty('--rail-shift', `${shift}px`);
             }
 
+            function scheduleRailRecenter() {
+                requestAnimationFrame(() => {
+                    updateRailPosition(globalIndex);
+                    requestAnimationFrame(() => updateRailPosition(globalIndex));
+                });
+            }
+
             function rebaseRailIfNeeded() {
                 if (!totalLogos || !logoGrid) return;
 
@@ -1415,11 +1422,13 @@
             await loadLogos();
             buildLogoGrid();
             setActiveLogo(globalIndex, true);
+            scheduleRailRecenter();
 
             if (splashAlreadyShown) {
                 splash.style.display = 'none';
                 hero.classList.add('instant');
                 try { await initParticleSystem(); } catch (e) { console.error('Particle init failed:', e); markParticleFallback(); }
+                scheduleRailRecenter();
                 requestAnimationFrame(() => { hero.classList.add('loaded'); });
             } else {
                 try {
@@ -1429,6 +1438,7 @@
                     ]);
                 } catch (e) { console.error('Init error:', e); markParticleFallback(); }
                 try { sessionStorage.setItem('splashShown', '1'); } catch (_) {}
+                scheduleRailRecenter();
                 requestAnimationFrame(() => { hero.classList.add('loaded'); });
             }
 
