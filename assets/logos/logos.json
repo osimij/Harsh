@@ -82,7 +82,9 @@
       "description": "Identity for Primo's Car Wash — a bold, friendly mark with retro service-era roots, designed to feel iconic on signage and apparel alike.",
       "year": "2025",
       "thumbnailBg": "#D62828",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "excludeFromHero": true,
+      "archived": true
     },
     {
       "id": "rivet",

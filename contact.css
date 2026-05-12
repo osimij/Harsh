@@ -178,6 +178,8 @@ a {
     text-align: center;
     background: var(--contact-bg);
     color: var(--contact-text);
+    animation: contactSpin 8s linear infinite;
+    will-change: transform;
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     user-select: none;
     -webkit-user-select: none;
@@ -236,6 +238,15 @@ a {
 .contact-socials a:focus-visible {
     color: var(--contact-text);
     transform: translateY(-1px);
+}
+
+@keyframes contactSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ============================================

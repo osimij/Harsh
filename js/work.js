@@ -230,24 +230,30 @@
     }
 
     function getProjectNeighbors(project) {
-        const currentIndex = manifest.findIndex(item => item.id === project.id);
+        const projects = getVisibleProjects();
+        if (!projects.length) return [];
+
+        const currentIndex = projects.findIndex(item => item.id === project.id);
         const safeIndex = currentIndex >= 0 ? currentIndex : 0;
 
         return Array.from({ length: 9 }, (_, offset) => {
-            const index = (safeIndex + offset + 1) % manifest.length;
-            return manifest[index];
+            const index = (safeIndex + offset + 1) % projects.length;
+            return projects[index];
         });
     }
 
     function getAdjacentProjects(project) {
-        const currentIndex = manifest.findIndex(item => item.id === project.id);
+        const projects = getVisibleProjects();
+        if (!projects.length) return { previous: null, next: null };
+
+        const currentIndex = projects.findIndex(item => item.id === project.id);
         const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-        const previousIndex = (safeIndex - 1 + manifest.length) % manifest.length;
-        const nextIndex = (safeIndex + 1) % manifest.length;
+        const previousIndex = (safeIndex - 1 + projects.length) % projects.length;
+        const nextIndex = (safeIndex + 1) % projects.length;
 
         return {
-            previous: manifest[previousIndex],
-            next: manifest[nextIndex]
+            previous: projects[previousIndex],
+            next: projects[nextIndex]
         };
     }
 
@@ -283,26 +289,23 @@
             .replace(/[^a-z0-9-]/g, '');
     }
 
-    // Hand-curated layout for the bento grid. Featured cards are derived from
-    // logos that have a `caseStudy` array. Spotlight cards are picked for
-    // visual rhythm — strong brand colors spread across the page.
-    const SPOTLIGHT_IDS = new Set([
-        'automaison',
-        'balanced-pathways',
-        'primos-car-wash',
-        'phanmotion'
-    ]);
-
     function getCardSize(logo) {
-        if (Array.isArray(logo.caseStudy) && logo.caseStudy.length > 0) return 'featured';
-        if (SPOTLIGHT_IDS.has(logo.id)) return 'spotlight';
         return 'standard';
+    }
+
+    function isArchivedProject(logo) {
+        return logo && logo.archived === true;
+    }
+
+    function getVisibleProjects() {
+        return manifest.filter(logo => !isArchivedProject(logo));
     }
 
     /** Build the ordered list of logos for the gallery — featured(s) first. */
     function getOrderedLogos() {
-        const featured = manifest.filter(logo => getCardSize(logo) === 'featured');
-        const others = manifest.filter(logo => getCardSize(logo) !== 'featured');
+        const visibleProjects = getVisibleProjects();
+        const featured = visibleProjects.filter(logo => getCardSize(logo) === 'featured');
+        const others = visibleProjects.filter(logo => getCardSize(logo) !== 'featured');
         return [...featured, ...others];
     }
 
@@ -532,6 +535,14 @@
         wrap.className = 'work-cell__mark';
 
         if (logo.imageFile) {
+            if (recolorTo) {
+                wrap.classList.add('work-cell__mark--mask');
+                wrap.style.backgroundColor = recolorTo;
+                wrap.style.webkitMaskImage = `url("${logo.imageFile}")`;
+                wrap.style.maskImage = `url("${logo.imageFile}")`;
+                return wrap;
+            }
+
             const img = document.createElement('img');
             img.src = logo.imageFile;
             img.alt = '';
@@ -558,8 +569,7 @@
         const numeral = String(displayIndex + 1).padStart(2, '0');
         const tile = document.createElement('span');
         tile.className = 'work-cell__brand-tile';
-        if (logo.thumbnailBg) tile.style.backgroundColor = logo.thumbnailBg;
-        tile.appendChild(buildLogoMark(logo, svgString));
+        tile.appendChild(buildLogoMark(logo, svgString, logo.thumbnailBg));
 
         const badgeTag = getBadgeTag(logo);
         const badge = document.createElement('span');
@@ -1625,6 +1635,7 @@
 
         await loadManifest();
         allTags = extractTags(manifest);
+        buildSidebar();
 
         if (projectId) {
             await renderDetail(projectId);
