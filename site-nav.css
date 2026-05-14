@@ -60,6 +60,31 @@ site-nav {
         max(40px, env(safe-area-inset-left, 0px));
     color: var(--site-nav-color, #ffffff);
     pointer-events: none;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        backdrop-filter 0.2s ease,
+        -webkit-backdrop-filter 0.2s ease,
+        color 0.2s ease,
+        padding-bottom 0.2s ease;
+}
+
+.site-nav--scrolled {
+    padding-bottom: 14px;
+    color: #050505;
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom-color: rgba(5, 5, 5, 0.08);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+}
+
+.site-nav--scrolled .site-nav-logo {
+    filter: brightness(0) !important;
+    mix-blend-mode: normal;
 }
 
 .site-nav-logo-link,

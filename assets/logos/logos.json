@@ -11,7 +11,8 @@
       "description": "Brand identity for Automaison — a refined wordmark engineered for an automation platform, balancing precision with approachable personality.",
       "year": "2025",
       "thumbnailBg": "#0F1B33",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 1.15
     },
     {
       "id": "dream-culture",
@@ -23,7 +24,8 @@
       "description": "Identity system for Dream Culture — a confident, expressive wordmark for a brand built around imagination and self-expression.",
       "year": "2025",
       "thumbnailBg": "#5B2C82",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 1.15
     },
     {
       "id": "hype-proxies",
@@ -35,7 +37,9 @@
       "description": "Brand mark for HypeProxies — a sharp, modern identity for a residential proxy service, blending speed cues with technical credibility.",
       "year": "2025",
       "thumbnailBg": "#0F3D2E",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "useOriginalColors": true,
+      "galleryLogoScale": 0.96
     },
     {
       "id": "influence-pro",
@@ -47,7 +51,8 @@
       "description": "Identity for InfluencePro — a polished mark for an influencer marketing platform, communicating reach and professional polish.",
       "year": "2025",
       "thumbnailBg": "#1E3A8A",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 0.95
     },
     {
       "id": "north-systems",
@@ -59,7 +64,8 @@
       "description": "Corporate identity for NorthSystems — a steady, directional mark anchored by a stylized peak that signals reliability and strategic direction.",
       "year": "2025",
       "thumbnailBg": "#0A0E27",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 1.1
     },
     {
       "id": "phanmotion",
@@ -70,8 +76,9 @@
       "tags": ["Logo", "Branding", "Motion"],
       "description": "Brand identity for Phanmotion — a kinetic mark for a motion design studio, distilling energy and movement into a single confident form.",
       "year": "2025",
-      "thumbnailBg": "#9B1D6F",
-      "logoColor": "#FFFFFF"
+      "thumbnailBg": "#221BC1",
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 1.1
     },
     {
       "id": "primos-car-wash",
@@ -96,7 +103,9 @@
       "description": "Brand identity for Rivet — a structural, no-nonsense wordmark for an industrial brand, with weight and confidence built into every form.",
       "year": "2025",
       "thumbnailBg": "#1F1F1F",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "useOriginalColors": true,
+      "galleryLogoScale": 1.05
     },
     {
       "id": "urbanscapes",
@@ -108,11 +117,13 @@
       "description": "Identity for URBANSCAPES — a structured, architectural wordmark inspired by city skylines and urban geometry.",
       "year": "2025",
       "thumbnailBg": "#3F3F3F",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoColor": "#000000"
     },
     {
       "id": "caviar-cocktails",
-      "imageFile": "assets/CandC-icon.png",
+      "file": "CaviarandCocktails.svg",
+      "symbolFile": "CaviarandCocktails.svg",
       "name": "Caviar & Cocktails",
       "displayName": "Caviar & Cocktails",
       "tags": ["Branding", "Identity", "Logo"],
@@ -120,6 +131,7 @@
       "year": "2024",
       "thumbnailBg": "#EA3820",
       "logoColor": "#f6ead0",
+      "galleryLogoScale": 1.2,
       "caseStudy": [
         { "type": "image", "tone": "light", "title": "Intro",        "label": "Opening",     "src": "assets/case-studies/caviar-cocktails/frame-151-1.png", "width": 1631, "height": 1088, "caption": "" },
         { "type": "image", "tone": "light", "title": "Brand badge", "label": "Lockup",         "src": "assets/case-studies/caviar-cocktails/frame-218.png", "width": 1631, "height": 631, "caption": "Primary mark with credits." },
@@ -149,18 +161,22 @@
       "description": "Brand identity for Artikuchi — a monogram that fuses the letterforms A and K into a single cohesive mark, balancing symmetry with character.",
       "year": "2024",
       "thumbnailBg": "#C70204",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 0.86
     },
     {
       "id": "peacora",
       "file": "Peacora.svg",
+      "symbolFile": "Peacora.svg",
       "name": "Peacora",
       "displayName": "Peacora",
       "tags": ["Logo", "Branding"],
       "description": "A graceful identity for Peacora, capturing elegance and natural form through refined design.",
       "year": "2024",
       "thumbnailBg": "#E1DDD5",
-      "logoColor": "#062B2B"
+      "logoColor": "#062B2B",
+      "useOriginalColors": true,
+      "galleryLogoScale": 0.88
     },
     {
       "id": "balanced-pathways",
@@ -171,7 +187,8 @@
       "description": "Corporate identity for Balanced Pathways Corporation — a mark that communicates stability, direction, and professional integrity.",
       "year": "2024",
       "thumbnailBg": "#000098",
-      "logoColor": "#FFFFFF"
+      "logoColor": "#FFFFFF",
+      "galleryLogoScale": 1.08
     },
     {
       "id": "solar-sphere",
@@ -198,6 +215,7 @@
     {
       "id": "macro-genics",
       "file": "Macro Genics.svg",
+      "symbolFile": "Macro Genics.svg",
       "name": "Macro Genics",
       "displayName": "Macro Genics",
       "tags": ["Logo", "Branding", "Science"],
@@ -220,23 +238,28 @@
     {
       "id": "forgeflow",
       "file": "ForgeFlow.svg",
+      "symbolFile": "ForgeFlow.svg",
       "name": "ForgeFlow",
       "displayName": "ForgeFlow",
       "tags": ["Logo", "Branding", "Tech"],
       "description": "Brand identity for ForgeFlow — a bold mark that conveys strength and seamless workflow through refined geometry.",
       "year": "2024",
       "thumbnailBg": "#F03C0B",
-      "logoColor": "#F5F3E1"
+      "logoColor": "#F5F3E1",
+      "galleryLogoScale": 1.12
     },
     {
       "id": "raw-abstract-goods",
       "file": "RAW ABTRACT GOODS.svg",
+      "symbolFile": "RAW ABTRACT GOODS.svg",
       "name": "RAW ABSTRACT GOODS",
       "displayName": "RAW ABSTRACT GOODS",
       "tags": ["Logo", "Branding", "Streetwear"],
       "description": "Brand identity for RAW ABSTRACT GOODS — a raw, unfiltered mark that embraces abstraction and authenticity.",
       "year": "2024",
-      "thumbnailBg": "#F9F1EB"
+      "thumbnailBg": "#F9F1EB",
+      "useOriginalColors": true,
+      "galleryLogoScale": 1.15
     }
   ]
 }

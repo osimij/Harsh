@@ -31,6 +31,25 @@
         connectedCallback() {
             if (this.firstElementChild) return;
             this.innerHTML = NAV_HTML;
+            const nav = this.querySelector('.site-nav');
+            if (!nav) return;
+
+            const updateScrolledState = () => {
+                nav.classList.toggle('site-nav--scrolled', window.scrollY > 8);
+            };
+
+            updateScrolledState();
+            window.addEventListener('scroll', updateScrolledState, { passive: true });
+            this._cleanupScrollState = () => {
+                window.removeEventListener('scroll', updateScrolledState);
+            };
+        }
+
+        disconnectedCallback() {
+            if (typeof this._cleanupScrollState === 'function') {
+                this._cleanupScrollState();
+                this._cleanupScrollState = null;
+            }
         }
     }
 

@@ -513,7 +513,7 @@
 
             // Logo data loaded from manifest
             let logoManifest = [];
-            let svgStrings = [];        // wordmark (logo + text) — assets/logos/*.svg, used by the bottom ticker thumbnails
+            let svgStrings = [];        // wordmark (logo + text) — assets/logos/full-logos/*.svg, used by the bottom ticker thumbnails
             let canvasSvgStrings = [];  // symbol-only — assets/logos/symbol/*.svg, falls back to wordmark
             let logoAspects = [];       // bw/bh of the particle-rendered SVG, used by the CA shader
 
@@ -615,7 +615,7 @@
                 }
 
                 const fetches = logoManifest.map(logo =>
-                    fetch(`assets/logos/${logo.file}`).then(r => {
+                    fetch(`assets/logos/full-logos/${logo.file}`).then(r => {
                         if (!r.ok) throw new Error(`Failed to load ${logo.file}`);
                         return r.text();
                     })

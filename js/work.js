@@ -8,9 +8,9 @@
 (async function () {
     'use strict';
 
-    const MANIFEST_URL  = 'assets/logos/logos.json';
-    const LOGOS_DIR     = 'assets/logos/';        // wordmark (logo + text)
-    const SYMBOLS_DIR   = 'assets/logos/symbol/'; // symbol-only mark, used by gallery cards
+    const MANIFEST_URL  = 'assets/logos/logos.json?v=gallery-comment-fixes-20260514';
+    const LOGOS_DIR     = 'assets/logos/full-logos/'; // wordmark (logo + text)
+    const SYMBOLS_DIR   = 'assets/logos/symbol/';     // symbol-only mark, used by gallery cards
 
     // ---- Helpers ------------------------------------------------
 
@@ -395,15 +395,15 @@
 
     /**
      * Fetch a single SVG and cache it. Returns null for image-based logos.
-     * Prefers the symbol-only variant in `assets/logos/symbol/` and falls back
-     * to the wordmark when no symbol is available.
+     * Gallery cards use full wordmarks by default, with symbol files kept only
+     * as a fallback if a full logo is missing.
      */
     async function fetchSvg(logo) {
         if (logo.imageFile) return null;
         if (svgCache[logo.id]) return svgCache[logo.id];
-        const preferredSrc = logo.symbolFile ? SYMBOLS_DIR + logo.symbolFile : LOGOS_DIR + logo.file;
+        const preferredSrc = LOGOS_DIR + logo.file;
         let res = await fetch(preferredSrc);
-        if (!res.ok && logo.symbolFile) res = await fetch(LOGOS_DIR + logo.file);
+        if (!res.ok && logo.symbolFile) res = await fetch(SYMBOLS_DIR + logo.symbolFile);
         if (!res.ok) throw new Error(`Failed to load ${logo.file}`);
         const text = await res.text();
         svgCache[logo.id] = text;
@@ -510,6 +510,9 @@
         cell.setAttribute('data-logo-id', logo.id);
         cell.setAttribute('data-tags', (logo.tags || []).join(','));
         cell.setAttribute('data-index', String(displayIndex + 1).padStart(2, '0'));
+        if (logo.galleryLogoScale) {
+            cell.style.setProperty('--work-logo-scale', String(logo.galleryLogoScale));
+        }
 
         cell.addEventListener('click', (event) => {
             if (event.defaultPrevented) return;
@@ -535,7 +538,7 @@
         wrap.className = 'work-cell__mark';
 
         if (logo.imageFile) {
-            if (recolorTo) {
+            if (recolorTo && !logo.useOriginalColors) {
                 wrap.classList.add('work-cell__mark--mask');
                 wrap.style.backgroundColor = recolorTo;
                 wrap.style.webkitMaskImage = `url("${logo.imageFile}")`;
@@ -553,7 +556,7 @@
         }
 
         let svgStr = deduplicateSvgIds(svgString, `wk_${logo.id}`);
-        const targetColor = recolorTo || logo.logoColor;
+        const targetColor = logo.useOriginalColors ? null : (logo.galleryLogoColor || recolorTo || logo.logoColor);
         if (targetColor) svgStr = recolorSvg(svgStr, targetColor);
         wrap.innerHTML = svgStr;
         const svgEl = wrap.querySelector('svg');
@@ -569,6 +572,9 @@
         const numeral = String(displayIndex + 1).padStart(2, '0');
         const tile = document.createElement('span');
         tile.className = 'work-cell__brand-tile';
+        if (logo.galleryBackdrop && logo.thumbnailBg) {
+            tile.style.backgroundColor = logo.thumbnailBg;
+        }
         tile.appendChild(buildLogoMark(logo, svgString, logo.thumbnailBg));
 
         const badgeTag = getBadgeTag(logo);
