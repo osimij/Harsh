@@ -175,12 +175,20 @@ export function setupControls({ appCompat, lifecycle }) {
     // Enforce density cap at the UI level (in case the HTML slider max is edited externally).
     const logoDensityEl = document.getElementById('logo-density');
     const imageDensityEl = document.getElementById('image-density');
+    const logoDensityValueEl = document.getElementById('logo-density-value');
+    const imageDensityValueEl = document.getElementById('image-density-value');
     const clampDensity = (value) => Math.min(MAX_PARTICLE_DENSITY, Math.max(100, parseInt(value, 10) || 15000));
     const syncLegacyDensity = () => {
         app.settings.density = Math.max(
             clampDensity(app.settings.logoDensity),
             clampDensity(app.settings.imageDensity)
         );
+    };
+    const syncDensityControl = (input, label, value) => {
+        const capped = clampDensity(value);
+        if (input) input.value = String(capped);
+        if (label) label.textContent = String(capped);
+        return capped;
     };
 
     [logoDensityEl, imageDensityEl].forEach((el) => {
@@ -192,6 +200,9 @@ export function setupControls({ appCompat, lifecycle }) {
             el.value = String(MAX_PARTICLE_DENSITY);
         }
     });
+    app.settings.logoDensity = syncDensityControl(logoDensityEl, logoDensityValueEl, app.settings.logoDensity);
+    app.settings.imageDensity = syncDensityControl(imageDensityEl, imageDensityValueEl, app.settings.imageDensity);
+    syncLegacyDensity();
 
     // Logo density slider
     setupSlider('logo-density', 15000, (value) => {

@@ -1703,7 +1703,13 @@ body.work-detail-view .case-go-back {
 @media (max-width: 767px) {
     body.work-detail-view #detail-view.detail-page,
     .case-page-outgoing__page.detail-page {
+        width: calc(100vw - 4.26666vw);
         margin: 0 2.13333vw;
+    }
+
+    body.work-detail-view .case-footer {
+        left: 2.13333vw;
+        width: calc(100vw - 4.26666vw);
     }
 
     .case-padding-1 { padding: 2.13333vw; }

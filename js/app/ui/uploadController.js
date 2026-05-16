@@ -50,7 +50,7 @@ export function setupUpload({ dom, appCompat, lifecycle }) {
                     const manifest = await manifestRes.json();
                     const logos = manifest.logos.slice(0, 3);
                     const fetches = logos.map(logo => {
-                        const svgUrl = new URL(`../../../assets/logos/${logo.file}`, import.meta.url);
+                        const svgUrl = new URL(`../../../assets/logos/full-logos/${logo.file}`, import.meta.url);
                         return fetch(svgUrl, { cache: 'no-store' }).then(r => {
                             if (!r.ok) throw new Error(`${logo.file} ${r.status}`);
                             return r.text();
